@@ -2,14 +2,5 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/register": "pages/register.js",
-  "/quotes": "pages/quotes.js",
-  "/api/quotes": "pages/api/quotes.js",
-  "/api/quotes/favorites": "pages/api/quotes/favorites.js",
-  "/chat": "pages/chat.js",
-  "/api/auth/me": "pages/api/auth/me.js",
-  "/login": "pages/login.js",
-  "/diary": "pages/diary.js",
-  "/api/diary": "pages/api/diary.js"
+  "/login": "pages/login.js"
 }
