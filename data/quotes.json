@@ -1,0 +1,20 @@
+{
+  "Heartbreak": [
+    {"id":1, "text":"The pain you feel today is the strength you feel tomorrow."},
+    {"id":2, "text":"Grief is the price we pay for loving."}
+  ],
+  "Healing": [
+    {"id":3, "text":"Healing is not linear; be gentle with yourself."},
+    {"id":4, "text":"Small steps forward are still progress."}
+  ],
+  "Self-Love": [
+    {"id":5, "text":"You are worthy of care and tenderness."},
+    {"id":6, "text":"Talk to yourself like you would to someone you love."}
+  ],
+  "Reflection": [
+    {"id":7, "text":"Look back only to learn, not to linger."}
+  ],
+  "Inspiration": [
+    {"id":8, "text":"There are brighter chapters ahead."}
+  ]
+}
