@@ -2,5 +2,15 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/login": "pages/login.js"
+  "/login": "pages/login.js",
+  "/chat": "pages/chat.js",
+  "/": "pages/index.js",
+  "/diary": "pages/diary.js",
+  "/quotes": "pages/quotes.js",
+  "/api/quotes/favorites": "pages/api/quotes/favorites.js",
+  "/api/quotes": "pages/api/quotes.js",
+  "/api/chat/history": "pages/api/chat/history.js",
+  "/api/auth/me": "pages/api/auth/me.js",
+  "/api/diary": "pages/api/diary.js",
+  "/api/gamification/progress": "pages/api/gamification/progress.js"
 }

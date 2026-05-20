@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 
 /**
  * Simple month view calendar that highlights dates with entries.
  * Expects `entriesByDate` map of yyyy-mm-dd -> array
  */
 export default function CalendarView({ year, month, entriesByDate, onSelectDate }){
+  const monthLabel = new Date(year, month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   const weeks = useMemo(()=>{
     const d = new Date(year, month, 1)
     const startDay = d.getDay()
@@ -20,6 +22,15 @@ export default function CalendarView({ year, month, entriesByDate, onSelectDate 
 
   return (
     <div className="card p-3">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#8c6147]">Journal map</p>
+          <h4 className="mt-1 font-semibold text-lg">{monthLabel}</h4>
+        </div>
+        <div className="rounded-full bg-white/70 px-3 py-1 text-xs text-[#7a6756] shadow-sm">
+          {Object.keys(entriesByDate).length} active days
+        </div>
+      </div>
       <div className="grid grid-cols-7 gap-2 text-sm mb-2 subtle">
         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
       </div>
@@ -30,7 +41,15 @@ export default function CalendarView({ year, month, entriesByDate, onSelectDate 
             const key = cell.toISOString().slice(0,10)
             const has = entriesByDate[key] && entriesByDate[key].length>0
             return (
-              <button key={ci} onClick={()=>onSelectDate(key)} className={`h-12 rounded ${has? 'bg-beige-100':''} flex items-center justify-center`}>{cell.getDate()}</button>
+              <motion.button
+                key={ci}
+                onClick={()=>onSelectDate(key)}
+                whileHover={{ y: -3, scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className={`calendar-day ${has ? 'calendar-day-active' : ''}`}
+              >
+                {cell.getDate()}
+              </motion.button>
             )
           })}
         </div>
