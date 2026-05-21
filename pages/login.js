@@ -14,7 +14,7 @@ export default function Login(){
     e.preventDefault()
     setLoading(true)
     const res = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})})
-    if(res.ok) router.push('/')
+    if(res.ok) router.push('/letter-to-yourself')
     else {
       const payload = await res.json().catch(()=>null)
       alert(payload?.error || 'Login failed')

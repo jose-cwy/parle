@@ -1,0 +1,30 @@
+export const termsSections = [
+  {
+    title: 'Using Heartstrings Club',
+    body: 'Heartstrings Club is designed as a gentle self-support platform for journaling, reflection, and private emotional check-ins. It is not a replacement for licensed medical, legal, or emergency services.'
+  },
+  {
+    title: 'Privacy expectations',
+    body: 'We work to keep your account content private to your authenticated session and stored data. You are responsible for protecting your login credentials and for using a device you trust.'
+  },
+  {
+    title: 'Emotional safety',
+    body: 'The platform may discuss grief, heartbreak, and difficult emotions. If you feel in immediate danger or at risk of harming yourself or someone else, stop using the platform and contact emergency or crisis services right away.'
+  },
+  {
+    title: 'Acceptable use',
+    body: 'You agree not to misuse the platform, attempt unauthorized access, interfere with service availability, or submit content that breaks applicable law or violates another person\'s privacy or safety.'
+  },
+  {
+    title: 'Account responsibilities',
+    body: 'You are responsible for the accuracy of your signup information, maintaining your password securely, and any activity that occurs through your account until you notify us of misuse.'
+  },
+  {
+    title: 'Letters and diary entries',
+    body: 'Diary entries and personal letters are intended for your own private use. Once a letter is marked completed, the current V1 design treats it as sealed content and stops returning its text through the UI and API.'
+  },
+  {
+    title: 'Future updates',
+    body: 'We may improve features, privacy controls, and safety mechanisms in later versions. Continued use after material updates may require reviewing a newer terms version before certain actions such as signup.'
+  },
+]

@@ -5,6 +5,13 @@ import { motion } from 'framer-motion'
  * Simple month view calendar that highlights dates with entries.
  * Expects `entriesByDate` map of yyyy-mm-dd -> array
  */
+function formatLocalDateKey(date){
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function CalendarView({ year, month, entriesByDate, onSelectDate }){
   const monthLabel = new Date(year, month).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   const weeks = useMemo(()=>{
@@ -38,7 +45,7 @@ export default function CalendarView({ year, month, entriesByDate, onSelectDate 
         <div key={ri} className="grid grid-cols-7 gap-2 mb-2">
           {row.map((cell,ci)=>{
             if(!cell) return <div key={ci} className="h-12"></div>
-            const key = cell.toISOString().slice(0,10)
+            const key = formatLocalDateKey(cell)
             const has = entriesByDate[key] && entriesByDate[key].length>0
             return (
               <motion.button

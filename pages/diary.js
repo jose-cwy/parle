@@ -5,6 +5,16 @@ import CalendarView from '../components/CalendarView'
 import RequireAuth from '../components/RequireAuth'
 import Reveal from '../components/Reveal'
 
+// Keep diary dates in the user's local calendar day instead of UTC,
+// so an entry written on May 21 doesn't highlight May 22.
+function formatLocalDateKey(value){
+  const date = new Date(value)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function Diary(){
   const [entries, setEntries] = useState([])
   const [open, setOpen] = useState(false)
@@ -20,7 +30,10 @@ export default function Diary(){
 
   function entriesByDate(){
     const map = {}
-    entries.forEach(e=>{ const d = e.created_at.slice(0,10); (map[d] = map[d]||[]).push(e) })
+    entries.forEach(e=>{
+      const dateKey = formatLocalDateKey(e.created_at)
+      ;(map[dateKey] = map[dateKey] || []).push(e)
+    })
     return map
   }
 
@@ -98,7 +111,7 @@ export default function Diary(){
           <Reveal delay={0.12}>
             <div className="card p-4">
               <h4 className="font-semibold text-lg">Selected date</h4>
-              <div className="mt-2 subtle">{selectedDate || 'None'}</div>
+              <div className="mt-2 subtle">{selectedDate ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString() : 'None'}</div>
             </div>
           </Reveal>
           <Reveal delay={0.16}>

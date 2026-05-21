@@ -9,6 +9,7 @@ export default function Header(){
   const router = useRouter()
   const navLinks = user
     ? [
+        { href: '/letter-to-yourself', label: 'Letter' },
         { href: '/diary', label: 'Diary' },
         { href: '/chat', label: 'Chat' },
         { href: '/quotes', label: 'Quotes' },
