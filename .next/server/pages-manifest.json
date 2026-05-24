@@ -3,11 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/api/auth/me": "pages/api/auth/me.js",
-  "/api/diary": "pages/api/diary.js",
   "/api/letters/self": "pages/api/letters/self.js",
-  "/api/gamification/progress": "pages/api/gamification/progress.js",
-  "/api/quotes": "pages/api/quotes.js",
-  "/api/chat/history": "pages/api/chat/history.js",
-  "/api/quotes/favorites": "pages/api/quotes/favorites.js"
+  "/api/auth/me": "pages/api/auth/me.js"
 }

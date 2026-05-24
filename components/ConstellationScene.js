@@ -46,23 +46,53 @@ const ARC_NODES = [
 ]
 const ARC_EDGES = [[0,1],[1,2]]
 
+/* Bridge cluster — upper-right region, two linked star groups (connection) */
+const BRIDGE2_NODES = [
+  { x:  480, y: -320, z: 580 },
+  { x:  560, y: -260, z: 560 },
+  { x:  500, y: -180, z: 540 },
+  { x:  680, y: -240, z: 570 },
+  { x:  720, y: -160, z: 555 },
+]
+const BRIDGE2_EDGES = [[0,1],[1,2],[1,3],[3,4]]
+
+/* Crescent arc — lower-left quadrant (new journey opening) */
+const CRESCENT_NODES = [
+  { x: -580, y:  320, z: 600 },
+  { x: -520, y:  230, z: 580 },
+  { x: -440, y:  170, z: 560 },
+  { x: -360, y:  200, z: 545 },
+  { x: -300, y:  280, z: 560 },
+]
+const CRESCENT_EDGES = [[0,1],[1,2],[2,3],[3,4]]
+
 /* All constellation stars indexed by their position in the full array */
-const CONST_STARS = [...HEART_NODES, ...THREAD_NODES, ...ARC_NODES]
-const CONST_STAR_COUNT = CONST_STARS.length  // 18
+const CONST_STARS = [
+  ...HEART_NODES,
+  ...THREAD_NODES,
+  ...ARC_NODES,
+  ...BRIDGE2_NODES,
+  ...CRESCENT_NODES,
+]
+const CONST_STAR_COUNT = CONST_STARS.length  // 30
 
 /* Edge index offsets into the final stars array */
-const HEART_OFFSET  = 0
-const THREAD_OFFSET = HEART_NODES.length
-const ARC_OFFSET    = HEART_NODES.length + THREAD_NODES.length
+const HEART_OFFSET    = 0
+const THREAD_OFFSET   = HEART_NODES.length
+const ARC_OFFSET      = HEART_NODES.length + THREAD_NODES.length
+const BRIDGE2_OFFSET  = HEART_NODES.length + THREAD_NODES.length + ARC_NODES.length
+const CRESCENT_OFFSET = BRIDGE2_OFFSET + BRIDGE2_NODES.length
 
 const ALL_EDGES = [
-  ...HEART_EDGES.map(([a, b]) => [a + HEART_OFFSET,  b + HEART_OFFSET]),
-  ...THREAD_EDGES.map(([a, b]) => [a + THREAD_OFFSET, b + THREAD_OFFSET]),
-  ...ARC_EDGES.map(([a, b]) => [a + ARC_OFFSET, b + ARC_OFFSET]),
+  ...HEART_EDGES.map(([a, b])   => [a + HEART_OFFSET,    b + HEART_OFFSET]),
+  ...THREAD_EDGES.map(([a, b])  => [a + THREAD_OFFSET,   b + THREAD_OFFSET]),
+  ...ARC_EDGES.map(([a, b])     => [a + ARC_OFFSET,      b + ARC_OFFSET]),
+  ...BRIDGE2_EDGES.map(([a, b]) => [a + BRIDGE2_OFFSET,  b + BRIDGE2_OFFSET]),
+  ...CRESCENT_EDGES.map(([a,b]) => [a + CRESCENT_OFFSET, b + CRESCENT_OFFSET]),
 ]
 
 /* ─── Build full star array (constellation + scattered) ─────── */
-const TOTAL_STARS = 130
+const TOTAL_STARS = 200
 const SCATTER_COUNT = TOTAL_STARS - CONST_STAR_COUNT
 
 function buildStars() {

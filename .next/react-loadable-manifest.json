@@ -1,8 +1,8 @@
 {
   "index.js -> ../components/ConstellationScene": {
-    "id": 3499,
+    "id": "index.js -> ../components/ConstellationScene",
     "files": [
-      "static/chunks/499.ae56a5a9f039e454.js"
+      "static/chunks/components_ConstellationScene_js.js"
     ]
   }
 }

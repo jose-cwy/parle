@@ -271,8 +271,51 @@ function FeaturePanel({ feature, visible }) {
   )
 }
 
-/* ─── CurvedTrail — Canvas cubic bezier dotted path ─────────── */
-function CurvedTrail({ scrollYProgress }) {
+/* ─── ScrollConstellationPath — scroll-drawn constellation trail ─ */
+/*
+ * Three shape clusters drawn progressively as the user scrolls:
+ *  Top:  heart outline (6 nodes, emotional anchor)
+ *  Mid:  bridge pair  (3 nodes, connection)
+ *  Low:  journey path (4 nodes, winding forward)
+ *
+ * Lines use a gradient-fade comet-tail effect: bright silver-white at
+ * the leading edge, trailing to near-invisible behind it.
+ * Arrived nodes bloom with a soft radial glow.
+ */
+
+/* Node positions as fraction of canvas [0–1] */
+const PATH_NODES = [
+  /* 0-5: heart top-third */
+  { x: 0.50, y: 0.04 },
+  { x: 0.28, y: 0.07 },
+  { x: 0.38, y: 0.12 },
+  { x: 0.62, y: 0.12 },
+  { x: 0.72, y: 0.07 },
+  { x: 0.50, y: 0.17 },
+  /* 6-8: bridge mid */
+  { x: 0.22, y: 0.40 },
+  { x: 0.50, y: 0.47 },
+  { x: 0.78, y: 0.40 },
+  /* 9-12: journey path lower */
+  { x: 0.32, y: 0.64 },
+  { x: 0.64, y: 0.73 },
+  { x: 0.36, y: 0.83 },
+  { x: 0.58, y: 0.94 },
+]
+
+const PATH_EDGES = [
+  /* heart */
+  [0, 1], [1, 2], [2, 5], [5, 3], [3, 4], [4, 0],
+  /* bridge */
+  [6, 7], [7, 8],
+  /* journey path */
+  [9, 10], [10, 11], [11, 12],
+]
+
+/* Total edge "units" used to map scrollYProgress → drawn edges */
+const EDGE_COUNT = PATH_EDGES.length
+
+function ScrollConstellationPath({ scrollYProgress }) {
   const canvasRef = useRef(null)
 
   const draw = useCallback(() => {
@@ -285,40 +328,103 @@ function CurvedTrail({ scrollYProgress }) {
 
     ctx.clearRect(0, 0, W, H)
 
-    /* Build a smooth cubic bezier S-curve through the canvas height */
-    const cx = W / 2
-    /* Control points for the S-curve — weave left/right */
-    const points = [
-      { x: cx,       y: 0 },
-      { x: W * 0.12, y: H * 0.25 },
-      { x: W * 0.88, y: H * 0.5 },
-      { x: cx,       y: H },
-    ]
+    /* How many full edges + fractional leading edge to draw */
+    const totalProgress = progress * EDGE_COUNT
+    const fullEdges = Math.floor(totalProgress)
+    const partial = totalProgress - fullEdges
 
-    /* Create a temporary offscreen path to measure total length */
-    const totalDots = Math.floor(H / 14)
-    const filledDots = Math.round(totalDots * progress)
+    /* Helper: resolve node to canvas px */
+    const px = (n) => ({ x: n.x * W, y: n.y * H })
 
-    for (let i = 0; i < totalDots; i++) {
-      const t = i / (totalDots - 1)
-      /* Cubic bezier interpolation */
-      const x = cubicBezier(points[0].x, points[1].x, points[2].x, points[3].x, t)
-      const y = cubicBezier(points[0].y, points[1].y, points[2].y, points[3].y, t)
+    /* 1. Draw all unvisited nodes as faint silver dots */
+    PATH_NODES.forEach((n, idx) => {
+      const { x, y } = px(n)
+      const isVisited = idx <= (PATH_EDGES[Math.min(fullEdges, EDGE_COUNT - 1)] || [0, 0])[1]
+      ctx.beginPath()
+      ctx.arc(x, y, 1.6, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(210,225,255,0.12)'
+      ctx.fill()
+    })
 
-      if (i < filledDots) {
-        ctx.beginPath()
-        ctx.arc(x, y, 2.2, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(45,212,191,${0.55 + 0.45 * (i / totalDots)})`
-        ctx.shadowBlur = 8
-        ctx.shadowColor = 'rgba(45,212,191,0.6)'
-        ctx.fill()
-        ctx.shadowBlur = 0
-      } else {
-        ctx.beginPath()
-        ctx.arc(x, y, 1.5, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(45,212,191,0.12)'
-        ctx.fill()
-      }
+    /* 2. Draw completed edges with gradient-fade comet-tail */
+    for (let e = 0; e < fullEdges && e < EDGE_COUNT; e++) {
+      const [ai, bi] = PATH_EDGES[e]
+      const a = px(PATH_NODES[ai])
+      const b = px(PATH_NODES[bi])
+
+      const edgeAlpha = 0.18 + 0.55 * (e / EDGE_COUNT)
+
+      const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y)
+      grad.addColorStop(0, `rgba(180,200,255,${edgeAlpha * 0.25})`)
+      grad.addColorStop(0.6, `rgba(210,228,255,${edgeAlpha * 0.75})`)
+      grad.addColorStop(1, `rgba(220,238,255,${edgeAlpha})`)
+
+      ctx.beginPath()
+      ctx.moveTo(a.x, a.y)
+      ctx.lineTo(b.x, b.y)
+      ctx.strokeStyle = grad
+      ctx.lineWidth = 1.2
+      ctx.stroke()
+    }
+
+    /* 3. Draw the currently-drawing (partial) edge */
+    if (fullEdges < EDGE_COUNT && partial > 0) {
+      const [ai, bi] = PATH_EDGES[fullEdges]
+      const a = px(PATH_NODES[ai])
+      const b = px(PATH_NODES[bi])
+      const ex = a.x + (b.x - a.x) * partial
+      const ey = a.y + (b.y - a.y) * partial
+
+      /* Bright leading-edge glow */
+      const grad = ctx.createLinearGradient(a.x, a.y, ex, ey)
+      grad.addColorStop(0, 'rgba(220,235,255,0.1)')
+      grad.addColorStop(0.7, 'rgba(225,238,255,0.55)')
+      grad.addColorStop(1, 'rgba(235,245,255,0.95)')
+
+      ctx.beginPath()
+      ctx.moveTo(a.x, a.y)
+      ctx.lineTo(ex, ey)
+      ctx.strokeStyle = grad
+      ctx.lineWidth = 1.4
+      ctx.shadowBlur = 6
+      ctx.shadowColor = 'rgba(210,228,255,0.6)'
+      ctx.stroke()
+      ctx.shadowBlur = 0
+
+      /* Leading-edge bright dot */
+      ctx.beginPath()
+      ctx.arc(ex, ey, 2.2, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(235,245,255,0.9)'
+      ctx.shadowBlur = 10
+      ctx.shadowColor = 'rgba(210,228,255,0.7)'
+      ctx.fill()
+      ctx.shadowBlur = 0
+    }
+
+    /* 4. Bloom arrived nodes */
+    const arrivedCount = fullEdges < EDGE_COUNT
+      ? PATH_EDGES[fullEdges][0]
+      : PATH_NODES.length
+
+    for (let ni = 0; ni < arrivedCount; ni++) {
+      const { x, y } = px(PATH_NODES[ni])
+      /* Soft radial bloom */
+      const bloom = ctx.createRadialGradient(x, y, 0, x, y, 9)
+      bloom.addColorStop(0, 'rgba(220,238,255,0.45)')
+      bloom.addColorStop(1, 'rgba(210,228,255,0)')
+      ctx.beginPath()
+      ctx.arc(x, y, 9, 0, Math.PI * 2)
+      ctx.fillStyle = bloom
+      ctx.fill()
+
+      /* Star dot */
+      ctx.beginPath()
+      ctx.arc(x, y, 2.4, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(230,242,255,0.88)'
+      ctx.shadowBlur = 8
+      ctx.shadowColor = 'rgba(210,228,255,0.65)'
+      ctx.fill()
+      ctx.shadowBlur = 0
     }
   }, [scrollYProgress])
 
@@ -327,7 +433,7 @@ function CurvedTrail({ scrollYProgress }) {
     if (!canvas) return
 
     const resize = () => {
-      canvas.width  = 48
+      canvas.width  = 64
       canvas.height = window.innerHeight
       draw()
     }
@@ -349,7 +455,7 @@ function CurvedTrail({ scrollYProgress }) {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: 48,
+        width: 64,
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 50,
@@ -360,9 +466,80 @@ function CurvedTrail({ scrollYProgress }) {
   )
 }
 
-function cubicBezier(p0, p1, p2, p3, t) {
-  const mt = 1 - t
-  return mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3
+/* ─── DriftParticles — slow upward-drifting firefly particles ── */
+/*
+ * 18 tiny glowing dots seeded at fixed positions across the viewport.
+ * Each drifts upward slowly and fades in-out like fireflies / embers.
+ * Color mix: silver-white and soft teal.
+ * Respects prefers-reduced-motion — renders nothing when reduced.
+ */
+const DRIFT_PARTICLES = (() => {
+  function sr(seed) {
+    let s = seed
+    return () => {
+      s = (s * 1664525 + 1013904223) & 0xffffffff
+      return (s >>> 0) / 0xffffffff
+    }
+  }
+  const rand = sr(0xf1be50)
+  return Array.from({ length: 18 }, (_, i) => ({
+    id: i,
+    left: `${4 + rand() * 88}%`,
+    top: `${10 + rand() * 75}%`,
+    size: 1.5 + rand() * 2.5,
+    dur: 7 + rand() * 9,
+    delay: rand() * 8,
+    repeatDelay: rand() * 3,
+    travel: 80 + rand() * 80,
+    color: rand() > 0.52
+      ? `rgba(220,235,255,${(0.45 + rand() * 0.3).toFixed(2)})`
+      : `rgba(45,212,191,${(0.35 + rand() * 0.25).toFixed(2)})`,
+    blur: rand() > 0.5 ? 1.2 : 0.8,
+  }))
+})()
+
+function DriftParticles({ reduced }) {
+  if (reduced) return null
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 15,
+        overflow: 'hidden',
+      }}
+    >
+      {DRIFT_PARTICLES.map((p) => (
+        <motion.span
+          key={p.id}
+          style={{
+            position: 'absolute',
+            left: p.left,
+            top: p.top,
+            width: p.size,
+            height: p.size,
+            borderRadius: '50%',
+            background: p.color,
+            filter: `blur(${p.blur}px)`,
+            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+          }}
+          animate={{
+            y: [0, -p.travel],
+            opacity: [0, 0.75, 0.55, 0],
+          }}
+          transition={{
+            duration: p.dur,
+            delay: p.delay,
+            repeat: Infinity,
+            ease: 'easeInOut',
+            repeatDelay: p.repeatDelay,
+          }}
+        />
+      ))}
+    </div>
+  )
 }
 
 /* ─── Progress dots ─────────────────────────────────────────── */
@@ -444,7 +621,8 @@ export default function Home() {
   return (
     <>
       <ScrollProgressBar scrollYProgress={scrollYProgress} />
-      <CurvedTrail scrollYProgress={scrollYProgress} />
+      <ScrollConstellationPath scrollYProgress={scrollYProgress} />
+      <DriftParticles reduced={shouldReduceMotion} />
 
       <div ref={stageRef} className="room-stage">
         <div className="room-sticky">
