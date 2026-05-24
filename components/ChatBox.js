@@ -49,7 +49,7 @@ export default function ChatBox(){
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       transition={{ ...spring.gentle, opacity: { duration: 0.5 } }}
     >
-      <div className="mb-4 flex items-center justify-between sketch-frame rounded-[18px] border border-[var(--border)] bg-[rgba(45,35,28,0.72)] px-4 py-3">
+      <div className="mb-4 flex items-center justify-between sketch-frame rounded-[18px] border border-[var(--border)] bg-[rgba(3,12,28,0.82)] px-4 py-3">
         <div>
           <p className="eyebrow">Heartstrings AI</p>
           <p className="mt-1 text-sm subtle">Steady, supportive conversation when you need somewhere to start.</p>

@@ -33,7 +33,7 @@ export default function Login(){
             animate={{ rotate: 360 }}
             transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
           />
-          <div className="relative border-b border-[var(--border)] bg-[rgba(45,35,28,0.72)] px-6 py-5 sketch-frame rounded-t-[22px]">
+          <div className="relative border-b border-[var(--border)] bg-[rgba(3,12,28,0.82)] px-6 py-5 sketch-frame rounded-t-[22px]">
             <p className="eyebrow">Welcome back</p>
             <h2 className="mt-2 font-serif text-2xl font-semibold">Log in</h2>
             <p className="mt-2 text-sm subtle">The door is still open. Continue your journal, chat, and quotes.</p>

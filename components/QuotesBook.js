@@ -94,7 +94,7 @@ export default function QuotesBook(){
                 <p className="eyebrow">Current chapter</p>
                 <h3 className="mt-1 font-semibold text-2xl">{active}</h3>
               </div>
-              <div className="rounded-full border border-[var(--border)] bg-[rgba(34,28,44,0.65)] px-3 py-1 text-sm text-[var(--muted)]">
+              <div className="rounded-full border border-[var(--border)] bg-[rgba(3,12,28,0.72)] px-3 py-1 text-sm text-[var(--muted)]">
                 {(chapters[active] || []).length} quotes
               </div>
             </div>

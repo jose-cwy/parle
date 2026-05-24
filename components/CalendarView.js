@@ -33,7 +33,7 @@ export default function CalendarView({ year, month, entriesByDate, selectedDate,
           <p className="eyebrow">Journal map</p>
           <h4 className="mt-1 font-semibold text-lg">{monthLabel}</h4>
         </div>
-        <div className="rounded-full border border-[var(--border)] bg-[rgba(45,35,28,0.72)] px-3 py-1 text-xs text-[var(--text-soft)]">
+        <div className="rounded-full border border-[var(--border)] bg-[rgba(3,12,28,0.75)] px-3 py-1 text-xs text-[var(--text-soft)]">
           {activeDays} active day{activeDays === 1 ? '' : 's'}
         </div>
       </div>

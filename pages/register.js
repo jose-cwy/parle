@@ -63,7 +63,7 @@ export default function Register({ acceptedTermsInitially }){
             animate={{ rotate: -360 }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
           />
-          <div className={`relative border-b border-[var(--border)] bg-[rgba(45,35,28,0.72)] px-6 py-5 sketch-frame rounded-t-[22px] transition ${acceptedTerms ? 'opacity-100' : 'opacity-55'}`}>
+          <div className={`relative border-b border-[var(--border)] bg-[rgba(3,12,28,0.82)] px-6 py-5 sketch-frame rounded-t-[22px] transition ${acceptedTerms ? 'opacity-100' : 'opacity-55'}`}>
             <p className="eyebrow">Join Heartstrings Club</p>
             <h2 className="mt-2 font-serif text-2xl font-semibold">Create account</h2>
             <p className="mt-2 text-sm subtle">

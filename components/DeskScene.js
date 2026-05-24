@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import CozyRoomIllustration from './CozyRoomIllustration'
+import OceanNightBg from './OceanNightBg'
 import { SkeletonBlock } from './Skeleton'
 import { spring } from '../lib/motion'
 
@@ -11,7 +11,7 @@ export default function DeskScene({
   return (
     <div className="letter-room-shell">
       <div className="room-scene room-scene-original">
-        <CozyRoomIllustration showOverlay={false} className="absolute inset-0" />
+        <OceanNightBg />
 
         <AnimatePresence>
           {isSealing ? (

@@ -27,7 +27,7 @@ export default function Header(){
     [0, 80],
     isJourney
       ? ['rgba(31,24,20,0)', 'rgba(31,24,20,0.88)']
-      : ['rgba(45,35,28,0.82)', 'rgba(45,35,28,0.82)']
+      : ['rgba(3,12,28,0.88)', 'rgba(3,12,28,0.88)']
   )
   const headerBorder = useTransform(
     scrollY,

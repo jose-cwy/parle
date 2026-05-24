@@ -1,13 +1,10 @@
 import { motion } from 'framer-motion'
-import CozyRoomIllustration from './CozyRoomIllustration'
+import OceanNightBg from './OceanNightBg'
 
-/**
- * Diary page hero — original cozy nook with journal-focused details overlaid.
- */
 export default function DiaryRoomHero(){
   return (
     <div className="diary-room-hero">
-      <CozyRoomIllustration compact showOverlay={false} className="diary-room-art" />
+      <OceanNightBg />
       <motion.div
         className="diary-room-shade"
         aria-hidden="true"
@@ -24,7 +21,7 @@ export default function DiaryRoomHero(){
           <p className="eyebrow">Your writing nook</p>
           <h2 className="mt-2 text-2xl font-semibold md:text-3xl">A quiet room for today&apos;s pages</h2>
           <p className="mt-2 max-w-md text-sm subtle">
-            Open your journal by lamplight. Each entry stays private, warm, and yours.
+            Open your journal under the stars. Each entry stays private and yours.
           </p>
         </motion.div>
         <motion.div
@@ -44,19 +41,19 @@ export default function DiaryRoomHero(){
         </motion.div>
       </div>
       <svg className="diary-room-sketch-overlay" viewBox="0 0 800 600" aria-hidden="true">
-        <g opacity="0.9">
-          <rect x="320" y="360" width="72" height="52" rx="4" fill="#FFF4E8" stroke="#3D2A22" strokeWidth="2" transform="rotate(-4 356 386)" />
-          <line x1="356" y1="372" x2="356" y2="404" stroke="#D4C4A8" strokeWidth="1.5" transform="rotate(-4 356 386)" />
-          <path d="M332,382 L348,382 M332,392 L346,392 M364,382 L378,382" stroke="#C4A888" strokeWidth="1.2" transform="rotate(-4 356 386)" />
-          <ellipse cx="420" cy="340" rx="18" ry="22" fill="#FFE8C0" stroke="#3D2A22" strokeWidth="1.8" />
-          <rect x="412" y="358" width="16" height="8" rx="2" fill="#8B5A48" />
+        <g opacity="0.7">
+          <rect x="320" y="360" width="72" height="52" rx="4" fill="rgba(2,10,24,0.8)" stroke="rgba(45,212,191,0.4)" strokeWidth="1.5" transform="rotate(-4 356 386)" />
+          <line x1="356" y1="372" x2="356" y2="404" stroke="rgba(45,212,191,0.25)" strokeWidth="1.2" transform="rotate(-4 356 386)" />
+          <path d="M332,382 L348,382 M332,392 L346,392 M364,382 L378,382" stroke="rgba(45,212,191,0.2)" strokeWidth="1" transform="rotate(-4 356 386)" />
+          <ellipse cx="420" cy="340" rx="18" ry="22" fill="rgba(2,10,24,0.7)" stroke="rgba(45,212,191,0.35)" strokeWidth="1.5" />
+          <rect x="412" y="358" width="16" height="8" rx="2" fill="rgba(45,212,191,0.25)" />
           <motion.ellipse
             cx="420"
             cy="340"
             rx="28"
             ry="32"
-            fill="rgba(255,200,120,0.2)"
-            animate={{ opacity: [0.35, 0.65, 0.4] }}
+            fill="rgba(45,212,191,0.08)"
+            animate={{ opacity: [0.3, 0.65, 0.35] }}
             transition={{ duration: 4.2, repeat: Infinity, ease: [0.45, 0, 0.2, 1] }}
           />
         </g>
