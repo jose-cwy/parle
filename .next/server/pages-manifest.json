@@ -4,9 +4,6 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/api/auth/me": "pages/api/auth/me.js",
-  "/login": "pages/login.js",
-  "/api/auth/logout": "pages/api/auth/logout.js",
-  "/api/auth/login": "pages/api/auth/login.js",
-  "/api/letters/self": "pages/api/letters/self.js",
-  "/letter-to-yourself": "pages/letter-to-yourself.js"
+  "/letter-to-yourself": "pages/letter-to-yourself.js",
+  "/api/letters/self": "pages/api/letters/self.js"
 }

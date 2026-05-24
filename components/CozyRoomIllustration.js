@@ -89,11 +89,36 @@ export default function CozyRoomIllustration({
             <feGaussianBlur stdDeviation="8" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          <filter id="window-glass">
+            <feGaussianBlur stdDeviation="1.2" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <filter id="moonlight-soft">
+            <feGaussianBlur stdDeviation="22" />
+          </filter>
+          <radialGradient id="night-sky" cx="60%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#1a1848" />
+            <stop offset="45%" stopColor="#0f0e2e" />
+            <stop offset="100%" stopColor="#080618" />
+          </radialGradient>
+          <radialGradient id="moonlight-cast" cx="50%" cy="0%" r="80%" fx="50%" fy="0%">
+            <stop offset="0%" stopColor="rgba(180,200,255,0.22)" />
+            <stop offset="60%" stopColor="rgba(140,160,220,0.08)" />
+            <stop offset="100%" stopColor="rgba(100,120,200,0)" />
+          </radialGradient>
+          <radialGradient id="moonlight-wall" cx="50%" cy="0%" r="100%">
+            <stop offset="0%" stopColor="rgba(160,180,240,0.14)" />
+            <stop offset="100%" stopColor="rgba(100,120,200,0)" />
+          </radialGradient>
         </defs>
 
         {/* ── BG LAYER: wall, tiles, light wash ── */}
         <motion.g style={bgY ? { y: bgY } : {}}>
           <rect x="0" y="0" width="800" height="400" fill="url(#cr-wall-base)" />
+          {/* Deep shadow on left wall — makes room feel less evenly lit */}
+          <rect x="0" y="0" width="260" height="400" fill="rgba(20,10,6,0.28)" />
+          {/* Deep shadow on ceiling area */}
+          <rect x="0" y="0" width="800" height="48" fill="rgba(10,6,4,0.45)" />
           {[
             [24, 24, 118, 88, '#A87860'],
             [148, 18, 96, 72, '#7A5848'],
@@ -115,16 +140,77 @@ export default function CozyRoomIllustration({
           ))}
           <rect x="0" y="0" width="800" height="400" fill="url(#cr-light-wash)" />
 
-          {/* Wall posters */}
-          <g transform="translate(548, 56) rotate(-4)">
-            <rect x="0" y="0" width="68" height="90" rx="2" fill="#E8DCC8" stroke="#3D2A22" strokeWidth="2" />
-            <ellipse cx="34" cy="38" rx="16" ry="20" fill="#6B8A62" opacity="0.7" />
-            <rect x="18" y="62" width="32" height="8" rx="2" fill="#C07850" opacity="0.6" />
+          {/* ── Right wall window with night sky ── */}
+          {/* Outer frame shadow / depth */}
+          <rect x="544" y="52" width="158" height="192" rx="7" fill="#1a0e08" opacity="0.85" />
+          {/* Window frame (dark wood) */}
+          <rect x="548" y="56" width="150" height="184" rx="5" fill="#2d1a10" stroke="#140c06" strokeWidth="3" />
+          {/* Sill ledge */}
+          <rect x="542" y="232" width="162" height="10" rx="3" fill="#3d2218" stroke="#1a0e08" strokeWidth="1.5" />
+          {/* Night sky glass */}
+          <rect x="558" y="65" width="130" height="166" rx="3" fill="url(#night-sky)" />
+
+          {/* Stars */}
+          {[
+            [572, 78, 1.2, 0.9], [598, 71, 0.9, 0.7], [614, 82, 1.4, 1.0],
+            [630, 69, 1.0, 0.8], [648, 76, 1.1, 0.9], [664, 72, 0.8, 0.6],
+            [676, 84, 1.3, 1.0], [568, 92, 0.9, 0.7], [588, 100, 1.1, 0.85],
+            [610, 96, 0.8, 0.6], [638, 92, 1.2, 0.9], [660, 98, 0.9, 0.7],
+            [678, 90, 1.0, 0.8], [574, 110, 0.8, 0.65],[596, 118, 1.1, 0.75],
+            [622, 112, 0.9, 0.6], [650, 108, 1.2, 0.9], [672, 116, 0.8, 0.7],
+            [682, 102, 1.0, 0.8], [563, 128, 0.9, 0.65],
+          ].map(([x, y, r, op], i) => (
+            <motion.circle
+              key={`star-${i}`}
+              cx={x} cy={y} r={r}
+              fill="#e8eeff"
+              opacity={op}
+              animate={{ opacity: [op * 0.5, op, op * 0.65, op * 0.9, op * 0.5] }}
+              transition={{
+                duration: 3.2 + (i % 5) * 0.7,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: (i % 7) * 0.4,
+              }}
+            />
+          ))}
+
+          {/* Crescent moon */}
+          <g transform="translate(650, 74)">
+            {/* Moon body */}
+            <circle cx="0" cy="0" r="14" fill="#d8deff" opacity="0.92" />
+            {/* Shadow circle to carve crescent */}
+            <circle cx="7" cy="-3" r="12" fill="#0d0e2e" />
+            {/* Subtle moon glow */}
+            <circle cx="0" cy="0" r="22" fill="rgba(200,210,255,0.12)" filter="url(#moonlight-soft)" />
           </g>
-          <g transform="translate(620, 72) rotate(7)">
-            <rect x="0" y="0" width="58" height="76" rx="2" fill="#D8C8B0" stroke="#3D2A22" strokeWidth="2" />
-            <path d="M12,18 L46,18 L29,52 Z" fill="none" stroke="#7A5A48" strokeWidth="2" />
-          </g>
+
+          {/* Window mullions (cross dividers) */}
+          <rect x="621" y="65" width="3" height="166" rx="1.5" fill="#2d1a10" opacity="0.9" />
+          <rect x="558" y="147" width="130" height="3" rx="1.5" fill="#2d1a10" opacity="0.9" />
+
+          {/* Glass reflection shimmer — subtle diagonal highlight */}
+          <rect
+            x="558" y="65" width="130" height="166" rx="3"
+            fill="none"
+            stroke="rgba(200,220,255,0.08)"
+            strokeWidth="1"
+          />
+          <line x1="566" y1="70" x2="580" y2="90" stroke="rgba(255,255,255,0.07)" strokeWidth="2" strokeLinecap="round" />
+
+          {/* Moonlight wall wash — pale blue falling down the wall below window */}
+          <rect
+            x="540" y="240" width="175" height="160"
+            fill="url(#moonlight-wall)"
+            opacity="0.6"
+          />
+
+          {/* Curtain panels — loose fabric on both sides of window */}
+          <path d="M548,56 Q536,120 542,242" fill="none" stroke="#3d2a1e" strokeWidth="18" strokeLinecap="round" opacity="0.7" />
+          <path d="M698,56 Q710,120 704,242" fill="none" stroke="#3d2a1e" strokeWidth="18" strokeLinecap="round" opacity="0.7" />
+          {/* Curtain fold details */}
+          <path d="M542,80 Q532,140 538,200" fill="none" stroke="#2d1e14" strokeWidth="4" strokeLinecap="round" opacity="0.5" />
+          <path d="M704,80 Q714,140 708,200" fill="none" stroke="#2d1e14" strokeWidth="4" strokeLinecap="round" opacity="0.5" />
         </motion.g>
 
         {/* ── FLOOR LAYER ── */}
@@ -200,11 +286,19 @@ export default function CozyRoomIllustration({
             <rect x="0" y="0" width="8" height="24" fill="#5A4838" />
             <path d="M-6,24 Q4,48 14,24" fill="#FFF4E8" stroke="#3D2A22" strokeWidth="1.5" />
             <motion.ellipse
-              cx="4" cy="20" rx="22" ry="28"
-              fill="rgba(255,200,120,0.35)"
+              cx="4" cy="20" rx="28" ry="36"
+              fill="rgba(255,185,80,0.48)"
               filter="url(#lamp-glow)"
-              animate={{ opacity: [0.4, 0.85, 0.45], rx: [18, 26, 19], ry: [24, 32, 25] }}
+              animate={{ opacity: [0.5, 1.0, 0.55], rx: [22, 34, 24], ry: [30, 44, 32] }}
               transition={{ duration: 3.8, repeat: Infinity, ease: [0.22, 1, 0.36, 1] }}
+            />
+            {/* Wider warm light bloom on wall around sconce */}
+            <motion.ellipse
+              cx="4" cy="30" rx="52" ry="60"
+              fill="rgba(255,160,60,0.18)"
+              filter="url(#lamp-glow)"
+              animate={{ opacity: [0.3, 0.65, 0.35] }}
+              transition={{ duration: 4.4, repeat: Infinity, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
             />
             <rect x="2" y="8" width="4" height="14" rx="1" fill="#FFF9F0" opacity="0.9" />
             {/* Candle flame */}
@@ -318,6 +412,21 @@ export default function CozyRoomIllustration({
                 stroke="#E8DCC8" strokeWidth="2.5" strokeLinecap="round" />
             )
           })}
+
+          {/* Moonlight pool on floor — cool blue ellipse beneath the window */}
+          <ellipse
+            cx="622" cy="460"
+            rx="88" ry="32"
+            fill="url(#moonlight-cast)"
+            opacity="0.75"
+          />
+          {/* Second softer moonlight spill further out */}
+          <ellipse
+            cx="622" cy="480"
+            rx="120" ry="22"
+            fill="rgba(140,160,220,0.06)"
+            filter="url(#moonlight-soft)"
+          />
 
           {/* Boots */}
           <g transform="translate(640, 468)">

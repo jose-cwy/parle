@@ -8,9 +8,6 @@ import {
   AnimatePresence,
 } from 'framer-motion'
 import CozyRoomIllustration from '../components/CozyRoomIllustration'
-import FloatingParticles from '../components/FloatingParticles'
-import CustomCursor from '../components/CustomCursor'
-import AmbientAudioToggle from '../components/AmbientAudioToggle'
 import { spring } from '../lib/motion'
 
 /* ─── Feature panel data ────────────────────────────────────── */
@@ -217,6 +214,74 @@ function FeaturePanel({ feature, visible }) {
   )
 }
 
+/* ─── Scroll journey thread ─────────────────────────────────── */
+function ScrollThread({ scrollYProgress }) {
+  const height = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
+  const NODES = [0, 0.18, 0.36, 0.54, 0.72, 0.90]
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: '1.5rem',
+        top: 0,
+        bottom: 0,
+        width: 2,
+        zIndex: 50,
+        pointerEvents: 'none',
+      }}
+      aria-hidden="true"
+    >
+      {/* Faint rail */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(232,168,96,0.1)',
+          borderRadius: 2,
+        }}
+      />
+      {/* Growing amber thread */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height,
+          background: 'linear-gradient(to bottom, var(--accent), var(--accent-2))',
+          borderRadius: 2,
+          boxShadow: '0 0 8px 2px rgba(232,168,96,0.4)',
+        }}
+      />
+      {/* Phase nodes */}
+      {NODES.map((p, i) => (
+        <motion.div
+          key={i}
+          style={{
+            position: 'absolute',
+            top: `${p * 100}%`,
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: 'var(--accent)',
+            border: '1.5px solid rgba(13,10,8,0.8)',
+          }}
+          animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.9, 1.2, 0.9] }}
+          transition={{
+            duration: 2.8 + i * 0.3,
+            repeat: Infinity,
+            ease: 'easeInOut',
+            delay: i * 0.4,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 /* ─── Progress dots ─────────────────────────────────────────── */
 function NavDots({ activePhase, count = 6, onDotClick }) {
   return (
@@ -319,9 +384,8 @@ export default function Home() {
 
   return (
     <>
-      <CustomCursor />
       <ScrollProgressBar scrollYProgress={scrollYProgress} />
-      <AmbientAudioToggle />
+      <ScrollThread scrollYProgress={scrollYProgress} />
 
       <div ref={stageRef} className="room-stage">
         {/* ── STICKY ROOM VIEWPORT ── */}
@@ -338,9 +402,6 @@ export default function Home() {
               onDoorClick={() => setDoorOpen(true)}
             />
           </motion.div>
-
-          {/* Fireflies & dust */}
-          <FloatingParticles />
 
           {/* ── Cinematic darkness — fades out on entry ── */}
           <AnimatePresence>
