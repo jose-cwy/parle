@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"index.js -> ../components/RoomScene":{"id":722,"files":["static/chunks/fb7d5399.1a09e863520afb7c.js","static/chunks/2d36dd80.61df11cc86a664c9.js","static/chunks/95.8f1a56171731a882.js","static/chunks/722.ba5cddaabbef6316.js"]}}';
+self.__REACT_LOADABLE_MANIFEST='{"index.js -> ../components/ConstellationScene":{"id":3499,"files":["static/chunks/499.ae56a5a9f039e454.js"]}}';

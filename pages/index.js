@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import {
   motion,
   useScroll,
@@ -10,8 +10,11 @@ import {
 import dynamic from 'next/dynamic'
 import { spring } from '../lib/motion'
 
-// Three.js is not SSR-compatible — load client-side only
-const RoomScene = dynamic(() => import('../components/RoomScene'), { ssr: false })
+/* ease-out-expo for all panel entrances */
+const EXPO = [0.16, 1, 0.3, 1]
+
+/* ConstellationScene — Canvas-based 3D star field, no Three.js */
+const ConstellationScene = dynamic(() => import('../components/ConstellationScene'), { ssr: false })
 
 /* ─── Feature panel data ────────────────────────────────────── */
 const features = [
@@ -86,8 +89,29 @@ const PHASES = [
   [0.88, 1.0],  // CTA
 ]
 
+/* ─── CTA Particles — pure CSS, seeded positions ────────────── */
+const PARTICLES = (() => {
+  function sr(seed) {
+    let s = seed
+    return () => {
+      s = (s * 1664525 + 1013904223) & 0xffffffff
+      return (s >>> 0) / 0xffffffff
+    }
+  }
+  const rand = sr(0xabc123)
+  return Array.from({ length: 24 }, (_, i) => ({
+    id: i,
+    left: `${10 + rand() * 80}%`,
+    bottom: `${5 + rand() * 35}%`,
+    size: 4 + rand() * 5,
+    dur: `${3 + rand() * 3.5}s`,
+    delay: `${rand() * 4}s`,
+    color: rand() > 0.5 ? 'var(--accent)' : 'var(--accent-2)',
+  }))
+})()
+
 /* ─── Typewriter hook ───────────────────────────────────────── */
-function useTypewriter(text, active, speed = 38) {
+function useTypewriter(text, active, speed = 36) {
   const [displayed, setDisplayed] = useState('')
   useEffect(() => {
     if (!active) { setDisplayed(''); return }
@@ -106,13 +130,13 @@ function useTypewriter(text, active, speed = 38) {
 /* ─── Feature demo snippets ─────────────────────────────────── */
 function LetterDemo({ lines }) {
   return (
-    <div className="panel-demo panel-demo-letter mt-4">
+    <div className="panel-demo panel-demo-letter mt-3">
       {lines.map((l, i) => (
         <motion.p
           key={i}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.1, ...spring.gentle }}
+          transition={{ delay: i * 0.1, duration: 0.5, ease: EXPO }}
         >
           {l}
         </motion.p>
@@ -128,14 +152,14 @@ function LetterDemo({ lines }) {
 
 function ChatDemo({ messages }) {
   return (
-    <div className="panel-demo panel-demo-chat mt-4">
+    <div className="panel-demo panel-demo-chat mt-3">
       {messages.map((m, i) => (
         <motion.div
           key={i}
           className={`panel-chat-bubble ${m.role === 'user' ? 'panel-chat-user' : 'panel-chat-ai'}`}
-          initial={{ opacity: 0, y: 8, scale: 0.94 }}
+          initial={{ opacity: 0, y: 10, scale: 0.94 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: i * 0.22, ...spring.snappy }}
+          transition={{ delay: i * 0.2, duration: 0.5, ease: EXPO }}
         >
           {m.text}
         </motion.div>
@@ -146,14 +170,15 @@ function ChatDemo({ messages }) {
 
 function QuotesDemo({ items }) {
   return (
-    <div className="mt-4 flex flex-col gap-3">
+    <div className="mt-3 flex flex-col gap-2">
       {items.map((q, i) => (
         <motion.blockquote
           key={i}
-          className="room-panel-body italic border-l-2 border-[var(--accent)] pl-4 !mb-0 text-sm"
+          className="room-panel-body italic border-l-2 pl-3 !mb-0 text-sm"
+          style={{ borderColor: 'var(--accent)' }}
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.15, ...spring.gentle }}
+          transition={{ delay: i * 0.15, duration: 0.5, ease: EXPO }}
         >
           &ldquo;{q}&rdquo;
         </motion.blockquote>
@@ -164,13 +189,13 @@ function QuotesDemo({ items }) {
 
 function DiaryDemo({ lines }) {
   return (
-    <div className="panel-demo panel-demo-letter mt-4">
+    <div className="panel-demo panel-demo-letter mt-3">
       {lines.map((l, i) => (
         <motion.p
           key={i}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.12, ...spring.gentle }}
+          transition={{ delay: i * 0.12, duration: 0.5, ease: EXPO }}
         >
           {l}
         </motion.p>
@@ -179,7 +204,7 @@ function DiaryDemo({ lines }) {
   )
 }
 
-/* ─── Single feature panel positioned over the room ─────────── */
+/* ─── Feature panel — staggered entrance with ease-out-expo ─── */
 function FeaturePanel({ feature, visible }) {
   const isLeft = feature.side === 'left'
 
@@ -190,99 +215,154 @@ function FeaturePanel({ feature, visible }) {
           key={feature.id}
           className="room-panel"
           style={{
-            [isLeft ? 'left' : 'right']: 'clamp(1.5rem, 5vw, 5rem)',
+            [isLeft ? 'left' : 'right']: 'clamp(1.25rem, 4vw, 4.5rem)',
             top: '50%',
             transform: 'translateY(-50%)',
           }}
-          initial={{ opacity: 0, x: isLeft ? -72 : 72, filter: 'blur(14px)' }}
+          initial={{ opacity: 0, x: isLeft ? -64 : 64, filter: 'blur(16px)' }}
           animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, x: isLeft ? -40 : 40, filter: 'blur(8px)' }}
-          transition={{ ...spring.float, opacity: { duration: 0.5 } }}
+          exit={{ opacity: 0, x: isLeft ? -32 : 32, filter: 'blur(8px)', transition: { duration: 0.32, ease: [0.45, 0, 0.2, 1] } }}
+          transition={{ duration: 0.7, ease: EXPO, opacity: { duration: 0.45 } }}
         >
-          <span className="room-panel-eyebrow">{feature.eyebrow}</span>
-          <h2 className="room-panel-title">{feature.title}</h2>
-          <p className="room-panel-body">{feature.body}</p>
+          <motion.span
+            className="room-panel-eyebrow"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08, duration: 0.5, ease: EXPO }}
+          >
+            {feature.eyebrow}
+          </motion.span>
+
+          <motion.h2
+            className="room-panel-title"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.16, duration: 0.55, ease: EXPO }}
+          >
+            {feature.title}
+          </motion.h2>
+
+          <motion.p
+            className="room-panel-body"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.24, duration: 0.5, ease: EXPO }}
+          >
+            {feature.body}
+          </motion.p>
 
           {feature.demo.type === 'letter' && <LetterDemo lines={feature.demo.lines} />}
           {feature.demo.type === 'chat' && <ChatDemo messages={feature.demo.messages} />}
           {feature.demo.type === 'quotes' && <QuotesDemo items={feature.demo.items} />}
           {feature.demo.type === 'diary' && <DiaryDemo lines={feature.demo.lines} />}
 
-          <Link href={feature.href} className="room-panel-link mt-5 inline-flex">
-            {feature.link} →
-          </Link>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.38, duration: 0.45, ease: EXPO }}
+          >
+            <Link href={feature.href} className="room-panel-link mt-4 inline-flex">
+              {feature.link} →
+            </Link>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   )
 }
 
-/* ─── Scroll journey thread ─────────────────────────────────── */
-function ScrollThread({ scrollYProgress }) {
-  const height = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
-  const NODES = [0, 0.18, 0.36, 0.54, 0.72, 0.90]
+/* ─── CurvedTrail — Canvas cubic bezier dotted path ─────────── */
+function CurvedTrail({ scrollYProgress }) {
+  const canvasRef = useRef(null)
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const W = canvas.width
+    const H = canvas.height
+    const progress = scrollYProgress.get()
+
+    ctx.clearRect(0, 0, W, H)
+
+    /* Build a smooth cubic bezier S-curve through the canvas height */
+    const cx = W / 2
+    /* Control points for the S-curve — weave left/right */
+    const points = [
+      { x: cx,       y: 0 },
+      { x: W * 0.12, y: H * 0.25 },
+      { x: W * 0.88, y: H * 0.5 },
+      { x: cx,       y: H },
+    ]
+
+    /* Create a temporary offscreen path to measure total length */
+    const totalDots = Math.floor(H / 14)
+    const filledDots = Math.round(totalDots * progress)
+
+    for (let i = 0; i < totalDots; i++) {
+      const t = i / (totalDots - 1)
+      /* Cubic bezier interpolation */
+      const x = cubicBezier(points[0].x, points[1].x, points[2].x, points[3].x, t)
+      const y = cubicBezier(points[0].y, points[1].y, points[2].y, points[3].y, t)
+
+      if (i < filledDots) {
+        ctx.beginPath()
+        ctx.arc(x, y, 2.2, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(45,212,191,${0.55 + 0.45 * (i / totalDots)})`
+        ctx.shadowBlur = 8
+        ctx.shadowColor = 'rgba(45,212,191,0.6)'
+        ctx.fill()
+        ctx.shadowBlur = 0
+      } else {
+        ctx.beginPath()
+        ctx.arc(x, y, 1.5, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(45,212,191,0.12)'
+        ctx.fill()
+      }
+    }
+  }, [scrollYProgress])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const resize = () => {
+      canvas.width  = 48
+      canvas.height = window.innerHeight
+      draw()
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    const unsub = scrollYProgress.on('change', draw)
+    return () => {
+      window.removeEventListener('resize', resize)
+      unsub()
+    }
+  }, [draw, scrollYProgress])
 
   return (
-    <div
+    <canvas
+      ref={canvasRef}
+      className="curved-trail-canvas"
       style={{
         position: 'fixed',
-        left: '1.5rem',
+        left: 0,
         top: 0,
-        bottom: 0,
-        width: 2,
-        zIndex: 50,
+        width: 48,
+        height: '100vh',
         pointerEvents: 'none',
+        zIndex: 50,
+        display: 'block',
       }}
       aria-hidden="true"
-    >
-      {/* Faint rail */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(232,168,96,0.1)',
-          borderRadius: 2,
-        }}
-      />
-      {/* Growing amber thread */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height,
-          background: 'linear-gradient(to bottom, var(--accent), var(--accent-2))',
-          borderRadius: 2,
-          boxShadow: '0 0 8px 2px rgba(232,168,96,0.4)',
-        }}
-      />
-      {/* Phase nodes */}
-      {NODES.map((p, i) => (
-        <motion.div
-          key={i}
-          style={{
-            position: 'absolute',
-            top: `${p * 100}%`,
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: 'var(--accent)',
-            border: '1.5px solid rgba(13,10,8,0.8)',
-          }}
-          animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.9, 1.2, 0.9] }}
-          transition={{
-            duration: 2.8 + i * 0.3,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: i * 0.4,
-          }}
-        />
-      ))}
-    </div>
+    />
   )
+}
+
+function cubicBezier(p0, p1, p2, p3, t) {
+  const mt = 1 - t
+  return mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3
 }
 
 /* ─── Progress dots ─────────────────────────────────────────── */
@@ -316,55 +396,42 @@ export default function Home() {
   const stageRef = useRef(null)
   const shouldReduceMotion = useReducedMotion()
 
-  /* Scroll tracking on the outer 500vh div */
   const { scrollYProgress } = useScroll({
     target: stageRef,
     offset: ['start start', 'end end'],
   })
 
-  /* Entry animation state */
-  const [entryDone, setEntryDone] = useState(false)
+  const [entryDone, setEntryDone]   = useState(false)
   const [darkOverlay, setDarkOverlay] = useState(true)
-  const [heroActive, setHeroActive] = useState(false)
+  const [heroActive, setHeroActive]  = useState(false)
   const [activePhase, setActivePhase] = useState(0)
 
   /* Drive active phase from scroll */
   useEffect(() => {
     const unsub = scrollYProgress.on('change', (v) => {
       for (let i = PHASES.length - 1; i >= 0; i--) {
-        if (v >= PHASES[i][0]) {
-          setActivePhase(i)
-          break
-        }
+        if (v >= PHASES[i][0]) { setActivePhase(i); break }
       }
     })
     return unsub
   }, [scrollYProgress])
 
-  /* Cinematic entry sequence on mount */
+  /* Cinematic entry sequence */
   useEffect(() => {
     if (shouldReduceMotion) {
-      setDarkOverlay(false)
-      setHeroActive(true)
-      setEntryDone(true)
+      setDarkOverlay(false); setHeroActive(true); setEntryDone(true)
       return
     }
-
     const t1 = setTimeout(() => setDarkOverlay(false), 300)
-    const t2 = setTimeout(() => setHeroActive(true), 1200)
-    const t3 = setTimeout(() => setEntryDone(true), 3200)
-
+    const t2 = setTimeout(() => setHeroActive(true), 1100)
+    const t3 = setTimeout(() => setEntryDone(true), 3000)
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [shouldReduceMotion])
 
   /* Typewriter headline */
-  const headline = useTypewriter(
-    'A warm room for healing when love hurts.',
-    heroActive,
-    42,
-  )
+  const headline = useTypewriter('A warm room for healing when love hurts.', heroActive, 40)
 
-  /* Scroll to phase via dot click */
+  /* Scroll to phase */
   const scrollToPhase = (i) => {
     if (!stageRef.current) return
     const totalHeight = stageRef.current.scrollHeight - window.innerHeight
@@ -372,34 +439,32 @@ export default function Home() {
     window.scrollTo({ top: targetY, behavior: 'smooth' })
   }
 
-  /* Is a given feature phase visible? */
   const isFeatureVisible = (idx) => activePhase === idx + 1
 
   return (
     <>
       <ScrollProgressBar scrollYProgress={scrollYProgress} />
-      <ScrollThread scrollYProgress={scrollYProgress} />
+      <CurvedTrail scrollYProgress={scrollYProgress} />
 
       <div ref={stageRef} className="room-stage">
-        {/* ── STICKY ROOM VIEWPORT ── */}
         <div className="room-sticky">
 
-          {/* Three.js room scene — full bleed, scroll-driven camera */}
-          <RoomScene scrollProgress={scrollYProgress} />
+          {/* Constellation scene — Canvas 3D camera dolly */}
+          <ConstellationScene scrollProgress={scrollYProgress} />
 
-          {/* ── Cinematic darkness — fades out on entry ── */}
+          {/* ── Cinematic darkness fade-in ── */}
           <AnimatePresence>
             {darkOverlay && (
               <motion.div
                 className="room-entry-dark"
                 initial={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 2.4, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 2.6, ease: [0.22, 1, 0.36, 1] }}
               />
             )}
           </AnimatePresence>
 
-          {/* ── PHASE 0: Hero content (typewriter headline) ── */}
+          {/* ── PHASE 0: Hero content ── */}
           <AnimatePresence>
             {activePhase === 0 && (
               <motion.div
@@ -407,14 +472,14 @@ export default function Home() {
                 className="room-hero-content"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, y: -30, filter: 'blur(10px)' }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ opacity: 0, y: -24, filter: 'blur(8px)' }}
+                transition={{ duration: 0.55, ease: EXPO }}
               >
                 <motion.p
                   className="room-panel-eyebrow mb-3"
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={heroActive ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.2, ...spring.gentle }}
+                  transition={{ delay: 0.1, duration: 0.55, ease: EXPO }}
                 >
                   Heartstrings Club
                 </motion.p>
@@ -428,7 +493,7 @@ export default function Home() {
                   className="room-hero-sub"
                   initial={{ opacity: 0, y: 14 }}
                   animate={heroActive ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 2.6, ...spring.gentle }}
+                  transition={{ delay: 2.4, duration: 0.6, ease: EXPO }}
                 >
                   Scroll to enter.
                 </motion.p>
@@ -437,13 +502,18 @@ export default function Home() {
                   className="scroll-hint"
                   initial={{ opacity: 0 }}
                   animate={heroActive ? { opacity: 1 } : {}}
-                  transition={{ delay: 3.2, duration: 1 }}
+                  transition={{ delay: 3.0, duration: 0.8 }}
                 >
                   <span className="scroll-hint-text">scroll to journey</span>
                   <motion.div
-                    style={{ width: 1, height: 36, background: 'rgba(255,244,232,0.22)', borderRadius: 2 }}
-                    animate={{ scaleY: [0, 1, 0], opacity: [0, 0.55, 0] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: [0.22, 1, 0.36, 1] }}
+                    style={{
+                      width: 1,
+                      height: 36,
+                      background: 'rgba(45,212,191,0.35)',
+                      borderRadius: 2,
+                    }}
+                    animate={{ scaleY: [0, 1, 0], opacity: [0, 0.7, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: [0.22, 1, 0.36, 1] }}
                   />
                 </motion.div>
               </motion.div>
@@ -452,14 +522,10 @@ export default function Home() {
 
           {/* ── PHASES 1-4: Feature panels ── */}
           {features.map((feat, i) => (
-            <FeaturePanel
-              key={feat.id}
-              feature={feat}
-              visible={isFeatureVisible(i)}
-            />
+            <FeaturePanel key={feat.id} feature={feat} visible={isFeatureVisible(i)} />
           ))}
 
-          {/* ── PHASE 5: CTA ── */}
+          {/* ── PHASE 5: CTA with CSS particle burst ── */}
           <AnimatePresence>
             {activePhase === 5 && (
               <motion.div
@@ -468,13 +534,30 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.65, ease: EXPO }}
               >
+                {/* CSS particle burst — zero JS cost */}
+                {PARTICLES.map((p) => (
+                  <span
+                    key={p.id}
+                    className="cta-particle"
+                    style={{
+                      left: p.left,
+                      bottom: p.bottom,
+                      width: p.size,
+                      height: p.size,
+                      background: p.color,
+                      '--dur': p.dur,
+                      '--delay': p.delay,
+                    }}
+                  />
+                ))}
+
                 <motion.p
                   className="room-panel-eyebrow mb-3"
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15, ...spring.gentle }}
+                  transition={{ delay: 0.12, duration: 0.55, ease: EXPO }}
                 >
                   The door is open
                 </motion.p>
@@ -485,21 +568,21 @@ export default function Home() {
                     fontSize: 'clamp(2rem, 5vw, 4rem)',
                     fontWeight: 700,
                     lineHeight: 1.15,
-                    color: 'var(--paper-bg)',
+                    color: 'var(--text)',
                     letterSpacing: '-0.025em',
-                    textShadow: '0 4px 24px rgba(0,0,0,0.45)',
+                    textShadow: '0 4px 32px rgba(45,212,191,0.25), 0 2px 8px rgba(0,0,0,0.5)',
                     marginBottom: '1.25rem',
                   }}
-                  initial={{ opacity: 0, y: 24, filter: 'blur(10px)' }}
+                  initial={{ opacity: 0, y: 28, filter: 'blur(12px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ delay: 0.3, ...spring.float }}
+                  transition={{ delay: 0.28, duration: 0.7, ease: EXPO }}
                 >
                   Your room is ready.
                 </motion.h2>
 
                 <motion.p
                   style={{
-                    color: 'rgba(255,244,232,0.68)',
+                    color: 'rgba(184,224,232,0.72)',
                     fontSize: '1.05rem',
                     maxWidth: 480,
                     lineHeight: 1.7,
@@ -507,7 +590,7 @@ export default function Home() {
                   }}
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, ...spring.gentle }}
+                  transition={{ delay: 0.44, duration: 0.55, ease: EXPO }}
                 >
                   Come back as often as you need. No pressure, no timeline — only warmth, privacy, and the quiet space to feel your way through.
                 </motion.p>
@@ -516,7 +599,7 @@ export default function Home() {
                   className="flex flex-wrap gap-3 justify-center"
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7, ...spring.gentle }}
+                  transition={{ delay: 0.58, duration: 0.5, ease: EXPO }}
                 >
                   <Link href="/register" className="room-cta-join-btn">
                     Join the club
@@ -528,24 +611,25 @@ export default function Home() {
                       alignItems: 'center',
                       padding: '0.95rem 1.8rem',
                       borderRadius: 99,
-                      border: '1.5px solid rgba(255,244,232,0.22)',
-                      color: 'rgba(255,244,232,0.75)',
+                      border: '1.5px solid rgba(45,212,191,0.28)',
+                      color: 'rgba(184,224,232,0.82)',
                       fontSize: '1rem',
                       fontWeight: 600,
                       textDecoration: 'none',
                       transition: 'border-color 0.2s, color 0.2s',
+                      backdropFilter: 'blur(8px)',
                     }}
                   >
                     Already have a space
                   </Link>
                 </motion.div>
 
-                {/* Twinkling fairy lights */}
+                {/* Twinkling teal lights */}
                 <motion.div
-                  className="flex justify-center items-center gap-5 mt-10"
+                  className="flex justify-center items-center gap-4 mt-10"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9, duration: 0.8 }}
+                  transition={{ delay: 0.75, duration: 0.8 }}
                   aria-hidden="true"
                 >
                   {[0, 0.4, 0.8, 1.2, 0.6, 1.0].map((d, i) => (
@@ -553,14 +637,14 @@ export default function Home() {
                       key={i}
                       style={{
                         display: 'inline-block',
-                        width: 8,
-                        height: 8,
+                        width: 7,
+                        height: 7,
                         borderRadius: '50%',
-                        background: i % 2 === 0 ? 'var(--accent)' : 'var(--accent-teal)',
-                        boxShadow: `0 0 14px 4px ${i % 2 === 0 ? 'rgba(232,168,96,0.5)' : 'rgba(74,138,130,0.5)'}`,
+                        background: i % 2 === 0 ? 'var(--accent)' : 'var(--accent-2)',
+                        boxShadow: `0 0 14px 4px ${i % 2 === 0 ? 'rgba(45,212,191,0.55)' : 'rgba(56,189,248,0.5)'}`,
                       }}
-                      animate={{ opacity: [0.3, 1, 0.4], scale: [0.85, 1.2, 0.9] }}
-                      transition={{ duration: 2.2 + d, repeat: Infinity, ease: [0.22, 1, 0.36, 1], delay: d }}
+                      animate={{ opacity: [0.25, 1, 0.35], scale: [0.8, 1.25, 0.85] }}
+                      transition={{ duration: 2.2 + d, repeat: Infinity, ease: EXPO, delay: d }}
                     />
                   ))}
                 </motion.div>
@@ -568,27 +652,27 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* Phase label (small bottom-centre indicator) */}
+          {/* Phase label */}
           <AnimatePresence mode="wait">
             {activePhase > 0 && activePhase < 5 && (
               <motion.div
                 key={`label-${activePhase}`}
                 style={{
                   position: 'absolute',
-                  bottom: '1.75rem',
+                  bottom: '1.5rem',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   zIndex: 35,
-                  fontSize: '0.68rem',
-                  letterSpacing: '0.16em',
+                  fontSize: '0.66rem',
+                  letterSpacing: '0.18em',
                   textTransform: 'uppercase',
-                  color: 'rgba(255,244,232,0.32)',
+                  color: 'rgba(45,212,191,0.4)',
                   fontWeight: 500,
                 }}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.35 }}
               >
                 {features[activePhase - 1]?.eyebrow}
               </motion.div>

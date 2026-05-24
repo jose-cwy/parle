@@ -7,8 +7,8 @@
 ---
 
 **Project:** Heartstrings Club
-**Generated:** 2026-05-23 15:23:04
-**Category:** Beauty/Spa/Wellness Service
+**Generated:** 2026-05-24 14:16:27
+**Category:** Non-profit/Charity
 
 ---
 
@@ -18,25 +18,17 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#8B5CF6` | `--color-primary` |
-| Secondary | `#C4B5FD` | `--color-secondary` |
-| CTA/Accent | `#10B981` | `--color-cta` |
-| Background | `#FAF5FF` | `--color-background` |
-| Text | `#4C1D95` | `--color-text` |
-
-**Color Notes:** Calming lavender + wellness green
+| Primary | `#2563EB` | `--color-primary` |
+| Secondary | `#3B82F6` | `--color-secondary` |
+| CTA/Accent | `#F97316` | `--color-cta` |
+| Background | `#F8FAFC` | `--color-background` |
+| Text | `#1E293B` | `--color-text` |
 
 ### Typography
 
-- **Heading Font:** Lora
-- **Body Font:** Raleway
-- **Mood:** calm, wellness, health, relaxing, natural, organic
-- **Google Fonts:** [Lora + Raleway](https://fonts.google.com/share?selection.family=Lora:wght@400;500;600;700|Raleway:wght@300;400;500;600;700)
-
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap');
-```
+- **Heading Font:** Inter
+- **Body Font:** Inter
+- **Mood:** Heartfelt + Readable typography
 
 ### Spacing Variables
 
@@ -68,7 +60,7 @@
 ```css
 /* Primary Button */
 .btn-primary {
-  background: #10B981;
+  background: #F97316;
   color: white;
   padding: 12px 24px;
   border-radius: 8px;
@@ -85,8 +77,8 @@
 /* Secondary Button */
 .btn-secondary {
   background: transparent;
-  color: #8B5CF6;
-  border: 2px solid #8B5CF6;
+  color: #2563EB;
+  border: 2px solid #2563EB;
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
@@ -99,7 +91,7 @@
 
 ```css
 .card {
-  background: #FAF5FF;
+  background: #F8FAFC;
   border-radius: 12px;
   padding: 24px;
   box-shadow: var(--shadow-md);
@@ -125,9 +117,9 @@
 }
 
 .input:focus {
-  border-color: #8B5CF6;
+  border-color: #2563EB;
   outline: none;
-  box-shadow: 0 0 0 3px #8B5CF620;
+  box-shadow: 0 0 0 3px #2563EB20;
 }
 ```
 
@@ -153,17 +145,17 @@
 
 ## Style Guidelines
 
-**Style:** Soft UI Evolution
+**Style:** Accessible & Ethical
 
-**Keywords:** Evolved soft UI, better contrast, modern aesthetics, subtle depth, accessibility-focused, improved shadows, hybrid
+**Keywords:** High contrast, large text (16px+), keyboard navigation, screen reader friendly, WCAG compliant, focus state, semantic
 
-**Best For:** Modern enterprise apps, SaaS platforms, health/wellness, modern business tools, professional, hybrid
+**Best For:** Government, healthcare, education, inclusive products, large audience, legal compliance, public
 
-**Key Effects:** Improved shadows (softer than flat, clearer than neumorphism), modern (200-300ms), focus visible, WCAG AA/AAA
+**Key Effects:** Clear focus rings (3-4px), ARIA labels, skip links, responsive design, reduced motion, 44x44px touch targets
 
 ### Page Pattern
 
-**Pattern Name:** Hero-Centric + Social Proof
+**Pattern Name:** Storytelling + Trust
 
 - **CTA Placement:** Above fold
 - **Section Order:** Hero > Features > CTA
@@ -172,9 +164,8 @@
 
 ## Anti-Patterns (Do NOT Use)
 
-- ❌ Bright neon colors
-- ❌ Harsh animations
-- ❌ Dark mode
+- ❌ No impact data
+- ❌ Hidden financials
 
 ### Additional Forbidden Patterns
 
