@@ -3403,6 +3403,25 @@ body.cinematic-cursor * {
   border-radius: 14px 14px 14px 4px;
 }
 
+/* ── Three.js / R3F canvas fixes ── */
+.room-canvas-wrapper {
+  position: absolute;
+  inset: 0;
+}
+
+/* Prevent canvas bottom gap (inline-block default) */
+.room-sticky canvas {
+  display: block;
+}
+
+/* R3F Canvas fills parent */
+.room-sticky > div > canvas,
+.room-canvas-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* ── Grain and vignette for the cinematic room ── */
 .cozy-room-grain {
   position: absolute;

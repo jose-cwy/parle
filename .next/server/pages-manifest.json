@@ -1,9 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/api/auth/me": "pages/api/auth/me.js",
-  "/letter-to-yourself": "pages/letter-to-yourself.js",
-  "/api/letters/self": "pages/api/letters/self.js"
-}
+{"/_app":"pages/_app.js","/api/auth/logout":"pages/api/auth/logout.js","/api/auth/login":"pages/api/auth/login.js","/api/auth/me":"pages/api/auth/me.js","/api/auth/register":"pages/api/auth/register.js","/api/chat/history":"pages/api/chat/history.js","/api/auth/terms-accept":"pages/api/auth/terms-accept.js","/api/chat/send":"pages/api/chat/send.js","/api/diary/[id]":"pages/api/diary/[id].js","/api/diary":"pages/api/diary.js","/api/gamification/progress":"pages/api/gamification/progress.js","/api/letters/self":"pages/api/letters/self.js","/api/quotes/favorites":"pages/api/quotes/favorites.js","/api/quotes":"pages/api/quotes.js","/chat":"pages/chat.html","/diary":"pages/diary.html","/api/quotes/read":"pages/api/quotes/read.js","/":"pages/index.html","/letter-to-yourself":"pages/letter-to-yourself.html","/quotes":"pages/quotes.html","/terms":"pages/terms.html","/login":"pages/login.html","/register":"pages/register.js","/_error":"pages/_error.js","/_document":"pages/_document.js","/404":"pages/404.html"}

@@ -7,8 +7,11 @@ import {
   useReducedMotion,
   AnimatePresence,
 } from 'framer-motion'
-import CozyRoomIllustration from '../components/CozyRoomIllustration'
+import dynamic from 'next/dynamic'
 import { spring } from '../lib/motion'
+
+// Three.js is not SSR-compatible — load client-side only
+const RoomScene = dynamic(() => import('../components/RoomScene'), { ssr: false })
 
 /* ─── Feature panel data ────────────────────────────────────── */
 const features = [
@@ -322,7 +325,6 @@ export default function Home() {
   /* Entry animation state */
   const [entryDone, setEntryDone] = useState(false)
   const [darkOverlay, setDarkOverlay] = useState(true)
-  const [doorOpen, setDoorOpen] = useState(false)
   const [heroActive, setHeroActive] = useState(false)
   const [activePhase, setActivePhase] = useState(0)
 
@@ -343,18 +345,16 @@ export default function Home() {
   useEffect(() => {
     if (shouldReduceMotion) {
       setDarkOverlay(false)
-      setDoorOpen(true)
       setHeroActive(true)
       setEntryDone(true)
       return
     }
 
     const t1 = setTimeout(() => setDarkOverlay(false), 300)
-    const t2 = setTimeout(() => setDoorOpen(true), 1800)
-    const t3 = setTimeout(() => setHeroActive(true), 1200)
-    const t4 = setTimeout(() => setEntryDone(true), 3200)
+    const t2 = setTimeout(() => setHeroActive(true), 1200)
+    const t3 = setTimeout(() => setEntryDone(true), 3200)
 
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4) }
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [shouldReduceMotion])
 
   /* Typewriter headline */
@@ -375,13 +375,6 @@ export default function Home() {
   /* Is a given feature phase visible? */
   const isFeatureVisible = (idx) => activePhase === idx + 1
 
-  /* Parallax rate for room layers — derived from scrollYProgress */
-  const roomScale = useTransform(
-    scrollYProgress,
-    [0, 1],
-    shouldReduceMotion ? [1, 1] : [1, 1.08],
-  )
-
   return (
     <>
       <ScrollProgressBar scrollYProgress={scrollYProgress} />
@@ -391,17 +384,8 @@ export default function Home() {
         {/* ── STICKY ROOM VIEWPORT ── */}
         <div className="room-sticky">
 
-          {/* Room illustration — full bleed */}
-          <motion.div
-            style={{ scale: roomScale, width: '100%', height: '100%', position: 'absolute', inset: 0 }}
-          >
-            <CozyRoomIllustration
-              scrollProgress={scrollYProgress}
-              doorOpen={doorOpen || activePhase === 5}
-              onDoorHover={() => setDoorOpen(true)}
-              onDoorClick={() => setDoorOpen(true)}
-            />
-          </motion.div>
+          {/* Three.js room scene — full bleed, scroll-driven camera */}
+          <RoomScene scrollProgress={scrollYProgress} />
 
           {/* ── Cinematic darkness — fades out on entry ── */}
           <AnimatePresence>
