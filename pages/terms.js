@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import AnimatedCard from '../components/AnimatedCard'
 import Reveal from '../components/Reveal'
+import { SkeletonButton } from '../components/Skeleton'
 import { termsSections } from '../data/termsContent'
 
 export default function TermsPage(){
@@ -105,14 +106,18 @@ export default function TermsPage(){
               </div>
 
               <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handleAccept}
-                  disabled={!hasReachedBottom || accepting}
-                  className="soft-button w-full border-transparent bg-[#b88957] py-3 text-white disabled:cursor-not-allowed disabled:opacity-55"
-                >
-                  {accepting ? 'Continuing...' : 'Accept and continue to signup'}
-                </button>
+                {accepting ? (
+                  <SkeletonButton className="h-12 w-full" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAccept}
+                    disabled={!hasReachedBottom}
+                    className="soft-button w-full border-transparent bg-[#b88957] py-3 text-white disabled:cursor-not-allowed disabled:opacity-55"
+                  >
+                    Accept and continue to signup
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import RequireAuth from '../components/RequireAuth'
+import DeskScene from '../components/DeskScene'
 import LetterEditor from '../components/LetterEditor'
+import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
+import { SkeletonLetterRoom } from '../components/Skeleton'
 
 export default function LetterToYourselfPage(){
   const [letter, setLetter] = useState(null)
@@ -9,12 +12,20 @@ export default function LetterToYourselfPage(){
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isSealing, setIsSealing] = useState(false)
+  const [showSavedToast, setShowSavedToast] = useState(false)
   const [pendingCompletedLetter, setPendingCompletedLetter] = useState(null)
   const [modalState, setModalState] = useState({ open: false, mode: 'status', title: '', description: '' })
 
   useEffect(() => {
     fetchLetter()
   }, [])
+
+  useEffect(() => {
+    if(!showSavedToast) return
+
+    const timeout = window.setTimeout(() => setShowSavedToast(false), 1800)
+    return () => window.clearTimeout(timeout)
+  }, [showSavedToast])
 
   async function fetchLetter(){
     setLoading(true)
@@ -47,12 +58,7 @@ export default function LetterToYourselfPage(){
 
     setLetter(data.letter)
     setDraft(data.letter?.content || '')
-    setModalState({
-      open: true,
-      mode: 'status',
-      title: 'Draft saved',
-      description: 'Your letter is resting on the table and saved privately to your account.'
-    })
+    setShowSavedToast(true)
   }
 
   function handleRequestComplete(){
@@ -64,8 +70,8 @@ export default function LetterToYourselfPage(){
     setModalState({
       open: true,
       mode: 'confirm-complete',
-      title: 'Finish and lock this letter?',
-      description: 'Once you finish it, the page will fold the letter away and the content will stop being readable in V1.'
+      title: 'Complete this letter?',
+      description: 'Your letter will fold away and stay locked until your journey is complete.'
     })
   }
 
@@ -94,7 +100,7 @@ export default function LetterToYourselfPage(){
 
     if(!res.ok) return alert(data?.error || 'Unable to complete this letter right now.')
 
-    // Delay the state swap until the fold-and-flight animation finishes.
+    // Keep the old paper visible until the fly-away animation finishes.
     setPendingCompletedLetter(data.letter)
     setModalState({ open: false, mode: 'status', title: '', description: '' })
     setIsSealing(true)
@@ -108,30 +114,35 @@ export default function LetterToYourselfPage(){
     setModalState({
       open: true,
       mode: 'status',
-      title: 'Letter locked',
-      description: 'The letter folded away and is now sealed. You can keep the memory, but not reopen the text yet.'
+      title: 'Your letter is now locked',
+      description: 'It will stay sealed until your journey is complete.'
     })
   }
 
   return (
     <RequireAuth>
       {loading ? (
-        <div className="card p-8 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-full border border-[rgba(140,97,71,0.2)] border-t-[#b88957] spinner-ring" />
-          <p className="text-lg font-semibold text-[#241e1a]">Loading your room...</p>
-        </div>
+        <SkeletonLetterRoom />
       ) : (
-        <LetterEditor
-          value={draft}
-          onChange={setDraft}
-          onSave={handleSaveDraft}
-          onComplete={handleRequestComplete}
-          loading={saving}
-          isCompleted={Boolean(letter?.is_completed)}
-          isSealing={isSealing}
-          updatedAt={letter?.updated_at}
-          onSealAnimationComplete={handleSealAnimationComplete}
-        />
+        <>
+          <DeskScene
+            isSealing={isSealing}
+            onSealAnimationComplete={handleSealAnimationComplete}
+          >
+            <LetterEditor
+              value={draft}
+              onChange={setDraft}
+              onSave={handleSaveDraft}
+              onComplete={handleRequestComplete}
+              loading={saving}
+              isCompleted={Boolean(letter?.is_completed)}
+              isSealing={isSealing}
+              updatedAt={letter?.updated_at}
+            />
+          </DeskScene>
+
+          <Notification open={showSavedToast} message="Saved!" />
+        </>
       )}
 
       <ConfirmationModal

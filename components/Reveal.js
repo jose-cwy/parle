@@ -1,23 +1,21 @@
 import { motion } from 'framer-motion'
+import { spring } from '../lib/motion'
 
-/**
- * Shared scroll reveal with a slightly richer lift and softness.
- */
 export default function Reveal({
   children,
   delay = 0,
   className = '',
   distance = 24,
-  scale = 0.985,
+  scale = 0.97,
   once = true
 }) {
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: distance, scale }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once, amount: 0.2 }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: distance, scale, filter: 'blur(8px)' }}
+      whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+      viewport={{ once, amount: 0.1, margin: '0px 0px -48px 0px' }}
+      transition={{ ...spring.gentle, delay, opacity: { duration: 0.55 } }}
     >
       {children}
     </motion.div>

@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion'
+import { spring, hoverGlow } from '../lib/motion'
 
-export default function AnimatedCard({ children, className = '', hover = true }){
+export default function AnimatedCard({ children, className = '', hover = true, delay = 0 }){
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18, scale: 0.985 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={hover ? { y: -8, scale: 1.01 } : undefined}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 24, scale: 0.97, filter: 'blur(8px)' }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+      transition={{ ...spring.gentle, delay, opacity: { duration: 0.5 } }}
+      whileHover={hover ? { y: -4, scale: 1.008, transition: spring.breath } : undefined}
+      whileTap={hover ? { scale: 0.99, y: 0, transition: spring.snappy } : undefined}
       className={`card ${className}`}
     >
       {children}

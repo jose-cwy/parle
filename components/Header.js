@@ -1,12 +1,16 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import SkeletonBlock from './Skeleton'
+import { spring, hoverGlow } from '../lib/motion'
 
 export default function Header(){
   const [user, setUser] = useState(null)
   const [ready, setReady] = useState(false)
   const router = useRouter()
+  const isJourney = router.pathname === '/'
+
   const navLinks = user
     ? [
         { href: '/letter-to-yourself', label: 'Letter' },
@@ -15,6 +19,23 @@ export default function Header(){
         { href: '/quotes', label: 'Quotes' },
       ]
     : []
+
+  // On the journey landing, header stays transparent until scrolled past hero
+  const { scrollY } = useScroll()
+  const headerBg = useTransform(
+    scrollY,
+    [0, 80],
+    isJourney
+      ? ['rgba(31,24,20,0)', 'rgba(31,24,20,0.88)']
+      : ['rgba(45,35,28,0.82)', 'rgba(45,35,28,0.82)']
+  )
+  const headerBorder = useTransform(
+    scrollY,
+    [0, 80],
+    isJourney
+      ? ['rgba(232,168,96,0)', 'rgba(232,168,96,0.16)']
+      : ['rgba(232,168,96,0.16)', 'rgba(232,168,96,0.16)']
+  )
 
   useEffect(()=>{
     setReady(false)
@@ -42,37 +63,58 @@ export default function Header(){
 
   return (
     <motion.header
-      className="sticky top-0 z-30 w-full px-3 py-5"
+      className="sticky top-0 z-30 w-full px-3 py-3"
       initial={{ opacity: 0, y: -18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      transition={spring.gentle}
     >
-      <div className="container header-shell flex items-center justify-between gap-4">
-        <Link href="/" className="brand-mark text-2xl font-semibold" aria-label="Heartstrings Club">Heartstrings Club</Link>
-        <nav className="flex items-center gap-3 flex-wrap justify-end">
+      <motion.div
+        className="container flex items-center justify-between gap-4 rounded-[999px] px-5 py-3"
+        style={{
+          background: headerBg,
+          borderColor: headerBorder,
+          border: '1.5px solid',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      >
+        <Link href="/" className="brand-mark text-xl font-semibold text-[var(--text)] cursor-pointer flex items-center gap-2" aria-label="Heartstrings Club">
+          <span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-teal)] shadow-[0_0_10px_var(--accent-teal-glow)]" aria-hidden="true" />
+          Heartstrings Club
+        </Link>
+        <nav className="flex items-center gap-2 flex-wrap justify-end min-h-[2.5rem]">
+          {!ready ? (
+            <>
+              <SkeletonBlock className="h-9 w-20 hidden sm:block" rounded="rounded-full" />
+              <SkeletonBlock className="h-9 w-24" rounded="rounded-full" />
+            </>
+          ) : null}
           {ready && user ? navLinks.map((link) => {
             const active = router.pathname === link.href
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`nav-link ${active ? 'nav-link-active' : ''}`}
-              >
-                {link.label}
-              </Link>
+              <motion.div key={link.href} {...hoverGlow}>
+                <Link
+                  href={link.href}
+                  className={`nav-link cursor-pointer ${active ? 'nav-link-active' : ''}`}
+                >
+                  {link.label}
+                </Link>
+              </motion.div>
             )
           }) : null}
           {ready && !user ? (
             <>
-              <Link href="/login" className="auth-pill">Log in</Link>
-              <Link href="/register" className="auth-pill bg-[#b88957] text-white border-transparent">Sign up</Link>
+              <Link href="/login" className="auth-pill cursor-pointer">Log in</Link>
+              <Link href="/register" className="auth-pill soft-button-primary border-transparent cursor-pointer">Sign up</Link>
             </>
           ) : null}
           {ready && user ? (
-            <button onClick={handleLogout} className="auth-pill">Logout</button>
+            <motion.button onClick={handleLogout} className="auth-pill cursor-pointer" {...hoverGlow}>
+              Logout
+            </motion.button>
           ) : null}
         </nav>
-      </div>
+      </motion.div>
     </motion.header>
   )
 }

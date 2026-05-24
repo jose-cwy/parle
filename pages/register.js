@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import AnimatedCard from '../components/AnimatedCard'
 import Reveal from '../components/Reveal'
+import SkeletonBlock, { SkeletonButton } from '../components/Skeleton'
 import TermsGateModal from '../components/TermsGateModal'
 import { getTermsAcceptanceFromReq } from '../lib/auth'
 
@@ -62,9 +63,9 @@ export default function Register({ acceptedTermsInitially }){
             animate={{ rotate: -360 }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
           />
-          <div className={`relative border-b border-[rgba(140,97,71,0.12)] bg-white/40 px-6 py-5 transition ${acceptedTerms ? 'opacity-100' : 'opacity-55'}`}>
-            <p className="text-xs uppercase tracking-[0.2em] text-[#8c6147]">Join Heartstrings Club</p>
-            <h2 className="mt-2 font-semibold text-2xl">Create account</h2>
+          <div className={`relative border-b border-[var(--border)] bg-[rgba(45,35,28,0.72)] px-6 py-5 sketch-frame rounded-t-[22px] transition ${acceptedTerms ? 'opacity-100' : 'opacity-55'}`}>
+            <p className="eyebrow">Join Heartstrings Club</p>
+            <h2 className="mt-2 font-serif text-2xl font-semibold">Create account</h2>
             <p className="mt-2 text-sm subtle">
               {acceptedTerms
                 ? 'Your private space starts here.'
@@ -72,15 +73,21 @@ export default function Register({ acceptedTermsInitially }){
             </p>
           </div>
           <form onSubmit={handleSubmit} className={`relative space-y-4 p-6 transition ${acceptedTerms ? 'opacity-100' : 'pointer-events-none opacity-45 blur-[1px]'}`}>
-            <label className="block mb-2">Email
-              <input value={email} onChange={e=>setEmail(e.target.value)} className="w-full mt-1 rounded-xl border border-[rgba(140,97,71,0.14)] bg-white/70 p-3 outline-none transition focus:border-[#b88957]" type="email" required disabled={!acceptedTerms || loading} />
+            <label className="block mb-2 text-sm">Email
+              <input value={email} onChange={e=>setEmail(e.target.value)} className="input-field" type="email" required disabled={!acceptedTerms || loading} />
             </label>
-            <label className="block mb-2">Password
-              <input value={password} onChange={e=>setPassword(e.target.value)} className="w-full mt-1 rounded-xl border border-[rgba(140,97,71,0.14)] bg-white/70 p-3 outline-none transition focus:border-[#b88957]" type="password" minLength={8} required disabled={!acceptedTerms || loading} />
+            <label className="block mb-2 text-sm">Password
+              <input value={password} onChange={e=>setPassword(e.target.value)} className="input-field" type="password" minLength={8} required disabled={!acceptedTerms || loading} />
             </label>
-            <button className="soft-button w-full bg-[#b88957] text-white border-transparent" disabled={loading || !acceptedTerms}>{loading? '...' : 'Create account'}</button>
+            {loading || acceptingTerms ? (
+              <SkeletonButton className="h-11 w-full" />
+            ) : (
+            <button className="soft-button soft-button-primary w-full border-transparent" disabled={!acceptedTerms}>
+              Create account
+            </button>
+            )}
             <p className="text-sm subtle">
-              Already have an account? <Link href="/login" className="text-[#8c6147] underline underline-offset-4">Log in</Link>.
+              Already have an account? <Link href="/login" className="text-[var(--accent)] underline underline-offset-4">Log in</Link>.
             </p>
           </form>
         </AnimatedCard>

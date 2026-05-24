@@ -1,45 +1,61 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { SkeletonChatBox, SkeletonBlock, SkeletonButton } from './Skeleton'
+import { spring, hoverGlow } from '../lib/motion'
 
 export default function ChatBox(){
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(null)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef()
 
-  useEffect(()=>{ fetch('/api/chat/history').then(r=>r.ok && r.json().then(d=>setMessages(d))) },[])
+  useEffect(()=>{
+    fetch('/api/chat/history')
+      .then(r=>r.ok ? r.json() : [])
+      .then(d=> setMessages(d))
+      .catch(()=> setMessages([]))
+  },[])
 
-  useEffect(()=>{ if(scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight },[messages])
+  useEffect(()=>{
+    if(scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+  },[messages, loading])
 
   async function send(){
-    if(!input) return
+    if(!input || loading) return
     const userMsg = { role:'user', text: input }
-    setMessages(prev=>[...prev, userMsg])
+    setMessages(prev=>[...(prev || []), userMsg])
     setInput('')
     setLoading(true)
     const res = await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:userMsg.text})})
     if(res.ok){
       const data = await res.json();
-      setMessages(prev=>[...prev, { role:'assistant', text: data.reply }])
+      setMessages(prev=>[...(prev || []), { role:'assistant', text: data.reply }])
       await fetch('/api/gamification/progress',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({deltaChat:1})
       })
     }
-    else setMessages(prev=>[...prev, { role:'assistant', text: 'Sorry, something went wrong.' }])
+    else setMessages(prev=>[...(prev || []), { role:'assistant', text: 'Sorry, something went wrong.' }])
     setLoading(false)
   }
 
+  if(messages === null) return <SkeletonChatBox />
+
   return (
-    <div className="chat-shell card p-3 flex flex-col h-[32rem]">
-      <div className="mb-4 flex items-center justify-between rounded-2xl border border-[rgba(140,97,71,0.12)] bg-white/55 px-4 py-3">
+    <motion.div
+      className="chat-shell card p-3 flex flex-col h-[32rem]"
+      initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ ...spring.gentle, opacity: { duration: 0.5 } }}
+    >
+      <div className="mb-4 flex items-center justify-between sketch-frame rounded-[18px] border border-[var(--border)] bg-[rgba(45,35,28,0.72)] px-4 py-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[#8c6147]">Heartstrings AI</p>
+          <p className="eyebrow">Heartstrings AI</p>
           <p className="mt-1 text-sm subtle">Steady, supportive conversation when you need somewhere to start.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[#7a6756]">
-          <span className="status-dot" />
+        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+          <span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-teal)] shadow-[0_0_8px_var(--accent-teal-glow)]" aria-hidden="true" />
           Online
         </div>
       </div>
@@ -48,10 +64,11 @@ export default function ChatBox(){
           {messages.map((m,i)=> (
             <motion.div
               key={`${m.role}-${i}-${m.text.slice(0, 12)}`}
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 20, scale: 0.96, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={spring.gentle}
+              layout
               className={`chat-bubble ${m.role==='user' ? 'chat-bubble-user ml-auto' : 'chat-bubble-assistant'}`}
               style={{maxWidth:'80%'}}
             >
@@ -61,13 +78,13 @@ export default function ChatBox(){
         </AnimatePresence>
         {loading ? (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="chat-bubble chat-bubble-assistant inline-flex items-center gap-2"
+            className="chat-bubble chat-bubble-assistant w-[72%] space-y-2 p-4"
           >
-            <span className="typing-dot" />
-            <span className="typing-dot" />
-            <span className="typing-dot" />
+            <SkeletonBlock className="h-3 w-full" rounded="rounded-full" />
+            <SkeletonBlock className="h-3 w-[88%]" rounded="rounded-full" />
+            <SkeletonBlock className="h-3 w-[64%]" rounded="rounded-full" />
           </motion.div>
         ) : null}
       </div>
@@ -75,8 +92,9 @@ export default function ChatBox(){
         <input
           value={input}
           onChange={e=>setInput(e.target.value)}
-          className="flex-1 rounded-2xl border border-[rgba(140,97,71,0.14)] bg-white/80 p-3 outline-none transition focus:border-[#b88957]"
+          className="input-field flex-1 !mt-0"
           placeholder="Say how you feel..."
+          disabled={loading}
           onKeyDown={(e) => {
             if(e.key === 'Enter' && !e.shiftKey){
               e.preventDefault()
@@ -84,10 +102,18 @@ export default function ChatBox(){
             }
           }}
         />
-        <button onClick={send} disabled={loading} className="soft-button border-transparent bg-[#b79362] px-4 text-white">
-          {loading ? 'Sending' : 'Send'}
-        </button>
+        {loading ? (
+          <SkeletonButton className="h-12 w-24 shrink-0" />
+        ) : (
+          <motion.button
+            onClick={send}
+            className="soft-button soft-button-primary border-transparent px-4"
+            {...hoverGlow}
+          >
+            Send
+          </motion.button>
+        )}
       </div>
-    </div>
+    </motion.div>
   )
 }

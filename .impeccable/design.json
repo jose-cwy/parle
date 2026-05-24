@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-23T00:00:00.000Z",
+  "title": "Design System: Heartstrings Club",
+  "extensions": {
+    "colorMeta": {
+      "bg-deep": {
+        "role": "neutral",
+        "displayName": "Deep Walnut",
+        "canonical": "oklch(18% 0.02 55)",
+        "tonalRamp": ["#0f0c0a", "#161210", "#1f1814", "#2a221c", "#3d2a22", "#4a3428", "#6e5848", "#a89480"]
+      },
+      "accent-warm": {
+        "role": "primary",
+        "displayName": "Golden Amber",
+        "canonical": "oklch(75% 0.12 70)",
+        "tonalRamp": ["#5a4030", "#8b6147", "#b85a38", "#c07850", "#e8a860", "#ffb347", "#ffd4a0", "#fff4e8"]
+      },
+      "accent-sage": {
+        "role": "secondary",
+        "displayName": "Sage Olive",
+        "canonical": "oklch(52% 0.06 130)",
+        "tonalRamp": ["#2d3828", "#3d4a38", "#4a6b62", "#5a6b42", "#6b7b4c", "#6b8a62", "#a8b898", "#d4e8c0"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles and emotional headlines only."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI copy, descriptions, chat, diary content."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-rest",
+        "value": "0 24px 60px rgba(0, 0, 0, 0.35)",
+        "purpose": "Default card elevation."
+      },
+      {
+        "name": "card-hover",
+        "value": "0 28px 70px rgba(0, 0, 0, 0.42), 0 0 48px rgba(255, 179, 71, 0.1)",
+        "purpose": "Lifted card on hover."
+      },
+      {
+        "name": "button-warm",
+        "value": "0 10px 30px rgba(240, 159, 85, 0.25)",
+        "purpose": "Primary CTA warm glow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Default ease-out for color and opacity transitions."
+      },
+      {
+        "name": "ease-drift",
+        "value": "cubic-bezier(0.37, 0, 0.2, 1)",
+        "purpose": "Fluid hover and card lift transitions."
+      }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action with warm gradient.",
+      "html": "<button class=\"ds-btn-primary\">Start your space</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(135deg, #e8a860 0%, #b85a38 100%); color: #ffffff; border: none; border-radius: 999px; padding: 0.7rem 1.15rem; font-family: Manrope, ui-sans-serif, sans-serif; font-size: 1rem; cursor: pointer; box-shadow: 0 10px 30px rgba(240, 159, 85, 0.25); transition: transform 360ms cubic-bezier(0.37, 0, 0.2, 1), box-shadow 360ms cubic-bezier(0.37, 0, 0.2, 1); } .ds-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(255, 179, 71, 0.38); } .ds-btn-primary:focus-visible { outline: 2px solid #e8a860; outline-offset: 3px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary action on dark warm surface.",
+      "html": "<button class=\"ds-btn-secondary\">Write a letter</button>",
+      "css": ".ds-btn-secondary { background: rgba(45, 35, 28, 0.72); color: #fff9f0; border: 1.5px solid rgba(232, 168, 96, 0.16); border-radius: 999px; padding: 0.7rem 1.15rem; font-family: Manrope, ui-sans-serif, sans-serif; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); transition: transform 360ms cubic-bezier(0.37, 0, 0.2, 1), background 360ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-secondary:hover { transform: translateY(-2px); background: rgba(58, 44, 34, 0.88); } .ds-btn-secondary:focus-visible { outline: 2px solid #e8a860; outline-offset: 3px; }"
+    },
+    {
+      "name": "Glass Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Default content container with warm blur.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-eyebrow\">Tonight</p><p class=\"ds-card-body\">Write slowly. The lamp glows with you.</p></div>",
+      "css": ".ds-card { background: rgba(45, 35, 28, 0.82); backdrop-filter: blur(20px); border: 1.5px solid rgba(232, 168, 96, 0.16); border-radius: 22px; padding: 1rem; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); color: #fff9f0; font-family: Manrope, ui-sans-serif, sans-serif; } .ds-eyebrow { font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: #e8a860; margin: 0 0 0.5rem; } .ds-card-body { margin: 0; color: #d4c4b0; line-height: 1.6; font-size: 0.95rem; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Auth and form input on dark warm background.",
+      "html": "<label class=\"ds-field-label\">Email<input class=\"ds-input\" type=\"email\" placeholder=\"you@example.com\" /></label>",
+      "css": ".ds-field-label { display: block; font-family: Manrope, ui-sans-serif, sans-serif; font-size: 0.875rem; color: #fff9f0; } .ds-input { width: 100%; margin-top: 0.35rem; border-radius: 14px; border: 1.5px solid rgba(232, 168, 96, 0.16); background: rgba(31, 24, 20, 0.72); padding: 0.85rem 1rem; color: #fff9f0; font-family: Manrope, ui-sans-serif, sans-serif; font-size: 1rem; outline: none; transition: border-color 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input:focus { border-color: rgba(232, 168, 96, 0.45); box-shadow: 0 0 0 3px rgba(232, 168, 96, 0.1); }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Header navigation pill link.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link ds-nav-link-active\" href=\"#\">Diary</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 0.5rem; } .ds-nav-link { color: #a89480; padding: 0.65rem 0.9rem; border-radius: 999px; text-decoration: none; font-family: Manrope, ui-sans-serif, sans-serif; font-size: 0.95rem; transition: transform 360ms cubic-bezier(0.37, 0, 0.2, 1), background 360ms cubic-bezier(0.22, 1, 0.36, 1), color 360ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-nav-link:hover { transform: translateY(-2px); background: rgba(255, 200, 140, 0.08); color: #fff9f0; } .ds-nav-link-active { background: rgba(232, 168, 96, 0.16); color: #fff9f0; box-shadow: inset 0 0 0 1px rgba(232, 168, 96, 0.2); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Golden-Hour Study Nook",
+    "overview": "Heartstrings Club looks and feels like a cozy illustrated room at sunset — warm terracotta walls, sage-green accents, cream paper, soft grain, and hand-drawn SVG environments. The UI is a product surface wrapped in a nostalgic, lo-fi illustration style.",
+    "keyCharacteristics": [
+      "Warm earthy palette on deep brown backgrounds",
+      "Rounded organic containers with soft warm shadows",
+      "Subtle film-grain texture overlays",
+      "Fluid Framer Motion transitions",
+      "Original SVG room illustrations",
+      "Cormorant Garamond display + Manrope body"
+    ],
+    "rules": [
+      { "name": "The Warm Tint Rule", "body": "Never use pure #000 or #fff. All neutrals are tinted toward terracotta or cream.", "section": "colors" },
+      { "name": "The One Accent Rule", "body": "Golden amber carries emphasis on ≤15% of any screen.", "section": "colors" },
+      { "name": "The Serif-for-Emotion Rule", "body": "Headlines use serif; functional UI stays in Manrope.", "section": "typography" },
+      { "name": "The Flat-Grain Rule", "body": "Texture adds depth; avoid stacking multiple blur layers decoratively.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use warm earthy CSS variables from :root",
+      "Do add subtle grain textures and golden-hour glows",
+      "Do use Framer Motion with spring tokens from lib/motion.js",
+      "Do respect prefers-reduced-motion",
+      "Do use inline SVG icons, never emoji as UI icons"
+    ],
+    "donts": [
+      "Don't use generic SaaS landing patterns",
+      "Don't use cold clinical white or corporate cyan accents",
+      "Don't use glassmorphism as default decoration",
+      "Don't use pure black or pure white",
+      "Don't use modal-first flows when inline works"
+    ]
+  }
+}

@@ -1,6 +1,13 @@
-import { useEffect, useRef } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { SkeletonBlock } from './Skeleton'
+import { spring, hoverGlow } from '../lib/motion'
 
+/**
+ * Interactive paper editor.
+ * This component only owns the writing surface and button interactions.
+ * The surrounding room illustration lives in DeskScene so the DOM stays simpler.
+ */
 export default function LetterEditor({
   value,
   onChange,
@@ -9,136 +16,119 @@ export default function LetterEditor({
   loading,
   isCompleted,
   isSealing,
-  updatedAt,
-  onSealAnimationComplete
+  updatedAt
 }){
   const textareaRef = useRef(null)
+  const [isFocused, setIsFocused] = useState(false)
 
   useEffect(() => {
     if(!textareaRef.current) return
+
+    // Auto-resize the paper so it grows with the letter without layout jumps.
     textareaRef.current.style.height = '0px'
-    textareaRef.current.style.height = `${Math.max(textareaRef.current.scrollHeight, 360)}px`
-  }, [value])
+    textareaRef.current.style.height = `${Math.max(textareaRef.current.scrollHeight, isFocused ? 410 : 360)}px`
+  }, [value, isFocused])
+
+  const letterLength = value.trim().length
+  const pulseKey = Math.max(0, Math.floor(letterLength / 24))
 
   return (
-    <div className="letter-room-shell">
-      <div className="room-scene">
-        <div className="room-wall" />
-        <div className="room-window">
-          <div className="room-window-sky" />
-          <div className="room-window-frame room-window-frame-x" />
-          <div className="room-window-frame room-window-frame-y" />
-          <div className="room-window-cloud room-window-cloud-one" />
-          <div className="room-window-cloud room-window-cloud-two" />
-        </div>
+    <motion.div
+      className={`room-letter-sheet ${isCompleted ? 'room-letter-sheet-sealed' : ''} ${isFocused ? 'room-letter-sheet-active' : ''}`}
+      animate={isSealing ? { scaleY: [1, 0.84, 0.58], rotateX: [0, 18, 38] } : { scaleY: 1, rotateX: 0 }}
+      transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {!isCompleted ? (
+        <>
+          <div className="room-letter-topline">
+            <div>
+              <p className="room-letter-label">Letter to Yourself</p>
+              <p className="room-letter-meta">{updatedAt ? `Last saved ${new Date(updatedAt).toLocaleString()}` : 'Write slowly. This room is here for you.'}</p>
+            </div>
+            <div className="room-letter-meta-wrap">
+              <motion.div
+                key={pulseKey}
+                className="room-typing-orb"
+                initial={{ scale: 0.8, opacity: 0.5 }}
+                animate={{ scale: [0.88, 1.15, 1], opacity: [0.5, 1, 0.7] }}
+                transition={{ duration: 0.45 }}
+              />
+              <div className="room-letter-pin" />
+            </div>
+          </div>
 
-        <div className="room-garland">
-          {[0, 1, 2, 3, 4].map((light) => (
-            <span key={light} className="room-garland-light" style={{ animationDelay: `${light * 0.15}s` }} />
-          ))}
-        </div>
-
-        <motion.div className="room-teddy" animate={{ y: [0, -5, 0] }} transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut' }}>
-          <span className="room-teddy-ear room-teddy-ear-left" />
-          <span className="room-teddy-ear room-teddy-ear-right" />
-          <span className="room-teddy-head" />
-          <span className="room-teddy-body" />
-        </motion.div>
-
-        <motion.div className="room-guitar" animate={{ rotate: [-3, -1, -3] }} transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}>
-          <span className="room-guitar-neck" />
-          <span className="room-guitar-head" />
-          <span className="room-guitar-body" />
-          <span className="room-guitar-hole" />
-        </motion.div>
-
-        <div className="room-floor" />
-        <div className="room-desk-shadow" />
-        <div className="room-desk">
-          <div className="room-desk-edge" />
-        </div>
-
-        <AnimatePresence>
-          {isSealing ? (
+          <div className="room-letter-body">
             <motion.div
-              key="sealed-flight"
-              className="room-lock-banner"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              It has been locked
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+              className="room-letter-focus-glow"
+              animate={{
+                opacity: isFocused ? 1 : 0.55,
+                scale: isFocused ? 1.02 : 1
+              }}
+              transition={{ duration: 0.24 }}
+            />
 
-        <div className="room-paper-stage">
-          <motion.div
-            className="room-paper-flight"
-            animate={isSealing ? { y: -320, x: 40, rotate: 12, scale: 0.52, opacity: 0 } : { y: 0, x: 0, rotate: -1.5, scale: 1, opacity: 1 }}
-            transition={{ duration: 1.35, ease: [0.22, 1, 0.36, 1] }}
-            onAnimationComplete={() => {
-              if(isSealing && onSealAnimationComplete) onSealAnimationComplete()
-            }}
-          >
-            <motion.div
-              className={`room-letter-sheet ${isCompleted ? 'room-letter-sheet-sealed' : ''}`}
-              animate={isSealing ? { scaleY: [1, 0.86, 0.62], rotateX: [0, 14, 32] } : { scaleY: 1, rotateX: 0 }}
-              transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {!isCompleted ? (
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder="Write a letter to yourself..."
+              className="letter-textarea room-letter-input"
+              disabled={loading || isCompleted || isSealing}
+            />
+
+            <div className="room-letter-lines" />
+          </div>
+
+          <div className="room-letter-footer">
+            <p className="room-letter-hint">
+              {letterLength ? `${letterLength} characters of honesty` : 'Start with one gentle sentence.'}
+            </p>
+
+            <div className="room-action-strip">
+              {loading ? (
                 <>
-                  <div className="room-letter-topline">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-[#8c6147]">My room letter</p>
-                      <p className="mt-1 text-sm subtle">{updatedAt ? `Last saved ${new Date(updatedAt).toLocaleString()}` : 'Begin whenever you are ready'}</p>
-                    </div>
-                    <div className="room-letter-pin" />
-                  </div>
-
-                  <textarea
-                    ref={textareaRef}
-                    value={value}
-                    onChange={(event) => onChange(event.target.value)}
-                    placeholder="Dear me..."
-                    className="letter-textarea room-letter-input"
-                    disabled={loading || isCompleted || isSealing}
-                  />
+                  <SkeletonBlock className="h-11 w-32" rounded="rounded-full" />
+                  <SkeletonBlock className="h-11 w-36" rounded="rounded-full" />
                 </>
               ) : (
-                <div className="room-letter-complete">
-                  <div className="room-envelope">
-                    <span className="room-envelope-flap" />
-                    <span className="room-envelope-seal" />
-                  </div>
-                  <p className="mt-4 text-sm leading-7 subtle">
-                    Your letter is sealed now. The words are tucked away until a future feature decides when it can be reopened.
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        </div>
+                <>
+              <motion.button
+                type="button"
+                onClick={onSave}
+                disabled={isCompleted || isSealing}
+                className="room-action-chip room-action-chip-primary"
+                {...hoverGlow}
+              >
+                Save Draft
+              </motion.button>
 
-        <div className="room-action-strip">
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={loading || isCompleted || isSealing}
-            className="room-action-chip room-action-chip-primary"
-          >
-            {loading ? 'Saving...' : 'Save draft'}
-          </button>
-          <button
-            type="button"
-            onClick={onComplete}
-            disabled={loading || isCompleted || isSealing}
-            className="room-action-chip"
-          >
-            Finish letter
-          </button>
+              <motion.button
+                type="button"
+                onClick={onComplete}
+                disabled={isCompleted || isSealing}
+                className="room-action-chip"
+                {...hoverGlow}
+              >
+                Complete Letter
+              </motion.button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="room-letter-complete">
+          <div className="room-envelope">
+            <span className="room-envelope-flap" />
+            <span className="room-envelope-seal" />
+          </div>
+          <p className="mt-4 text-sm leading-7 subtle">
+            Your letter is sealed now. The words are tucked away until a future feature decides when it can be reopened.
+          </p>
         </div>
-      </div>
-    </div>
+      )}
+    </motion.div>
   )
 }

@@ -2,14 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/api/auth/logout": "pages/api/auth/logout.js",
-  "/api/auth/me": "pages/api/auth/me.js",
   "/": "pages/index.js",
-  "/register": "pages/register.js",
-  "/api/auth/terms-accept": "pages/api/auth/terms-accept.js",
-  "/letter-to-yourself": "pages/letter-to-yourself.js",
+  "/api/auth/me": "pages/api/auth/me.js",
+  "/login": "pages/login.js",
+  "/api/auth/logout": "pages/api/auth/logout.js",
   "/api/auth/login": "pages/api/auth/login.js",
   "/api/letters/self": "pages/api/letters/self.js",
-  "/login": "pages/login.js",
-  "/api/auth/register": "pages/api/auth/register.js"
+  "/letter-to-yourself": "pages/letter-to-yourself.js"
 }

@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
 import { termsSections } from '../data/termsContent'
+import { SkeletonButton } from './Skeleton'
+import { spring } from '../lib/motion'
 
 export default function TermsGateModal({
   accepting,
@@ -13,12 +15,13 @@ export default function TermsGateModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div
         className="terms-popup w-full max-w-[22rem] overflow-hidden rounded-[22px] border border-[rgba(140,97,71,0.12)] bg-white shadow-[0_24px_80px_rgba(40,28,18,0.2)] sm:max-w-[24rem]"
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: 28, scale: 0.96, filter: 'blur(8px)' }}
+        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+        transition={spring.modal}
       >
         <div className="px-6 pb-3 pt-6 text-center">
           <h2 className="text-[1.75rem] font-semibold text-[#241e1a]">Terms and Conditions</h2>
@@ -42,14 +45,18 @@ export default function TermsGateModal({
         </div>
 
         <div className="px-5 pb-5 pt-4">
-          <button
-            type="button"
-            onClick={onAccept}
-            disabled={!hasReachedBottom || accepting}
-            className="w-full rounded-[12px] bg-[#111111] px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {accepting ? 'Accepting...' : 'Accept'}
-          </button>
+          {accepting ? (
+            <SkeletonButton className="h-12 w-full" rounded="rounded-[12px]" />
+          ) : (
+            <button
+              type="button"
+              onClick={onAccept}
+              disabled={!hasReachedBottom}
+              className="w-full rounded-[12px] bg-[#111111] px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Accept
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>
