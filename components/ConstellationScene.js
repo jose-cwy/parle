@@ -46,7 +46,7 @@ const ARC_NODES = [
 ]
 const ARC_EDGES = [[0,1],[1,2]]
 
-/* Bridge cluster — upper-right region, two linked star groups (connection) */
+/* Bridge cluster — upper-right region */
 const BRIDGE2_NODES = [
   { x:  480, y: -320, z: 580 },
   { x:  560, y: -260, z: 560 },
@@ -56,7 +56,7 @@ const BRIDGE2_NODES = [
 ]
 const BRIDGE2_EDGES = [[0,1],[1,2],[1,3],[3,4]]
 
-/* Crescent arc — lower-left quadrant (new journey opening) */
+/* Crescent arc — lower-left quadrant */
 const CRESCENT_NODES = [
   { x: -580, y:  320, z: 600 },
   { x: -520, y:  230, z: 580 },
@@ -66,6 +66,51 @@ const CRESCENT_NODES = [
 ]
 const CRESCENT_EDGES = [[0,1],[1,2],[2,3],[3,4]]
 
+/* Orion-style belt + shoulders — centre-left, mid depth */
+const ORION_NODES = [
+  { x: -180, y:  -80, z: 680 },  // left shoulder
+  { x:  -60, y: -120, z: 660 },  // right shoulder
+  { x: -160, y:   40, z: 700 },  // belt left
+  { x:  -80, y:   50, z: 690 },  // belt centre
+  { x:    0, y:   35, z: 680 },  // belt right
+  { x: -130, y:  160, z: 710 },  // foot left
+  { x:   20, y:  150, z: 700 },  // foot right
+]
+const ORION_EDGES = [[0,2],[1,2],[2,3],[3,4],[4,1],[3,5],[4,6]]
+
+/* Diamond / kite — upper-left, far depth */
+const DIAMOND_NODES = [
+  { x: -420, y: -380, z: 820 },  // top
+  { x: -520, y: -280, z: 800 },  // left
+  { x: -340, y: -280, z: 810 },  // right
+  { x: -420, y: -180, z: 800 },  // bottom
+  { x: -480, y: -340, z: 815 },  // inner left
+  { x: -360, y: -340, z: 815 },  // inner right
+]
+const DIAMOND_EDGES = [[0,1],[0,2],[1,3],[2,3],[1,4],[2,5],[4,5]]
+
+/* Scorpion tail — lower-right, varies depth */
+const SCORPION_NODES = [
+  { x:  300, y:  200, z: 620 },
+  { x:  380, y:  180, z: 640 },
+  { x:  440, y:  230, z: 660 },
+  { x:  500, y:  200, z: 650 },
+  { x:  560, y:  250, z: 670 },
+  { x:  620, y:  220, z: 660 },
+  { x:  680, y:  260, z: 680 },
+]
+const SCORPION_EDGES = [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]]
+
+/* Cassiopeia W — top-right area, medium depth */
+const CASS_NODES = [
+  { x:  200, y: -450, z: 750 },
+  { x:  280, y: -400, z: 730 },
+  { x:  360, y: -460, z: 740 },
+  { x:  440, y: -400, z: 730 },
+  { x:  520, y: -450, z: 745 },
+]
+const CASS_EDGES = [[0,1],[1,2],[2,3],[3,4]]
+
 /* All constellation stars indexed by their position in the full array */
 const CONST_STARS = [
   ...HEART_NODES,
@@ -73,22 +118,34 @@ const CONST_STARS = [
   ...ARC_NODES,
   ...BRIDGE2_NODES,
   ...CRESCENT_NODES,
+  ...ORION_NODES,
+  ...DIAMOND_NODES,
+  ...SCORPION_NODES,
+  ...CASS_NODES,
 ]
-const CONST_STAR_COUNT = CONST_STARS.length  // 30
+const CONST_STAR_COUNT = CONST_STARS.length
 
-/* Edge index offsets into the final stars array */
+/* Edge index offsets */
 const HEART_OFFSET    = 0
 const THREAD_OFFSET   = HEART_NODES.length
-const ARC_OFFSET      = HEART_NODES.length + THREAD_NODES.length
-const BRIDGE2_OFFSET  = HEART_NODES.length + THREAD_NODES.length + ARC_NODES.length
+const ARC_OFFSET      = THREAD_OFFSET + THREAD_NODES.length
+const BRIDGE2_OFFSET  = ARC_OFFSET    + ARC_NODES.length
 const CRESCENT_OFFSET = BRIDGE2_OFFSET + BRIDGE2_NODES.length
+const ORION_OFFSET    = CRESCENT_OFFSET + CRESCENT_NODES.length
+const DIAMOND_OFFSET  = ORION_OFFSET    + ORION_NODES.length
+const SCORPION_OFFSET = DIAMOND_OFFSET  + DIAMOND_NODES.length
+const CASS_OFFSET     = SCORPION_OFFSET + SCORPION_NODES.length
 
 const ALL_EDGES = [
-  ...HEART_EDGES.map(([a, b])   => [a + HEART_OFFSET,    b + HEART_OFFSET]),
-  ...THREAD_EDGES.map(([a, b])  => [a + THREAD_OFFSET,   b + THREAD_OFFSET]),
-  ...ARC_EDGES.map(([a, b])     => [a + ARC_OFFSET,      b + ARC_OFFSET]),
-  ...BRIDGE2_EDGES.map(([a, b]) => [a + BRIDGE2_OFFSET,  b + BRIDGE2_OFFSET]),
+  ...HEART_EDGES.map(([a,b])    => [a + HEART_OFFSET,    b + HEART_OFFSET]),
+  ...THREAD_EDGES.map(([a,b])   => [a + THREAD_OFFSET,   b + THREAD_OFFSET]),
+  ...ARC_EDGES.map(([a,b])      => [a + ARC_OFFSET,      b + ARC_OFFSET]),
+  ...BRIDGE2_EDGES.map(([a,b])  => [a + BRIDGE2_OFFSET,  b + BRIDGE2_OFFSET]),
   ...CRESCENT_EDGES.map(([a,b]) => [a + CRESCENT_OFFSET, b + CRESCENT_OFFSET]),
+  ...ORION_EDGES.map(([a,b])    => [a + ORION_OFFSET,    b + ORION_OFFSET]),
+  ...DIAMOND_EDGES.map(([a,b])  => [a + DIAMOND_OFFSET,  b + DIAMOND_OFFSET]),
+  ...SCORPION_EDGES.map(([a,b]) => [a + SCORPION_OFFSET, b + SCORPION_OFFSET]),
+  ...CASS_EDGES.map(([a,b])     => [a + CASS_OFFSET,     b + CASS_OFFSET]),
 ]
 
 /* ─── Build full star array (constellation + scattered) ─────── */
@@ -115,13 +172,13 @@ function buildStars() {
     })
   }
 
-  /* Scattered background stars */
+  /* Scattered background stars — extended z-range for longer warp travel */
   for (let i = 0; i < SCATTER_COUNT; i++) {
     stars.push({
       x: (rand() * 2 - 1) * 900,
       y: (rand() * 2 - 1) * 600,
-      z: 80 + rand() * 1100,
-      baseZ: 0,  // recalculated per-frame for infinite wrap
+      z: 80 + rand() * 1400,
+      baseZ: 0,
       size: 0.5 + rand() * 1.6,
       brightness: 0.25 + rand() * 0.65,
       isNode: false,
@@ -140,7 +197,7 @@ function buildStars() {
 
 const STARS = buildStars()
 const FOCAL = 600    // perspective focal length
-const CAM_MAX = 620  // max camera Z travel
+const CAM_MAX = 1100  // increased for faster cinematic warp (was 620)
 
 /* ─── Aurora overlay — slow-breathing teal/indigo orbs ─────── */
 const ORBS = [
@@ -182,8 +239,8 @@ export default function ConstellationScene({ scrollProgress }) {
 
   /* Camera Z driven by scroll: 0 → CAM_MAX */
   const cameraZ = useTransform(scrollProgress, [0, 1], [0, CAM_MAX])
-  /* Constellation alpha: invisible at hero, fully drawn by phase 2 */
-  const constAlpha = useTransform(scrollProgress, [0, 0.12, 0.55], [0, 0, 0.72])
+  /* Constellation alpha: fades in earlier now that warp starts immediately */
+  const constAlpha = useTransform(scrollProgress, [0, 0.08, 0.4], [0, 0, 0.72])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -223,6 +280,14 @@ export default function ConstellationScene({ scrollProgress }) {
       const my    = mouseRef.current.y
       const t     = timeRef.current
 
+      /* Camera origin offset: lerp from bottom-right toward center as
+         scroll advances 0→0.25, giving the "starting from bottom-right"
+         perspective that slowly centers as you fly inward */
+      const sv = scrollProgress.get()
+      const originLerp = Math.max(0, 1 - sv / 0.25)
+      const originX = originLerp * 320
+      const originY = originLerp * 210
+
       ctx.clearRect(0, 0, W, H)
 
       /* Project all stars to screen coords */
@@ -235,7 +300,7 @@ export default function ConstellationScene({ scrollProgress }) {
         /* Wrap scattered stars when they pass the camera */
         if (!star.isNode) {
           if (z < 10) {
-            star.z += 1100
+            star.z += 1400
             z = star.z - camZ
           }
         }
@@ -243,8 +308,9 @@ export default function ConstellationScene({ scrollProgress }) {
         const depth = Math.max(z, 1)
         const scale = FOCAL / depth
 
-        const sx = star.x * scale + cx
-        const sy = star.y * scale + cy
+        /* Apply bottom-right origin offset to all projected coords */
+        const sx = star.x * scale + cx + originX
+        const sy = star.y * scale + cy + originY
 
         /* Twinkle */
         const twinkle = 0.6 + 0.4 * Math.sin(t * star.twinkleSpeed + star.twinkleOffset)
@@ -253,8 +319,8 @@ export default function ConstellationScene({ scrollProgress }) {
         /* Size grows as star gets closer */
         const r = star.size * scale * 0.55
 
-        /* Cull stars outside viewport with a margin */
-        const inView = sx > -50 && sx < W + 50 && sy > -50 && sy < H + 50 && depth < 1200
+        /* Cull stars outside viewport with a generous margin for the offset */
+        const inView = sx > -400 && sx < W + 400 && sy > -300 && sy < H + 300 && depth < 1600
 
         projected[i] = { sx, sy, r: Math.max(r, 0.3), alpha, inView, depth }
       }
@@ -322,7 +388,11 @@ export default function ConstellationScene({ scrollProgress }) {
         ctx.restore()
       }
 
-      /* ── Draw stars ──────────────────────────────────────────── */
+      /* ── Draw stars (+ warp streaks for close scatter stars) ───── */
+      /* vanishing-point is viewport center after offset correction */
+      const vpx = cx + originX
+      const vpy = cy + originY
+
       for (let i = 0; i < STARS.length; i++) {
         const p = projected[i]
         if (!p || !p.inView || p.r < 0.15) continue
@@ -347,11 +417,39 @@ export default function ConstellationScene({ scrollProgress }) {
           ctx.arc(p.sx, p.sy, p.r * 1.15, 0, Math.PI * 2)
           ctx.fill()
         } else {
-          /* Regular stars: white-blue, small */
-          ctx.fillStyle = `rgba(220,240,255,${p.alpha})`
-          ctx.beginPath()
-          ctx.arc(p.sx, p.sy, p.r, 0, Math.PI * 2)
-          ctx.fill()
+          /* Scattered stars: draw as warp streaks when close to camera.
+             Streak radiates outward FROM the vanishing point — gives the
+             "flying through stars" hyperspace effect. Streak intensity
+             scales with proximity (depth) and how far the camera has moved. */
+          const warpT = Math.max(0, 1 - p.depth / 180) * Math.min(camZ / 300, 1)
+
+          if (warpT > 0.05) {
+            /* Direction from vanishing point toward star */
+            const dx  = p.sx - vpx
+            const dy  = p.sy - vpy
+            const len = Math.sqrt(dx * dx + dy * dy) || 1
+            const nx  = dx / len
+            const ny  = dy / len
+            /* Streak: from slightly behind to slightly ahead of the star */
+            const tail = p.r * (1 + warpT * 18)
+            const x0   = p.sx - nx * tail
+            const y0   = p.sy - ny * tail
+            const grad = ctx.createLinearGradient(x0, y0, p.sx, p.sy)
+            grad.addColorStop(0, `rgba(200,235,255,0)`)
+            grad.addColorStop(1, `rgba(220,242,255,${p.alpha * (0.4 + warpT * 0.6)})`)
+            ctx.strokeStyle = grad
+            ctx.lineWidth   = Math.max(p.r * 0.7, 0.4)
+            ctx.beginPath()
+            ctx.moveTo(x0, y0)
+            ctx.lineTo(p.sx, p.sy)
+            ctx.stroke()
+          } else {
+            /* Regular stars: white-blue circle */
+            ctx.fillStyle = `rgba(220,240,255,${p.alpha})`
+            ctx.beginPath()
+            ctx.arc(p.sx, p.sy, p.r, 0, Math.PI * 2)
+            ctx.fill()
+          }
         }
 
         ctx.restore()

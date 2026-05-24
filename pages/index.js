@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import {
   motion,
   useScroll,
@@ -79,14 +79,16 @@ const features = [
   },
 ]
 
-/* Scroll range per phase — 500vh / 5 segments */
+/* Scroll range per phase — 8 segments across 700vh */
 const PHASES = [
-  [0, 0.18],   // hero reveal
-  [0.18, 0.36], // letter
-  [0.36, 0.54], // diary
-  [0.54, 0.72], // chat
-  [0.72, 0.88], // quotes
-  [0.88, 1.0],  // CTA
+  [0,    0.12],  // 0: hero reveal
+  [0.12, 0.22],  // 1: emotional quote
+  [0.22, 0.36],  // 2: letter
+  [0.36, 0.51],  // 3: diary
+  [0.51, 0.66],  // 4: chat
+  [0.66, 0.80],  // 5: quotes
+  [0.80, 0.90],  // 6: testimonials
+  [0.90, 1.0],   // 7: CTA
 ]
 
 /* ─── CTA Particles — pure CSS, seeded positions ────────────── */
@@ -204,9 +206,200 @@ function DiaryDemo({ lines }) {
   )
 }
 
-/* ─── Feature panel — staggered entrance with ease-out-expo ─── */
-function FeaturePanel({ feature, visible }) {
+/*
+ * Trail node positions — [x,y] as fraction of viewport (0–1).
+ * S-curve from bottom-left to top, passing through each card's area.
+ * Cards are at: letter (left, ~y 0.57), diary (right, ~y 0.40),
+ *               chat (left, ~y 0.22), quotes (right, ~y 0.08).
+ * Milestone indices: 2=letter, 5=diary, 7=chat, 9=quotes.
+ */
+const TRAIL_NODES = [
+  [0.12, 0.96],  // 0 — start, bottom-left
+  [0.20, 0.84],  // 1 — rising
+  [0.24, 0.72],  // 2 ★ MILESTONE 0 — letter (left side)
+  [0.32, 0.62],  // 3 — departing left
+  [0.58, 0.55],  // 4 — sweeping right
+  [0.72, 0.48],  // 5 ★ MILESTONE 1 — diary (right side)
+  [0.62, 0.38],  // 6 — departing right
+  [0.26, 0.30],  // 7 ★ MILESTONE 2 — chat (left side)
+  [0.42, 0.20],  // 8 — rising
+  [0.70, 0.14],  // 9 ★ MILESTONE 3 — quotes (right side)
+  [0.48, 0.04],  // 10 — end, top center
+]
+const TRAIL_SEGMENT_COUNT = TRAIL_NODES.length - 1  // 10
+const TRAIL_MILESTONES = new Set([2, 5, 7, 9])
+
+/*
+ * Card top positions matched to trail milestone y-values.
+ * Indexed to features array (0=letter,1=diary,2=chat,3=quotes).
+ */
+const CARD_TOPS = ['57vh', '38vh', '20vh', '5vh']
+
+/* ─── Catmull-Rom → bezier: compute control points for smooth trail ─ */
+function catmullRomCPs(pts, i) {
+  const p0 = pts[Math.max(i - 1, 0)]
+  const p1 = pts[i]
+  const p2 = pts[i + 1]
+  const p3 = pts[Math.min(i + 2, pts.length - 1)]
+  const cp1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]
+  const cp2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
+  return [cp1, cp2]
+}
+
+/* ─── OceanTrail — full-screen scroll-drawn constellation trail ─── */
+function OceanTrail({ scrollYProgress }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const resize = () => {
+      canvas.width  = window.innerWidth
+      canvas.height = window.innerHeight
+      draw()
+    }
+
+    const draw = () => {
+      const W = canvas.width
+      const H = canvas.height
+      if (!W || !H) return
+      const ctx = canvas.getContext('2d')
+      const progress = scrollYProgress.get()
+
+      ctx.clearRect(0, 0, W, H)
+
+      const totalProgress = progress * TRAIL_SEGMENT_COUNT
+      const fullSegs  = Math.floor(totalProgress)
+      const partial   = totalProgress - fullSegs
+
+      const px = ([nx, ny]) => [nx * W, ny * H]
+
+      /* Draw completed segments as bright bezier curves */
+      for (let s = 0; s < fullSegs && s < TRAIL_SEGMENT_COUNT; s++) {
+        const [ax, ay] = px(TRAIL_NODES[s])
+        const [bx, by] = px(TRAIL_NODES[s + 1])
+        const [cp1, cp2] = catmullRomCPs(TRAIL_NODES, s)
+        const [c1x, c1y] = px(cp1)
+        const [c2x, c2y] = px(cp2)
+
+        const ageAlpha = 0.20 + 0.50 * (s / TRAIL_SEGMENT_COUNT)
+        const grad = ctx.createLinearGradient(ax, ay, bx, by)
+        grad.addColorStop(0,   `rgba(45,212,191,${(ageAlpha * 0.55).toFixed(2)})`)
+        grad.addColorStop(0.5, `rgba(56,189,248,${ageAlpha.toFixed(2)})`)
+        grad.addColorStop(1,   `rgba(167,243,208,${(ageAlpha * 0.85).toFixed(2)})`)
+
+        ctx.beginPath()
+        ctx.moveTo(ax, ay)
+        ctx.bezierCurveTo(c1x, c1y, c2x, c2y, bx, by)
+        ctx.strokeStyle = grad
+        ctx.lineWidth   = 1.4
+        ctx.stroke()
+      }
+
+      /* Draw the currently-animating partial segment */
+      if (fullSegs < TRAIL_SEGMENT_COUNT && partial > 0.01) {
+        const [ax, ay] = px(TRAIL_NODES[fullSegs])
+        const [bx, by] = px(TRAIL_NODES[fullSegs + 1])
+        const [cp1, cp2] = catmullRomCPs(TRAIL_NODES, fullSegs)
+        const [c1x, c1y] = px(cp1)
+        const [c2x, c2y] = px(cp2)
+
+        /* Sample bezier at t=partial to get leading edge point */
+        const t = partial
+        const mt = 1 - t
+        const ex = mt*mt*mt*ax + 3*mt*mt*t*c1x + 3*mt*t*t*c2x + t*t*t*bx
+        const ey = mt*mt*mt*ay + 3*mt*mt*t*c1y + 3*mt*t*t*c2y + t*t*t*by
+        /* Control points for the partial segment (De Casteljau subdivision) */
+        const pc1x = mt*ax + t*c1x, pc1y = mt*ay + t*c1y
+        const pc2x = mt*pc1x + t*(mt*c1x+t*c2x), pc2y = mt*pc1y + t*(mt*c1y+t*c2y)
+
+        const grad = ctx.createLinearGradient(ax, ay, ex, ey)
+        grad.addColorStop(0,   'rgba(45,212,191,0.12)')
+        grad.addColorStop(0.6, 'rgba(56,189,248,0.65)')
+        grad.addColorStop(1,   'rgba(200,252,245,0.98)')
+
+        ctx.beginPath()
+        ctx.moveTo(ax, ay)
+        ctx.bezierCurveTo(pc1x, pc1y, pc2x, pc2y, ex, ey)
+        ctx.strokeStyle = grad
+        ctx.lineWidth   = 1.8
+        ctx.shadowBlur  = 8
+        ctx.shadowColor = 'rgba(45,212,191,0.7)'
+        ctx.stroke()
+        ctx.shadowBlur  = 0
+
+        /* Comet head at leading edge */
+        ctx.beginPath()
+        ctx.arc(ex, ey, 2.8, 0, Math.PI * 2)
+        ctx.fillStyle   = 'rgba(200,255,245,0.95)'
+        ctx.shadowBlur  = 14
+        ctx.shadowColor = 'rgba(45,212,191,0.8)'
+        ctx.fill()
+        ctx.shadowBlur  = 0
+      }
+
+      /* Bloom arrived nodes */
+      const arrivedCount = Math.min(fullSegs + 1, TRAIL_NODES.length)
+      for (let ni = 0; ni < arrivedCount; ni++) {
+        const [nx, ny] = px(TRAIL_NODES[ni])
+        const isMile   = TRAIL_MILESTONES.has(ni)
+        const bloomR   = isMile ? 22 : 8
+        const dotR     = isMile ? 3.8 : 2.0
+        const alpha    = isMile ? 0.60 : 0.32
+
+        const bloom = ctx.createRadialGradient(nx, ny, 0, nx, ny, bloomR)
+        bloom.addColorStop(0, `rgba(45,212,191,${alpha})`)
+        bloom.addColorStop(1, 'rgba(45,212,191,0)')
+        ctx.beginPath()
+        ctx.arc(nx, ny, bloomR, 0, Math.PI * 2)
+        ctx.fillStyle = bloom
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.arc(nx, ny, dotR, 0, Math.PI * 2)
+        ctx.fillStyle   = isMile ? 'rgba(200,255,245,0.95)' : 'rgba(167,243,208,0.80)'
+        ctx.shadowBlur  = isMile ? 16 : 6
+        ctx.shadowColor = 'rgba(45,212,191,0.8)'
+        ctx.fill()
+        ctx.shadowBlur  = 0
+
+        if (isMile) {
+          ctx.beginPath()
+          ctx.arc(nx, ny, bloomR * 0.65, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(56,189,248,0.30)'
+          ctx.lineWidth   = 1.2
+          ctx.stroke()
+        }
+      }
+    }
+
+    resize()
+    window.addEventListener('resize', resize)
+    const unsub = scrollYProgress.on('change', draw)
+    return () => { window.removeEventListener('resize', resize); unsub() }
+  }, [scrollYProgress])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: 32,
+      }}
+    />
+  )
+}
+
+/* ─── Feature panel — bursts from trail milestone node ─── */
+function FeaturePanel({ feature, idx, visible }) {
   const isLeft = feature.side === 'left'
+  const cardTop = CARD_TOPS[idx]
 
   return (
     <AnimatePresence>
@@ -216,13 +409,13 @@ function FeaturePanel({ feature, visible }) {
           className="room-panel"
           style={{
             [isLeft ? 'left' : 'right']: 'clamp(1.25rem, 4vw, 4.5rem)',
-            top: '50%',
-            transform: 'translateY(-50%)',
+            top: cardTop,
+            transformOrigin: isLeft ? 'left center' : 'right center',
           }}
-          initial={{ opacity: 0, x: isLeft ? -64 : 64, filter: 'blur(16px)' }}
-          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, x: isLeft ? -32 : 32, filter: 'blur(8px)', transition: { duration: 0.32, ease: [0.45, 0, 0.2, 1] } }}
-          transition={{ duration: 0.7, ease: EXPO, opacity: { duration: 0.45 } }}
+          initial={{ opacity: 0, scale: 0.04, filter: 'blur(28px)' }}
+          animate={{ opacity: 1, scale: 1,    filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 0.88, filter: 'blur(12px)', transition: { duration: 0.28, ease: [0.45, 0, 0.2, 1] } }}
+          transition={{ type: 'spring', stiffness: 180, damping: 20, mass: 1.1, opacity: { duration: 0.3 } }}
         >
           <motion.span
             className="room-panel-eyebrow"
@@ -252,9 +445,9 @@ function FeaturePanel({ feature, visible }) {
           </motion.p>
 
           {feature.demo.type === 'letter' && <LetterDemo lines={feature.demo.lines} />}
-          {feature.demo.type === 'chat' && <ChatDemo messages={feature.demo.messages} />}
+          {feature.demo.type === 'chat'   && <ChatDemo messages={feature.demo.messages} />}
           {feature.demo.type === 'quotes' && <QuotesDemo items={feature.demo.items} />}
-          {feature.demo.type === 'diary' && <DiaryDemo lines={feature.demo.lines} />}
+          {feature.demo.type === 'diary'  && <DiaryDemo lines={feature.demo.lines} />}
 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -268,201 +461,6 @@ function FeaturePanel({ feature, visible }) {
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
-
-/* ─── ScrollConstellationPath — scroll-drawn constellation trail ─ */
-/*
- * Three shape clusters drawn progressively as the user scrolls:
- *  Top:  heart outline (6 nodes, emotional anchor)
- *  Mid:  bridge pair  (3 nodes, connection)
- *  Low:  journey path (4 nodes, winding forward)
- *
- * Lines use a gradient-fade comet-tail effect: bright silver-white at
- * the leading edge, trailing to near-invisible behind it.
- * Arrived nodes bloom with a soft radial glow.
- */
-
-/* Node positions as fraction of canvas [0–1] */
-const PATH_NODES = [
-  /* 0-5: heart top-third */
-  { x: 0.50, y: 0.04 },
-  { x: 0.28, y: 0.07 },
-  { x: 0.38, y: 0.12 },
-  { x: 0.62, y: 0.12 },
-  { x: 0.72, y: 0.07 },
-  { x: 0.50, y: 0.17 },
-  /* 6-8: bridge mid */
-  { x: 0.22, y: 0.40 },
-  { x: 0.50, y: 0.47 },
-  { x: 0.78, y: 0.40 },
-  /* 9-12: journey path lower */
-  { x: 0.32, y: 0.64 },
-  { x: 0.64, y: 0.73 },
-  { x: 0.36, y: 0.83 },
-  { x: 0.58, y: 0.94 },
-]
-
-const PATH_EDGES = [
-  /* heart */
-  [0, 1], [1, 2], [2, 5], [5, 3], [3, 4], [4, 0],
-  /* bridge */
-  [6, 7], [7, 8],
-  /* journey path */
-  [9, 10], [10, 11], [11, 12],
-]
-
-/* Total edge "units" used to map scrollYProgress → drawn edges */
-const EDGE_COUNT = PATH_EDGES.length
-
-function ScrollConstellationPath({ scrollYProgress }) {
-  const canvasRef = useRef(null)
-
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const W = canvas.width
-    const H = canvas.height
-    const progress = scrollYProgress.get()
-
-    ctx.clearRect(0, 0, W, H)
-
-    /* How many full edges + fractional leading edge to draw */
-    const totalProgress = progress * EDGE_COUNT
-    const fullEdges = Math.floor(totalProgress)
-    const partial = totalProgress - fullEdges
-
-    /* Helper: resolve node to canvas px */
-    const px = (n) => ({ x: n.x * W, y: n.y * H })
-
-    /* 1. Draw all unvisited nodes as faint silver dots */
-    PATH_NODES.forEach((n, idx) => {
-      const { x, y } = px(n)
-      const isVisited = idx <= (PATH_EDGES[Math.min(fullEdges, EDGE_COUNT - 1)] || [0, 0])[1]
-      ctx.beginPath()
-      ctx.arc(x, y, 1.6, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(210,225,255,0.12)'
-      ctx.fill()
-    })
-
-    /* 2. Draw completed edges with gradient-fade comet-tail */
-    for (let e = 0; e < fullEdges && e < EDGE_COUNT; e++) {
-      const [ai, bi] = PATH_EDGES[e]
-      const a = px(PATH_NODES[ai])
-      const b = px(PATH_NODES[bi])
-
-      const edgeAlpha = 0.18 + 0.55 * (e / EDGE_COUNT)
-
-      const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y)
-      grad.addColorStop(0, `rgba(180,200,255,${edgeAlpha * 0.25})`)
-      grad.addColorStop(0.6, `rgba(210,228,255,${edgeAlpha * 0.75})`)
-      grad.addColorStop(1, `rgba(220,238,255,${edgeAlpha})`)
-
-      ctx.beginPath()
-      ctx.moveTo(a.x, a.y)
-      ctx.lineTo(b.x, b.y)
-      ctx.strokeStyle = grad
-      ctx.lineWidth = 1.2
-      ctx.stroke()
-    }
-
-    /* 3. Draw the currently-drawing (partial) edge */
-    if (fullEdges < EDGE_COUNT && partial > 0) {
-      const [ai, bi] = PATH_EDGES[fullEdges]
-      const a = px(PATH_NODES[ai])
-      const b = px(PATH_NODES[bi])
-      const ex = a.x + (b.x - a.x) * partial
-      const ey = a.y + (b.y - a.y) * partial
-
-      /* Bright leading-edge glow */
-      const grad = ctx.createLinearGradient(a.x, a.y, ex, ey)
-      grad.addColorStop(0, 'rgba(220,235,255,0.1)')
-      grad.addColorStop(0.7, 'rgba(225,238,255,0.55)')
-      grad.addColorStop(1, 'rgba(235,245,255,0.95)')
-
-      ctx.beginPath()
-      ctx.moveTo(a.x, a.y)
-      ctx.lineTo(ex, ey)
-      ctx.strokeStyle = grad
-      ctx.lineWidth = 1.4
-      ctx.shadowBlur = 6
-      ctx.shadowColor = 'rgba(210,228,255,0.6)'
-      ctx.stroke()
-      ctx.shadowBlur = 0
-
-      /* Leading-edge bright dot */
-      ctx.beginPath()
-      ctx.arc(ex, ey, 2.2, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(235,245,255,0.9)'
-      ctx.shadowBlur = 10
-      ctx.shadowColor = 'rgba(210,228,255,0.7)'
-      ctx.fill()
-      ctx.shadowBlur = 0
-    }
-
-    /* 4. Bloom arrived nodes */
-    const arrivedCount = fullEdges < EDGE_COUNT
-      ? PATH_EDGES[fullEdges][0]
-      : PATH_NODES.length
-
-    for (let ni = 0; ni < arrivedCount; ni++) {
-      const { x, y } = px(PATH_NODES[ni])
-      /* Soft radial bloom */
-      const bloom = ctx.createRadialGradient(x, y, 0, x, y, 9)
-      bloom.addColorStop(0, 'rgba(220,238,255,0.45)')
-      bloom.addColorStop(1, 'rgba(210,228,255,0)')
-      ctx.beginPath()
-      ctx.arc(x, y, 9, 0, Math.PI * 2)
-      ctx.fillStyle = bloom
-      ctx.fill()
-
-      /* Star dot */
-      ctx.beginPath()
-      ctx.arc(x, y, 2.4, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(230,242,255,0.88)'
-      ctx.shadowBlur = 8
-      ctx.shadowColor = 'rgba(210,228,255,0.65)'
-      ctx.fill()
-      ctx.shadowBlur = 0
-    }
-  }, [scrollYProgress])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const resize = () => {
-      canvas.width  = 64
-      canvas.height = window.innerHeight
-      draw()
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    const unsub = scrollYProgress.on('change', draw)
-    return () => {
-      window.removeEventListener('resize', resize)
-      unsub()
-    }
-  }, [draw, scrollYProgress])
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="curved-trail-canvas"
-      style={{
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        width: 64,
-        height: '100vh',
-        pointerEvents: 'none',
-        zIndex: 50,
-        display: 'block',
-      }}
-      aria-hidden="true"
-    />
   )
 }
 
@@ -606,7 +604,7 @@ export default function Home() {
   }, [shouldReduceMotion])
 
   /* Typewriter headline */
-  const headline = useTypewriter('A warm room for healing when love hurts.', heroActive, 40)
+  const headline = useTypewriter('Write what you cannot say out loud.', heroActive, 42)
 
   /* Scroll to phase */
   const scrollToPhase = (i) => {
@@ -616,12 +614,13 @@ export default function Home() {
     window.scrollTo({ top: targetY, behavior: 'smooth' })
   }
 
-  const isFeatureVisible = (idx) => activePhase === idx + 1
+  /* features are at phases 2-5 now (quote is phase 1, testimonials=6, CTA=7) */
+  const isFeatureVisible = (idx) => activePhase === idx + 2
 
   return (
     <>
       <ScrollProgressBar scrollYProgress={scrollYProgress} />
-      <ScrollConstellationPath scrollYProgress={scrollYProgress} />
+      {!shouldReduceMotion && <OceanTrail scrollYProgress={scrollYProgress} />}
       <DriftParticles reduced={shouldReduceMotion} />
 
       <div ref={stageRef} className="room-stage">
@@ -659,7 +658,7 @@ export default function Home() {
                   animate={heroActive ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.1, duration: 0.55, ease: EXPO }}
                 >
-                  Heartstrings Club
+                  A safe space to feel.
                 </motion.p>
 
                 <h1 className="room-hero-headline">
@@ -671,18 +670,18 @@ export default function Home() {
                   className="room-hero-sub"
                   initial={{ opacity: 0, y: 14 }}
                   animate={heroActive ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 2.4, duration: 0.6, ease: EXPO }}
+                  transition={{ delay: 2.2, duration: 0.6, ease: EXPO }}
                 >
-                  Scroll to enter.
+                  A private space to write, reflect, and heal.
                 </motion.p>
 
                 <motion.div
                   className="scroll-hint"
                   initial={{ opacity: 0 }}
                   animate={heroActive ? { opacity: 1 } : {}}
-                  transition={{ delay: 3.0, duration: 0.8 }}
+                  transition={{ delay: 2.9, duration: 0.8 }}
                 >
-                  <span className="scroll-hint-text">scroll to journey</span>
+                  <span className="scroll-hint-text">Begin your journey</span>
                   <motion.div
                     style={{
                       width: 1,
@@ -698,14 +697,201 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* ── PHASES 1-4: Feature panels ── */}
+          {/* ── PHASE 1: Emotional quote ── */}
+          <AnimatePresence>
+            {activePhase === 1 && (
+              <motion.div
+                key="quote-phase"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 30,
+                  pointerEvents: 'none',
+                  padding: '0 2rem',
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, filter: 'blur(10px)' }}
+                transition={{ duration: 0.6, ease: EXPO }}
+              >
+                <motion.div
+                  style={{ textAlign: 'center', maxWidth: 640 }}
+                  initial={{ opacity: 0, y: 28 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: 0.1, duration: 0.65, ease: EXPO }}
+                >
+                  {/* Decorative quote mark */}
+                  <motion.div
+                    aria-hidden="true"
+                    style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '5rem',
+                      lineHeight: 1,
+                      color: 'rgba(45,212,191,0.25)',
+                      marginBottom: '-1rem',
+                      userSelect: 'none',
+                    }}
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2, duration: 0.5, ease: EXPO }}
+                  >
+                    &ldquo;
+                  </motion.div>
+
+                  <motion.p
+                    style={{
+                      fontFamily: 'var(--font-serif), Georgia, serif',
+                      fontSize: 'clamp(1.25rem, 3vw, 1.8rem)',
+                      fontStyle: 'italic',
+                      color: 'rgba(220,238,255,0.92)',
+                      lineHeight: 1.65,
+                      letterSpacing: '-0.01em',
+                      textShadow: '0 0 40px rgba(45,212,191,0.2)',
+                    }}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.28, duration: 0.7, ease: EXPO }}
+                  >
+                    Some feelings are too big for words.
+                    <br />
+                    This is a place to try anyway.
+                  </motion.p>
+
+                  {/* Soft teal divider */}
+                  <motion.div
+                    aria-hidden="true"
+                    style={{
+                      width: 48,
+                      height: 1.5,
+                      background: 'linear-gradient(90deg, transparent, rgba(45,212,191,0.55), transparent)',
+                      margin: '1.6rem auto 0',
+                      borderRadius: 2,
+                    }}
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.6, ease: EXPO }}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── PHASES 2-5: Feature panels ── */}
           {features.map((feat, i) => (
-            <FeaturePanel key={feat.id} feature={feat} visible={isFeatureVisible(i)} />
+            <FeaturePanel key={feat.id} feature={feat} idx={i} visible={isFeatureVisible(i)} />
           ))}
 
-          {/* ── PHASE 5: CTA with CSS particle burst ── */}
+          {/* ── PHASE 6: Testimonials ── */}
           <AnimatePresence>
-            {activePhase === 5 && (
+            {activePhase === 6 && (
+              <motion.div
+                key="testimonials"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 30,
+                  padding: '2rem clamp(1rem, 5vw, 4rem)',
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: EXPO }}
+              >
+                <motion.p
+                  className="room-panel-eyebrow mb-2"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08, duration: 0.5, ease: EXPO }}
+                >
+                  From the community
+                </motion.p>
+                <motion.h2
+                  style={{
+                    fontFamily: 'var(--font-serif), Georgia, serif',
+                    fontSize: 'clamp(1.5rem, 3.5vw, 2.4rem)',
+                    fontWeight: 700,
+                    color: 'var(--text)',
+                    letterSpacing: '-0.02em',
+                    marginBottom: '2.5rem',
+                    textAlign: 'center',
+                  }}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.16, duration: 0.55, ease: EXPO }}
+                >
+                  Words from people who stayed.
+                </motion.h2>
+
+                <div style={{
+                  display: 'flex',
+                  gap: 'clamp(0.75rem, 2vw, 1.5rem)',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  maxWidth: 900,
+                  width: '100%',
+                }}>
+                  {[
+                    { quote: 'Writing letters to myself changed how I think.', name: 'Jamie', age: 24 },
+                    { quote: 'My diary is the only place I am truly honest.', name: 'Priya', age: 31 },
+                    { quote: 'The quotes feature got me through a really hard month.', name: 'Marcus', age: 19 },
+                  ].map((t, i) => (
+                    <motion.div
+                      key={t.name}
+                      style={{
+                        flex: '1 1 240px',
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(220,240,255,0.10)',
+                        borderRadius: 16,
+                        padding: 'clamp(1.1rem, 2vw, 1.6rem)',
+                        backdropFilter: 'blur(14px)',
+                        WebkitBackdropFilter: 'blur(14px)',
+                        boxShadow: '0 4px 32px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(45,212,191,0.08) inset',
+                      }}
+                      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: i * 0.12 + 0.28, duration: 0.55, ease: EXPO }}
+                    >
+                      {/* Quote mark */}
+                      <div style={{
+                        fontFamily: 'Georgia, serif',
+                        fontSize: '2rem',
+                        lineHeight: 1,
+                        color: 'rgba(45,212,191,0.35)',
+                        marginBottom: '0.5rem',
+                        userSelect: 'none',
+                      }} aria-hidden="true">&ldquo;</div>
+                      <p style={{
+                        fontSize: '0.92rem',
+                        color: 'rgba(210,230,245,0.82)',
+                        lineHeight: 1.7,
+                        fontStyle: 'italic',
+                        marginBottom: '1rem',
+                      }}>{t.quote}</p>
+                      <p style={{
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(45,212,191,0.55)',
+                        fontWeight: 600,
+                      }}>— {t.name}, {t.age}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── PHASE 7: CTA with CSS particle burst ── */}
+          <AnimatePresence>
+            {activePhase === 7 && (
               <motion.div
                 key="cta"
                 className="room-cta-panel"
@@ -731,56 +917,75 @@ export default function Home() {
                   />
                 ))}
 
+                {/* Teal glow behind headline */}
+                <div aria-hidden="true" style={{
+                  position: 'absolute',
+                  top: '30%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '60vw',
+                  height: '40vh',
+                  background: 'radial-gradient(ellipse, rgba(45,212,191,0.12) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                }} />
+
                 <motion.p
                   className="room-panel-eyebrow mb-3"
+                  style={{ position: 'relative', zIndex: 1 }}
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.12, duration: 0.55, ease: EXPO }}
+                  transition={{ delay: 0.1, duration: 0.55, ease: EXPO }}
                 >
-                  The door is open
+                  You belong here
                 </motion.p>
 
                 <motion.h2
                   style={{
+                    position: 'relative',
+                    zIndex: 1,
                     fontFamily: 'var(--font-serif), Georgia, serif',
                     fontSize: 'clamp(2rem, 5vw, 4rem)',
                     fontWeight: 700,
                     lineHeight: 1.15,
                     color: 'var(--text)',
                     letterSpacing: '-0.025em',
-                    textShadow: '0 4px 32px rgba(45,212,191,0.25), 0 2px 8px rgba(0,0,0,0.5)',
-                    marginBottom: '1.25rem',
+                    textShadow: '0 4px 48px rgba(45,212,191,0.3), 0 2px 8px rgba(0,0,0,0.5)',
+                    marginBottom: '1rem',
                   }}
                   initial={{ opacity: 0, y: 28, filter: 'blur(12px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ delay: 0.28, duration: 0.7, ease: EXPO }}
+                  transition={{ delay: 0.22, duration: 0.7, ease: EXPO }}
                 >
-                  Your room is ready.
+                  Your story deserves a home.
                 </motion.h2>
 
                 <motion.p
                   style={{
+                    position: 'relative',
+                    zIndex: 1,
                     color: 'rgba(184,224,232,0.72)',
                     fontSize: '1.05rem',
                     maxWidth: 480,
-                    lineHeight: 1.7,
-                    margin: '0 auto 2.25rem',
+                    lineHeight: 1.75,
+                    margin: '0 auto 2.5rem',
                   }}
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.44, duration: 0.55, ease: EXPO }}
+                  transition={{ delay: 0.38, duration: 0.55, ease: EXPO }}
                 >
-                  Come back as often as you need. No pressure, no timeline — only warmth, privacy, and the quiet space to feel your way through.
+                  Start writing today — it takes less than a minute. No pressure, no timeline. Just warmth, privacy, and space to feel.
                 </motion.p>
 
                 <motion.div
                   className="flex flex-wrap gap-3 justify-center"
+                  style={{ position: 'relative', zIndex: 1 }}
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.58, duration: 0.5, ease: EXPO }}
+                  transition={{ delay: 0.52, duration: 0.5, ease: EXPO }}
                 >
                   <Link href="/register" className="room-cta-join-btn">
-                    Join the club
+                    Start for free
                   </Link>
                   <Link
                     href="/login"
@@ -830,9 +1035,9 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* Phase label */}
+          {/* Phase label — show feature eyebrow during phases 2-5 */}
           <AnimatePresence mode="wait">
-            {activePhase > 0 && activePhase < 5 && (
+            {activePhase >= 2 && activePhase <= 5 && (
               <motion.div
                 key={`label-${activePhase}`}
                 style={{
@@ -852,12 +1057,12 @@ export default function Home() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35 }}
               >
-                {features[activePhase - 1]?.eyebrow}
+                {features[activePhase - 2]?.eyebrow}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <NavDots activePhase={activePhase} count={6} onDotClick={scrollToPhase} />
+          <NavDots activePhase={activePhase} count={8} onDotClick={scrollToPhase} />
         </div>
       </div>
     </>

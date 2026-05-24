@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"index.js -> ../components/ConstellationScene\":{\"id\":\"index.js -> ../components/ConstellationScene\",\"files\":[\"static/chunks/components_ConstellationScene_js.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST='{"index.js -> ../components/ConstellationScene":{"id":3499,"files":["static/chunks/499.dbd6079e8ad5c4f6.js"]}}';
