@@ -235,121 +235,115 @@ const TRAIL_MILESTONES = new Set([2, 5, 7, 9])
  */
 const CARD_TOPS = ['57vh', '38vh', '20vh', '5vh']
 
-/* ─── Catmull-Rom → bezier: compute control points for smooth trail ─ */
-function catmullRomCPs(pts, i) {
-  const p0 = pts[Math.max(i - 1, 0)]
-  const p1 = pts[i]
-  const p2 = pts[i + 1]
-  const p3 = pts[Math.min(i + 2, pts.length - 1)]
-  const cp1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6]
-  const cp2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
-  return [cp1, cp2]
-}
-
 /* ─── OceanTrail — full-screen scroll-drawn constellation trail ─── */
+/*
+ * Draws a proper constellation: straight lines between glowing star nodes.
+ * All nodes are visible as faint ghost dots from the start — you can see
+ * the full shape of the constellation waiting to be drawn in.
+ * rAF-throttled: scroll value stored in a ref, one draw per animation frame.
+ */
 function OceanTrail({ scrollYProgress }) {
-  const canvasRef = useRef(null)
+  const canvasRef  = useRef(null)
+  const scrollRef  = useRef(0)
+  const rafRef     = useRef(null)
+  const sizeRef    = useRef({ W: 0, H: 0 })
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    const ctx = canvas.getContext('2d')
 
     const resize = () => {
       canvas.width  = window.innerWidth
       canvas.height = window.innerHeight
-      draw()
+      sizeRef.current = { W: canvas.width, H: canvas.height }
+      render(scrollRef.current)
     }
 
-    const draw = () => {
-      const W = canvas.width
-      const H = canvas.height
+    const render = (progress) => {
+      const { W, H } = sizeRef.current
       if (!W || !H) return
-      const ctx = canvas.getContext('2d')
-      const progress = scrollYProgress.get()
-
       ctx.clearRect(0, 0, W, H)
 
       const totalProgress = progress * TRAIL_SEGMENT_COUNT
-      const fullSegs  = Math.floor(totalProgress)
-      const partial   = totalProgress - fullSegs
+      const fullSegs = Math.floor(totalProgress)
+      const partial  = totalProgress - fullSegs
 
       const px = ([nx, ny]) => [nx * W, ny * H]
 
-      /* Draw completed segments as bright bezier curves */
+      /* 1. Ghost dots for ALL nodes — show the constellation shape ahead */
+      for (let ni = 0; ni < TRAIL_NODES.length; ni++) {
+        const [nx, ny] = px(TRAIL_NODES[ni])
+        ctx.beginPath()
+        ctx.arc(nx, ny, 1.5, 0, Math.PI * 2)
+        ctx.fillStyle = TRAIL_MILESTONES.has(ni)
+          ? 'rgba(45,212,191,0.18)'
+          : 'rgba(167,243,208,0.10)'
+        ctx.fill()
+      }
+
+      /* 2. Completed segments — straight constellation lines */
       for (let s = 0; s < fullSegs && s < TRAIL_SEGMENT_COUNT; s++) {
         const [ax, ay] = px(TRAIL_NODES[s])
         const [bx, by] = px(TRAIL_NODES[s + 1])
-        const [cp1, cp2] = catmullRomCPs(TRAIL_NODES, s)
-        const [c1x, c1y] = px(cp1)
-        const [c2x, c2y] = px(cp2)
+        const ageAlpha = 0.25 + 0.45 * (s / TRAIL_SEGMENT_COUNT)
 
-        const ageAlpha = 0.20 + 0.50 * (s / TRAIL_SEGMENT_COUNT)
         const grad = ctx.createLinearGradient(ax, ay, bx, by)
-        grad.addColorStop(0,   `rgba(45,212,191,${(ageAlpha * 0.55).toFixed(2)})`)
+        grad.addColorStop(0,   `rgba(45,212,191,${(ageAlpha * 0.6).toFixed(2)})`)
         grad.addColorStop(0.5, `rgba(56,189,248,${ageAlpha.toFixed(2)})`)
-        grad.addColorStop(1,   `rgba(167,243,208,${(ageAlpha * 0.85).toFixed(2)})`)
+        grad.addColorStop(1,   `rgba(167,243,208,${(ageAlpha * 0.8).toFixed(2)})`)
 
         ctx.beginPath()
         ctx.moveTo(ax, ay)
-        ctx.bezierCurveTo(c1x, c1y, c2x, c2y, bx, by)
+        ctx.lineTo(bx, by)
         ctx.strokeStyle = grad
-        ctx.lineWidth   = 1.4
+        ctx.lineWidth   = 1.2
         ctx.stroke()
       }
 
-      /* Draw the currently-animating partial segment */
-      if (fullSegs < TRAIL_SEGMENT_COUNT && partial > 0.01) {
+      /* 3. Currently-drawing partial segment — comet drawing toward next node */
+      if (fullSegs < TRAIL_SEGMENT_COUNT && partial > 0.005) {
         const [ax, ay] = px(TRAIL_NODES[fullSegs])
         const [bx, by] = px(TRAIL_NODES[fullSegs + 1])
-        const [cp1, cp2] = catmullRomCPs(TRAIL_NODES, fullSegs)
-        const [c1x, c1y] = px(cp1)
-        const [c2x, c2y] = px(cp2)
-
-        /* Sample bezier at t=partial to get leading edge point */
-        const t = partial
-        const mt = 1 - t
-        const ex = mt*mt*mt*ax + 3*mt*mt*t*c1x + 3*mt*t*t*c2x + t*t*t*bx
-        const ey = mt*mt*mt*ay + 3*mt*mt*t*c1y + 3*mt*t*t*c2y + t*t*t*by
-        /* Control points for the partial segment (De Casteljau subdivision) */
-        const pc1x = mt*ax + t*c1x, pc1y = mt*ay + t*c1y
-        const pc2x = mt*pc1x + t*(mt*c1x+t*c2x), pc2y = mt*pc1y + t*(mt*c1y+t*c2y)
+        const ex = ax + (bx - ax) * partial
+        const ey = ay + (by - ay) * partial
 
         const grad = ctx.createLinearGradient(ax, ay, ex, ey)
-        grad.addColorStop(0,   'rgba(45,212,191,0.12)')
-        grad.addColorStop(0.6, 'rgba(56,189,248,0.65)')
-        grad.addColorStop(1,   'rgba(200,252,245,0.98)')
+        grad.addColorStop(0,   'rgba(45,212,191,0.08)')
+        grad.addColorStop(0.6, 'rgba(56,189,248,0.60)')
+        grad.addColorStop(1,   'rgba(200,252,245,0.96)')
 
         ctx.beginPath()
         ctx.moveTo(ax, ay)
-        ctx.bezierCurveTo(pc1x, pc1y, pc2x, pc2y, ex, ey)
+        ctx.lineTo(ex, ey)
         ctx.strokeStyle = grad
-        ctx.lineWidth   = 1.8
-        ctx.shadowBlur  = 8
-        ctx.shadowColor = 'rgba(45,212,191,0.7)'
+        ctx.lineWidth   = 1.6
+        ctx.shadowBlur  = 7
+        ctx.shadowColor = 'rgba(45,212,191,0.65)'
         ctx.stroke()
         ctx.shadowBlur  = 0
 
-        /* Comet head at leading edge */
+        /* Comet head */
         ctx.beginPath()
-        ctx.arc(ex, ey, 2.8, 0, Math.PI * 2)
+        ctx.arc(ex, ey, 2.6, 0, Math.PI * 2)
         ctx.fillStyle   = 'rgba(200,255,245,0.95)'
-        ctx.shadowBlur  = 14
+        ctx.shadowBlur  = 12
         ctx.shadowColor = 'rgba(45,212,191,0.8)'
         ctx.fill()
         ctx.shadowBlur  = 0
       }
 
-      /* Bloom arrived nodes */
+      /* 4. Bloom arrived nodes */
       const arrivedCount = Math.min(fullSegs + 1, TRAIL_NODES.length)
       for (let ni = 0; ni < arrivedCount; ni++) {
         const [nx, ny] = px(TRAIL_NODES[ni])
         const isMile   = TRAIL_MILESTONES.has(ni)
         const bloomR   = isMile ? 22 : 8
-        const dotR     = isMile ? 3.8 : 2.0
-        const alpha    = isMile ? 0.60 : 0.32
+        const dotR     = isMile ? 3.8 : 2.2
+        const bloomA   = isMile ? 0.55 : 0.30
 
         const bloom = ctx.createRadialGradient(nx, ny, 0, nx, ny, bloomR)
-        bloom.addColorStop(0, `rgba(45,212,191,${alpha})`)
+        bloom.addColorStop(0, `rgba(45,212,191,${bloomA})`)
         bloom.addColorStop(1, 'rgba(45,212,191,0)')
         ctx.beginPath()
         ctx.arc(nx, ny, bloomR, 0, Math.PI * 2)
@@ -358,26 +352,42 @@ function OceanTrail({ scrollYProgress }) {
 
         ctx.beginPath()
         ctx.arc(nx, ny, dotR, 0, Math.PI * 2)
-        ctx.fillStyle   = isMile ? 'rgba(200,255,245,0.95)' : 'rgba(167,243,208,0.80)'
-        ctx.shadowBlur  = isMile ? 16 : 6
-        ctx.shadowColor = 'rgba(45,212,191,0.8)'
+        ctx.fillStyle   = isMile ? 'rgba(200,255,245,0.95)' : 'rgba(167,243,208,0.85)'
+        ctx.shadowBlur  = isMile ? 14 : 5
+        ctx.shadowColor = 'rgba(45,212,191,0.75)'
         ctx.fill()
         ctx.shadowBlur  = 0
 
         if (isMile) {
           ctx.beginPath()
-          ctx.arc(nx, ny, bloomR * 0.65, 0, Math.PI * 2)
-          ctx.strokeStyle = 'rgba(56,189,248,0.30)'
-          ctx.lineWidth   = 1.2
+          ctx.arc(nx, ny, bloomR * 0.60, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(56,189,248,0.28)'
+          ctx.lineWidth   = 1.1
           ctx.stroke()
         }
       }
     }
 
+    /* rAF throttle: at most one draw per animation frame */
+    const scheduleDraw = () => {
+      if (rafRef.current) return
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        render(scrollRef.current)
+      })
+    }
+
     resize()
     window.addEventListener('resize', resize)
-    const unsub = scrollYProgress.on('change', draw)
-    return () => { window.removeEventListener('resize', resize); unsub() }
+    const unsub = scrollYProgress.on('change', v => {
+      scrollRef.current = v
+      scheduleDraw()
+    })
+    return () => {
+      window.removeEventListener('resize', resize)
+      unsub()
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
   }, [scrollYProgress])
 
   return (
@@ -480,7 +490,7 @@ const DRIFT_PARTICLES = (() => {
     }
   }
   const rand = sr(0xf1be50)
-  return Array.from({ length: 18 }, (_, i) => ({
+  return Array.from({ length: 10 }, (_, i) => ({
     id: i,
     left: `${4 + rand() * 88}%`,
     top: `${10 + rand() * 75}%`,

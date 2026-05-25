@@ -148,8 +148,35 @@ const ALL_EDGES = [
   ...CASS_EDGES.map(([a,b])     => [a + CASS_OFFSET,     b + CASS_OFFSET]),
 ]
 
+/* ─── Shooting star pool — 3 independent slots ──────────────── */
+/*
+ * Each slot fires at a random interval. When active, it renders as a
+ * glowing streak moving diagonally across the canvas.
+ * Seeded initial offsets so first shots feel natural.
+ */
+const SHOOT_POOL = [
+  { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0, nextFire: 1800 },
+  { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0, nextFire: 3600 },
+  { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0, nextFire: 5400 },
+]
+let _lastShootTs = 0  // tracks rAF timestamp for delta-time
+
+function spawnShooter(slot, W, H) {
+  /* Start from a random point on the top or left edge */
+  const edge = Math.random() > 0.5
+  slot.x = edge ? Math.random() * W * 0.8 : Math.random() * W * 0.2
+  slot.y = edge ? Math.random() * H * 0.3 : Math.random() * H * 0.4
+  const speed = 480 + Math.random() * 320  // px/s
+  const angle = (Math.PI / 4) + (Math.random() - 0.5) * (Math.PI / 6)
+  slot.vx = Math.cos(angle) * speed
+  slot.vy = Math.sin(angle) * speed
+  slot.maxLife = 0.45 + Math.random() * 0.25  // seconds
+  slot.life = slot.maxLife
+  slot.active = true
+}
+
 /* ─── Build full star array (constellation + scattered) ─────── */
-const TOTAL_STARS = 200
+const TOTAL_STARS = 160
 const SCATTER_COUNT = TOTAL_STARS - CONST_STAR_COUNT
 
 function buildStars() {
@@ -246,10 +273,18 @@ export default function ConstellationScene({ scrollProgress }) {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    /* Resize canvas to fill the sticky container */
+    /* Resize canvas — cap devicePixelRatio at 1.5 to halve pixel work
+       on retina screens without visible quality loss at this scale */
     const resize = () => {
-      canvas.width  = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+      const W   = canvas.offsetWidth
+      const H   = canvas.offsetHeight
+      canvas.width  = W * dpr
+      canvas.height = H * dpr
+      canvas.getContext('2d').scale(dpr, dpr)
+      /* Store logical size for draw math */
+      canvas.logicalW = W
+      canvas.logicalH = H
     }
     resize()
     const ro = new ResizeObserver(resize)
@@ -270,8 +305,9 @@ export default function ConstellationScene({ scrollProgress }) {
       timeRef.current = timestamp * 0.001  // seconds
 
       const ctx   = canvas.getContext('2d')
-      const W     = canvas.width
-      const H     = canvas.height
+      /* Use logical dimensions (pre-DPR) for all draw math */
+      const W     = canvas.logicalW || canvas.offsetWidth
+      const H     = canvas.logicalH || canvas.offsetHeight
       const cx    = W * 0.5
       const cy    = H * 0.5
       const camZ  = cameraZ.get()
@@ -421,7 +457,9 @@ export default function ConstellationScene({ scrollProgress }) {
              Streak radiates outward FROM the vanishing point — gives the
              "flying through stars" hyperspace effect. Streak intensity
              scales with proximity (depth) and how far the camera has moved. */
-          const warpT = Math.max(0, 1 - p.depth / 180) * Math.min(camZ / 300, 1)
+          const warpT = camZ > 80
+            ? Math.max(0, 1 - p.depth / 180) * Math.min((camZ - 80) / 260, 1)
+            : 0
 
           if (warpT > 0.05) {
             /* Direction from vanishing point toward star */
@@ -452,6 +490,64 @@ export default function ConstellationScene({ scrollProgress }) {
           }
         }
 
+        ctx.restore()
+      }
+
+      /* ── Shooting stars ─────────────────────────────────────── */
+      const dt = _lastShootTs > 0 ? Math.min((timestamp - _lastShootTs) / 1000, 0.05) : 0
+      _lastShootTs = timestamp
+
+      for (let si = 0; si < SHOOT_POOL.length; si++) {
+        const s = SHOOT_POOL[si]
+
+        if (!s.active) {
+          /* Count down to next firing */
+          s.nextFire -= dt * 1000
+          if (s.nextFire <= 0) {
+            spawnShooter(s, W, H)
+            s.nextFire = 3500 + Math.random() * 4000
+          }
+          continue
+        }
+
+        /* Advance position */
+        s.x += s.vx * dt
+        s.y += s.vy * dt
+        s.life -= dt
+
+        if (s.life <= 0 || s.x > W + 50 || s.y > H + 50) {
+          s.active = false
+          continue
+        }
+
+        /* Draw streak: gradient from transparent tail to bright head */
+        const lifeRatio  = s.life / s.maxLife
+        const headAlpha  = Math.min(lifeRatio * 2, 1) * 0.88  // fade in fast, fade out slow
+        const tailLength = 90 + (1 - lifeRatio) * 60
+        const tx = s.x - (s.vx / Math.hypot(s.vx, s.vy)) * tailLength
+        const ty = s.y - (s.vy / Math.hypot(s.vx, s.vy)) * tailLength
+
+        const shootGrad = ctx.createLinearGradient(tx, ty, s.x, s.y)
+        shootGrad.addColorStop(0,   'rgba(255,255,255,0)')
+        shootGrad.addColorStop(0.6, `rgba(220,240,255,${(headAlpha * 0.4).toFixed(2)})`)
+        shootGrad.addColorStop(1,   `rgba(255,255,255,${headAlpha.toFixed(2)})`)
+
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(tx, ty)
+        ctx.lineTo(s.x, s.y)
+        ctx.strokeStyle = shootGrad
+        ctx.lineWidth   = 1.2
+        ctx.shadowBlur  = 6
+        ctx.shadowColor = 'rgba(200,240,255,0.7)'
+        ctx.stroke()
+        ctx.shadowBlur  = 0
+
+        /* Bright head dot */
+        ctx.beginPath()
+        ctx.arc(s.x, s.y, 1.6, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(255,255,255,${headAlpha.toFixed(2)})`
+        ctx.fill()
         ctx.restore()
       }
     }
