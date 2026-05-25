@@ -13,5 +13,16 @@ export default async function handler(req,res){
 
   const token = signToken({ id: u.id, email: u.email })
   setSessionCookie(res, token)
-  res.status(200).json({ok:true})
+
+  /* Detect first-time user: no letter row = never written their first letter */
+  let firstTime = false
+  try {
+    const hasLetter = await db.query(
+      'SELECT 1 FROM letters_to_self WHERE user_id=$1 LIMIT 1',
+      [u.id]
+    )
+    firstTime = hasLetter.rows.length === 0
+  } catch (_) { /* table may not exist in older schemas — ignore */ }
+
+  res.status(200).json({ ok: true, firstTime })
 }

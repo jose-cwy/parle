@@ -39,80 +39,58 @@ const MENU_NODES = [
 /* Edges as pairs of node indices — forms a closed loop + diagonal */
 const MENU_EDGES = [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2]]
 
-/* ─── Constellation icon SVG ─────────────────────────────────── */
+/* ─── Sparkle / starburst icon ────────────────────────────────── */
 /*
- * 4 dots connected by 2 lines, arranged like a small star cluster.
- * Closed: lines visible, dots at rest positions.
- * Open:   lines fade out, outer dots drift outward.
+ * A 4-arm star (✦) drawn as SVG lines.
+ * Closed: long cardinal arms + shorter diagonal arms = sparkle shape.
+ * Open:   whole icon rotates 45° and the diagonal arms contract to
+ *         the centre, leaving a clean + cross — visually "opens up".
  */
-function ConstellationIcon({ isOpen }) {
-  /* Dot positions — [cx, cy] in 24×24 viewBox */
-  const closed = { d0: [5, 6], d1: [19, 9], d2: [8, 19], d3: [14, 13] }
-  const open   = { d0: [3, 4], d1: [21, 7], d2: [6, 21], d3: [14, 13] }
-  const pos = isOpen ? open : closed
+function SparkleIcon({ isOpen }) {
+  const teal = 'var(--accent-teal)'
+  const trans = { duration: 0.28, ease: EXPO }
 
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
+    <motion.svg
+      width="22"
+      height="22"
+      viewBox="0 0 22 22"
       fill="none"
       aria-hidden="true"
-      style={{ display: 'block', overflow: 'visible' }}
+      style={{ display: 'block', overflow: 'visible', filter: 'drop-shadow(0 0 4px rgba(45,212,191,0.7))' }}
+      animate={{ rotate: isOpen ? 45 : 0 }}
+      transition={trans}
     >
-      {/* Connecting lines */}
+      {/* Long cardinal arms — always full length */}
+      <line x1="11" y1="2"  x2="11" y2="20" stroke={teal} strokeWidth="1.4" strokeLinecap="round" />
+      <line x1="2"  y1="11" x2="20" y2="11" stroke={teal} strokeWidth="1.4" strokeLinecap="round" />
+
+      {/* Short diagonal arms — contract to centre on open */}
       <motion.line
-        x1={closed.d0[0]} y1={closed.d0[1]}
-        x2={closed.d3[0]} y2={closed.d3[1]}
-        stroke="var(--accent-teal)" strokeWidth="1"
-        animate={{ opacity: isOpen ? 0 : 0.7 }}
-        transition={{ duration: 0.22 }}
+        animate={isOpen
+          ? { x1: 11, y1: 11, x2: 11, y2: 11 }
+          : { x1: 5,  y1: 5,  x2: 17, y2: 17 }
+        }
+        transition={trans}
+        stroke={teal} strokeWidth="1" strokeLinecap="round" opacity={isOpen ? 0 : 0.75}
       />
       <motion.line
-        x1={closed.d3[0]} y1={closed.d3[1]}
-        x2={closed.d1[0]} y2={closed.d1[1]}
-        stroke="var(--accent-teal)" strokeWidth="1"
-        animate={{ opacity: isOpen ? 0 : 0.55 }}
-        transition={{ duration: 0.22 }}
-      />
-      <motion.line
-        x1={closed.d3[0]} y1={closed.d3[1]}
-        x2={closed.d2[0]} y2={closed.d2[1]}
-        stroke="var(--accent-teal)" strokeWidth="1"
-        animate={{ opacity: isOpen ? 0 : 0.45 }}
-        transition={{ duration: 0.22 }}
+        animate={isOpen
+          ? { x1: 11, y1: 11, x2: 11, y2: 11 }
+          : { x1: 17, y1: 5,  x2: 5,  y2: 17 }
+        }
+        transition={trans}
+        stroke={teal} strokeWidth="1" strokeLinecap="round" opacity={isOpen ? 0 : 0.75}
       />
 
-      {/* Outer dot 0 */}
+      {/* Centre glow dot */}
       <motion.circle
-        animate={{ cx: pos.d0[0], cy: pos.d0[1] }}
-        transition={{ duration: 0.28, ease: EXPO }}
-        r={isOpen ? 1.8 : 2} fill="var(--accent-teal)"
-        style={{ filter: 'drop-shadow(0 0 3px rgba(45,212,191,0.9))' }}
+        cx="11" cy="11"
+        animate={{ r: isOpen ? [2, 2.8, 2] : 2 }}
+        transition={{ duration: isOpen ? 1.4 : 0.2, repeat: isOpen ? Infinity : 0, ease: 'easeInOut' }}
+        fill={teal}
       />
-      {/* Outer dot 1 */}
-      <motion.circle
-        animate={{ cx: pos.d1[0], cy: pos.d1[1] }}
-        transition={{ duration: 0.28, ease: EXPO }}
-        r={isOpen ? 1.8 : 1.6} fill="var(--accent-teal)"
-        style={{ filter: 'drop-shadow(0 0 2px rgba(45,212,191,0.7))' }}
-      />
-      {/* Outer dot 2 */}
-      <motion.circle
-        animate={{ cx: pos.d2[0], cy: pos.d2[1] }}
-        transition={{ duration: 0.28, ease: EXPO }}
-        r={isOpen ? 1.8 : 1.4} fill="rgba(167,243,208,0.85)"
-        style={{ filter: 'drop-shadow(0 0 2px rgba(45,212,191,0.6))' }}
-      />
-      {/* Center node — always visible, pulses when open */}
-      <motion.circle
-        cx={pos.d3[0]} cy={pos.d3[1]}
-        animate={{ r: isOpen ? [2.5, 3.2, 2.5] : 2.5, opacity: isOpen ? [1, 0.7, 1] : 1 }}
-        transition={{ duration: isOpen ? 1.6 : 0.2, repeat: isOpen ? Infinity : 0, ease: 'easeInOut' }}
-        fill="var(--accent-teal)"
-        style={{ filter: 'drop-shadow(0 0 4px rgba(45,212,191,1))' }}
-      />
-    </svg>
+    </motion.svg>
   )
 }
 
@@ -330,7 +308,7 @@ export default function Header() {
               transition: 'background 0.22s, border-color 0.22s',
             }}
           >
-            <ConstellationIcon isOpen={isOpen} />
+            <SparkleIcon isOpen={isOpen} />
           </motion.button>
         </div>
       </motion.header>

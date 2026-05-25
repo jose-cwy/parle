@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import { motion, AnimatePresence } from 'framer-motion'
 import RequireAuth from '../components/RequireAuth'
 import DeskScene from '../components/DeskScene'
 import LetterEditor from '../components/LetterEditor'
@@ -6,7 +8,10 @@ import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
 import { SkeletonLetterRoom } from '../components/Skeleton'
 
+const EXPO = [0.16, 1, 0.3, 1]
+
 export default function LetterToYourselfPage(){
+  const router = useRouter()
   const [letter, setLetter] = useState(null)
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
@@ -15,6 +20,17 @@ export default function LetterToYourselfPage(){
   const [showSavedToast, setShowSavedToast] = useState(false)
   const [pendingCompletedLetter, setPendingCompletedLetter] = useState(null)
   const [modalState, setModalState] = useState({ open: false, mode: 'status', title: '', description: '' })
+
+  /* Welcome banner — shown when arriving from first-time login */
+  const [showWelcome, setShowWelcome] = useState(false)
+  useEffect(() => {
+    if (router.query.welcome === '1') {
+      setShowWelcome(true)
+      /* Auto-dismiss after 7s */
+      const t = setTimeout(() => setShowWelcome(false), 7000)
+      return () => clearTimeout(t)
+    }
+  }, [router.query.welcome])
 
   useEffect(() => {
     fetchLetter()
@@ -121,6 +137,66 @@ export default function LetterToYourselfPage(){
 
   return (
     <RequireAuth>
+      {/* First-time welcome banner */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            key="welcome-banner"
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.55, ease: EXPO }}
+            style={{
+              position: 'fixed',
+              top: '4.5rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 50,
+              maxWidth: 560,
+              width: 'calc(100% - 2rem)',
+              background: 'rgba(3,12,28,0.88)',
+              border: '1px solid rgba(45,212,191,0.28)',
+              borderRadius: '14px',
+              padding: '1rem 1.4rem',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.85rem',
+            }}
+          >
+            <span style={{ fontSize: '1.3rem', flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+            <div style={{ flex: 1 }}>
+              <p style={{
+                fontFamily: 'var(--font-serif), Georgia, serif',
+                fontStyle: 'italic',
+                fontSize: '0.95rem',
+                color: 'rgba(180,240,225,0.92)',
+                lineHeight: 1.6,
+                margin: 0,
+              }}>
+                This is your first letter. Write to the future you — seal it, and open it when you are ready.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowWelcome(false)}
+              aria-label="Dismiss"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(150,200,210,0.5)',
+                fontSize: '1.1rem',
+                cursor: 'pointer',
+                flexShrink: 0,
+                padding: '0 0.2rem',
+              }}
+            >
+              ×
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {loading ? (
         <SkeletonLetterRoom />
       ) : (

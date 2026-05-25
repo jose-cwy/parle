@@ -273,19 +273,22 @@ export default function ConstellationScene({ scrollProgress }) {
     const canvas = canvasRef.current
     if (!canvas) return
 
+    /* Hoist context + projected array — created once, reused every frame.
+       Must be declared before resize so resize can call ctx.setTransform. */
+    const ctx       = canvas.getContext('2d')
+    const projected = new Array(STARS.length)
+
     /* Resize canvas — cap devicePixelRatio at 1.5 to halve pixel work
        on retina screens without visible quality loss at this scale.
-       Use ctx.setTransform (absolute, not additive) so repeated resize
-       calls from ResizeObserver never accumulate scale. */
+       ctx.setTransform is absolute (not additive) so repeated ResizeObserver
+       firings never accumulate scale. */
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       const W   = canvas.offsetWidth
       const H   = canvas.offsetHeight
       canvas.width  = W * dpr   // resets the canvas transform
       canvas.height = H * dpr
-      /* setTransform is absolute — safe to call on every resize */
-      canvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0)
-      /* Store logical size so draw math doesn't need to divide by dpr */
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       canvas.logicalW = W
       canvas.logicalH = H
     }
@@ -307,7 +310,6 @@ export default function ConstellationScene({ scrollProgress }) {
       rafRef.current = requestAnimationFrame(draw)
       timeRef.current = timestamp * 0.001  // seconds
 
-      const ctx   = canvas.getContext('2d')
       /* Use logical dimensions (pre-DPR) for all draw math */
       const W     = canvas.logicalW || canvas.offsetWidth
       const H     = canvas.logicalH || canvas.offsetHeight
@@ -329,9 +331,7 @@ export default function ConstellationScene({ scrollProgress }) {
 
       ctx.clearRect(0, 0, W, H)
 
-      /* Project all stars to screen coords */
-      const projected = new Array(STARS.length)
-
+      /* Project all stars into reusable array (no allocation per frame) */
       for (let i = 0; i < STARS.length; i++) {
         const star = STARS[i]
         let z = star.z - camZ

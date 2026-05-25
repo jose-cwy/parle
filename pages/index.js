@@ -235,7 +235,7 @@ const TRAIL_MILESTONES = new Set([2, 5, 7, 9])
  * Card top positions matched to trail milestone y-values.
  * Indexed to features array (0=letter,1=diary,2=chat,3=quotes).
  */
-const CARD_TOPS = ['57vh', '38vh', '20vh', '5vh']
+const CARD_TOPS = ['8vh', '32vh', '18vh', '4vh']
 
 /* ─── OceanTrail — full-screen scroll-drawn constellation trail ─── */
 /*
@@ -623,6 +623,15 @@ export default function Home() {
   const [darkOverlay, setDarkOverlay] = useState(true)
   const [heroActive, setHeroActive]  = useState(false)
   const [activePhase, setActivePhase] = useState(0)
+  const [ctaUser, setCtaUser]        = useState(null)   // auth state for CTA
+
+  /* Fetch auth state once — only used to personalise the CTA phase */
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.user) setCtaUser(d.user) })
+      .catch(() => {})
+  }, [])
 
   /* Drive active phase from scroll — functional updater prevents
      re-renders on every tick; only fires when phase actually changes */
@@ -1066,35 +1075,93 @@ export default function Home() {
                   Start writing today — it takes less than a minute. No pressure, no timeline. Just warmth, privacy, and space to feel.
                 </motion.p>
 
-                <motion.div
-                  className="flex flex-wrap gap-3 justify-center"
-                  style={{ position: 'relative', zIndex: 1 }}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.52, duration: 0.5, ease: EXPO }}
-                >
-                  <Link href="/register" className="room-cta-join-btn">
-                    Start for free
-                  </Link>
-                  <Link
-                    href="/login"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '0.95rem 1.8rem',
-                      borderRadius: 99,
-                      border: '1.5px solid rgba(45,212,191,0.28)',
-                      color: 'rgba(184,224,232,0.82)',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                      transition: 'border-color 0.2s, color 0.2s',
-                      backdropFilter: 'blur(8px)',
-                    }}
+                {ctaUser ? (
+                  /* ── Logged-in: personalised greeting + quick-access ── */
+                  <motion.div
+                    style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.52, duration: 0.5, ease: EXPO }}
                   >
-                    Already have a space
-                  </Link>
-                </motion.div>
+                    <p style={{
+                      fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
+                      color: 'rgba(120,240,220,0.9)',
+                      fontWeight: 600,
+                      marginBottom: '0.5rem',
+                      fontFamily: 'var(--font-serif), Georgia, serif',
+                      fontStyle: 'italic',
+                    }}>
+                      Welcome back{ctaUser.email ? `, ${ctaUser.email.split('@')[0]}` : ''} ✦
+                    </p>
+                    <p style={{
+                      fontSize: '0.95rem',
+                      color: 'rgba(184,224,232,0.65)',
+                      marginBottom: '2rem',
+                    }}>
+                      Your space is waiting. Keep writing, keep healing.
+                    </p>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      {[
+                        { href: '/chat',              label: 'AI Chat →' },
+                        { href: '/diary',             label: 'My Diary →' },
+                        { href: '/letter-to-yourself', label: 'My Letter →' },
+                        { href: '/quotes',            label: 'Quotes →' },
+                      ].map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '0.7rem 1.4rem',
+                            borderRadius: 99,
+                            border: '1px solid rgba(45,212,191,0.25)',
+                            color: 'rgba(184,224,232,0.85)',
+                            fontSize: '0.92rem',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            background: 'rgba(45,212,191,0.07)',
+                            backdropFilter: 'blur(8px)',
+                            transition: 'border-color 0.2s, background 0.2s',
+                          }}
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* ── Logged-out: signup CTA ── */
+                  <motion.div
+                    className="flex flex-wrap gap-3 justify-center"
+                    style={{ position: 'relative', zIndex: 1 }}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.52, duration: 0.5, ease: EXPO }}
+                  >
+                    <Link href="/register" className="room-cta-join-btn">
+                      Start for free
+                    </Link>
+                    <Link
+                      href="/login"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '0.95rem 1.8rem',
+                        borderRadius: 99,
+                        border: '1.5px solid rgba(45,212,191,0.28)',
+                        color: 'rgba(184,224,232,0.82)',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        transition: 'border-color 0.2s, color 0.2s',
+                        backdropFilter: 'blur(8px)',
+                      }}
+                    >
+                      Already have a space
+                    </Link>
+                  </motion.div>
+                )}
 
                 {/* Twinkling teal lights */}
                 <motion.div
