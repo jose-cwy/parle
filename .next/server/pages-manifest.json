@@ -2,11 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
   "/api/auth/me": "pages/api/auth/me.js",
-  "/chat": "pages/chat.js",
-  "/api/chat/history": "pages/api/chat/history.js",
-  "/api/auth/logout": "pages/api/auth/logout.js",
-  "/register": "pages/register.js",
-  "/api/auth/terms-accept": "pages/api/auth/terms-accept.js"
+  "/": "pages/index.js"
 }

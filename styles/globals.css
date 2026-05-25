@@ -3185,6 +3185,7 @@ body.cinematic-cursor * {
   width: 100%;
   overflow: hidden;
   background: #020d1a;
+  will-change: contents;
 }
 
 /* Cinematic darkness overlay — fades out on entry */

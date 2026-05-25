@@ -564,6 +564,7 @@ function DriftParticles({ reduced }) {
             background: p.color,
             filter: `blur(${p.blur}px)`,
             boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+            willChange: 'transform, opacity',
           }}
           animate={{
             y: [0, -p.travel],
@@ -623,12 +624,15 @@ export default function Home() {
   const [heroActive, setHeroActive]  = useState(false)
   const [activePhase, setActivePhase] = useState(0)
 
-  /* Drive active phase from scroll */
+  /* Drive active phase from scroll — functional updater prevents
+     re-renders on every tick; only fires when phase actually changes */
   useEffect(() => {
     const unsub = scrollYProgress.on('change', (v) => {
+      let next = 0
       for (let i = PHASES.length - 1; i >= 0; i--) {
-        if (v >= PHASES[i][0]) { setActivePhase(i); break }
+        if (v >= PHASES[i][0]) { next = i; break }
       }
+      setActivePhase(prev => prev === next ? prev : next)
     })
     return unsub
   }, [scrollYProgress])
