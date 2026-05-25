@@ -2,16 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/": "pages/index.js",
   "/api/auth/me": "pages/api/auth/me.js",
-  "/diary": "pages/diary.js",
-  "/letter-to-yourself": "pages/letter-to-yourself.js",
-  "/api/diary": "pages/api/diary.js",
-  "/api/gamification/progress": "pages/api/gamification/progress.js",
-  "/api/diary/[id]": "pages/api/diary/[id].js",
   "/chat": "pages/chat.js",
-  "/quotes": "pages/quotes.js",
-  "/api/quotes/favorites": "pages/api/quotes/favorites.js",
-  "/api/quotes": "pages/api/quotes.js",
   "/api/chat/history": "pages/api/chat/history.js",
-  "/api/letters/self": "pages/api/letters/self.js"
+  "/api/auth/logout": "pages/api/auth/logout.js",
+  "/register": "pages/register.js",
+  "/api/auth/terms-accept": "pages/api/auth/terms-accept.js"
 }

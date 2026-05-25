@@ -1,1 +1,8 @@
-{}
+{
+  "index.js -> ../components/ConstellationScene": {
+    "id": "index.js -> ../components/ConstellationScene",
+    "files": [
+      "static/chunks/components_ConstellationScene_js.js"
+    ]
+  }
+}

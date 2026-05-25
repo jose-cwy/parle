@@ -274,15 +274,18 @@ export default function ConstellationScene({ scrollProgress }) {
     if (!canvas) return
 
     /* Resize canvas — cap devicePixelRatio at 1.5 to halve pixel work
-       on retina screens without visible quality loss at this scale */
+       on retina screens without visible quality loss at this scale.
+       Use ctx.setTransform (absolute, not additive) so repeated resize
+       calls from ResizeObserver never accumulate scale. */
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       const W   = canvas.offsetWidth
       const H   = canvas.offsetHeight
-      canvas.width  = W * dpr
+      canvas.width  = W * dpr   // resets the canvas transform
       canvas.height = H * dpr
-      canvas.getContext('2d').scale(dpr, dpr)
-      /* Store logical size for draw math */
+      /* setTransform is absolute — safe to call on every resize */
+      canvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0)
+      /* Store logical size so draw math doesn't need to divide by dpr */
       canvas.logicalW = W
       canvas.logicalH = H
     }
@@ -429,15 +432,53 @@ export default function ConstellationScene({ scrollProgress }) {
       const vpx = cx + originX
       const vpy = cy + originY
 
+      /* Draw scattered regular stars first (no shadow, no gradient halo) in
+         one batched pass to minimise ctx state changes */
+      ctx.shadowBlur = 0
       for (let i = 0; i < STARS.length; i++) {
-        const p = projected[i]
-        if (!p || !p.inView || p.r < 0.15) continue
-
+        const p    = projected[i]
         const star = STARS[i]
-        ctx.save()
+        if (!p || !p.inView || p.r < 0.15 || star.isNode) continue
 
-        if (star.isNode && cAlpha > 0.01) {
-          /* Constellation nodes: soft teal glow halo */
+        const warpT = camZ > 80
+          ? Math.max(0, 1 - p.depth / 180) * Math.min((camZ - 80) / 260, 1)
+          : 0
+
+        if (warpT > 0.05) {
+          /* Warp streak — radiates outward from vanishing point */
+          const dx   = p.sx - vpx
+          const dy   = p.sy - vpy
+          const len  = Math.sqrt(dx * dx + dy * dy) || 1
+          const nx   = dx / len
+          const ny   = dy / len
+          const tail = p.r * (1 + warpT * 18)
+          const x0   = p.sx - nx * tail
+          const y0   = p.sy - ny * tail
+          const grad = ctx.createLinearGradient(x0, y0, p.sx, p.sy)
+          grad.addColorStop(0, 'rgba(200,235,255,0)')
+          grad.addColorStop(1, `rgba(220,242,255,${p.alpha * (0.4 + warpT * 0.6)})`)
+          ctx.strokeStyle = grad
+          ctx.lineWidth   = Math.max(p.r * 0.7, 0.4)
+          ctx.beginPath()
+          ctx.moveTo(x0, y0)
+          ctx.lineTo(p.sx, p.sy)
+          ctx.stroke()
+        } else {
+          /* Regular dot — batch into single fillStyle where possible */
+          ctx.fillStyle = `rgba(220,240,255,${p.alpha})`
+          ctx.beginPath()
+          ctx.arc(p.sx, p.sy, p.r, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+
+      /* Draw constellation nodes second (radial gradient halos) */
+      if (cAlpha > 0.01) {
+        for (let i = 0; i < STARS.length; i++) {
+          const p    = projected[i]
+          const star = STARS[i]
+          if (!p || !p.inView || p.r < 0.15 || !star.isNode) continue
+
           const haloR = p.r * 4.5
           const halo  = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, haloR)
           halo.addColorStop(0, `rgba(45,212,191,${p.alpha * 0.35 * cAlpha})`)
@@ -447,50 +488,11 @@ export default function ConstellationScene({ scrollProgress }) {
           ctx.arc(p.sx, p.sy, haloR, 0, Math.PI * 2)
           ctx.fill()
 
-          /* Bright core */
           ctx.fillStyle = `rgba(200,248,250,${p.alpha})`
           ctx.beginPath()
           ctx.arc(p.sx, p.sy, p.r * 1.15, 0, Math.PI * 2)
           ctx.fill()
-        } else {
-          /* Scattered stars: draw as warp streaks when close to camera.
-             Streak radiates outward FROM the vanishing point — gives the
-             "flying through stars" hyperspace effect. Streak intensity
-             scales with proximity (depth) and how far the camera has moved. */
-          const warpT = camZ > 80
-            ? Math.max(0, 1 - p.depth / 180) * Math.min((camZ - 80) / 260, 1)
-            : 0
-
-          if (warpT > 0.05) {
-            /* Direction from vanishing point toward star */
-            const dx  = p.sx - vpx
-            const dy  = p.sy - vpy
-            const len = Math.sqrt(dx * dx + dy * dy) || 1
-            const nx  = dx / len
-            const ny  = dy / len
-            /* Streak: from slightly behind to slightly ahead of the star */
-            const tail = p.r * (1 + warpT * 18)
-            const x0   = p.sx - nx * tail
-            const y0   = p.sy - ny * tail
-            const grad = ctx.createLinearGradient(x0, y0, p.sx, p.sy)
-            grad.addColorStop(0, `rgba(200,235,255,0)`)
-            grad.addColorStop(1, `rgba(220,242,255,${p.alpha * (0.4 + warpT * 0.6)})`)
-            ctx.strokeStyle = grad
-            ctx.lineWidth   = Math.max(p.r * 0.7, 0.4)
-            ctx.beginPath()
-            ctx.moveTo(x0, y0)
-            ctx.lineTo(p.sx, p.sy)
-            ctx.stroke()
-          } else {
-            /* Regular stars: white-blue circle */
-            ctx.fillStyle = `rgba(220,240,255,${p.alpha})`
-            ctx.beginPath()
-            ctx.arc(p.sx, p.sy, p.r, 0, Math.PI * 2)
-            ctx.fill()
-          }
         }
-
-        ctx.restore()
       }
 
       /* ── Shooting stars ─────────────────────────────────────── */

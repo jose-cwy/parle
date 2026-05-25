@@ -16,8 +16,27 @@ const EXPO = [0.16, 1, 0.3, 1]
 /* ConstellationScene — Canvas-based 3D star field, no Three.js */
 const ConstellationScene = dynamic(() => import('../components/ConstellationScene'), { ssr: false })
 
-/* ─── Feature panel data ────────────────────────────────────── */
+/* ─── Feature panel data — Chat leads as the headline feature ── */
 const features = [
+  {
+    id: 'chat',
+    eyebrow: 'Not alone',
+    title: 'Talk it out with someone who listens.',
+    body: 'Heartstrings AI is calm, patient, and always present. It remembers your story and never judges.',
+    href: '/chat',
+    link: 'Open Chat',
+    side: 'left',
+    highlight: true,  // gives this card a teal outer glow
+    badge: 'AI · Always here',
+    demo: {
+      type: 'chat',
+      messages: [
+        { role: 'user', text: 'I keep thinking about them.' },
+        { role: 'ai', text: 'That is really hard. What do those thoughts feel like for you right now?' },
+        { role: 'user', text: 'Like a song stuck in my head.' },
+      ],
+    },
+  },
   {
     id: 'letter',
     eyebrow: 'The first step',
@@ -25,7 +44,7 @@ const features = [
     body: 'Sit at the warm desk. Write what you cannot yet say out loud. Seal it until you are ready to read it back.',
     href: '/letter-to-yourself',
     link: 'Open Letters',
-    side: 'left',
+    side: 'right',
     demo: {
       type: 'letter',
       lines: ['Dear future me,', 'Today was hard.', 'I do not know where', 'this feeling ends...'],
@@ -38,27 +57,10 @@ const features = [
     body: 'Every day is a new page. Track what happened, how you felt, and what you need next — no one else can read this.',
     href: '/diary',
     link: 'Open Diary',
-    side: 'right',
+    side: 'left',
     demo: {
       type: 'diary',
       lines: ['May 24 — I cried again today.', 'But I also laughed.', 'That feels like progress.'],
-    },
-  },
-  {
-    id: 'chat',
-    eyebrow: 'Not alone',
-    title: 'Talk it out with someone who listens.',
-    body: 'Heartstrings AI is calm, patient, and always present. It remembers your story and never judges.',
-    href: '/chat',
-    link: 'Open Chat',
-    side: 'left',
-    demo: {
-      type: 'chat',
-      messages: [
-        { role: 'user', text: 'I keep thinking about them.' },
-        { role: 'ai', text: 'That is really hard. What do those thoughts feel like for you right now?' },
-        { role: 'user', text: 'Like a song stuck in my head.' },
-      ],
     },
   },
   {
@@ -251,7 +253,8 @@ function OceanTrail({ scrollYProgress }) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    /* desynchronized hint reduces latency on supporting browsers */
+    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
 
     const resize = () => {
       canvas.width  = window.innerWidth
@@ -421,20 +424,49 @@ function FeaturePanel({ feature, idx, visible }) {
             [isLeft ? 'left' : 'right']: 'clamp(1.25rem, 4vw, 4.5rem)',
             top: cardTop,
             transformOrigin: isLeft ? 'left center' : 'right center',
+            /* Teal outer glow for the highlighted (chat) card */
+            ...(feature.highlight && {
+              boxShadow: '0 0 48px rgba(45,212,191,0.18), 0 0 0 1px rgba(45,212,191,0.22)',
+            }),
           }}
           initial={{ opacity: 0, scale: 0.04, filter: 'blur(28px)' }}
           animate={{ opacity: 1, scale: 1,    filter: 'blur(0px)' }}
           exit={{ opacity: 0, scale: 0.88, filter: 'blur(12px)', transition: { duration: 0.28, ease: [0.45, 0, 0.2, 1] } }}
           transition={{ type: 'spring', stiffness: 180, damping: 20, mass: 1.1, opacity: { duration: 0.3 } }}
         >
-          <motion.span
-            className="room-panel-eyebrow"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.5, ease: EXPO }}
-          >
-            {feature.eyebrow}
-          </motion.span>
+          {/* Eyebrow row — badge sits inline for highlighted card */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+            <motion.span
+              className="room-panel-eyebrow"
+              style={{ margin: 0 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08, duration: 0.5, ease: EXPO }}
+            >
+              {feature.eyebrow}
+            </motion.span>
+            {feature.badge && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.18, duration: 0.4, ease: EXPO }}
+                style={{
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  background: 'rgba(45,212,191,0.16)',
+                  color: 'var(--accent-teal)',
+                  border: '1px solid rgba(45,212,191,0.32)',
+                  borderRadius: '999px',
+                  padding: '0.12em 0.6em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {feature.badge}
+              </motion.span>
+            )}
+          </div>
 
           <motion.h2
             className="room-panel-title"
@@ -684,6 +716,49 @@ export default function Home() {
                 >
                   A private space to write, reflect, and heal.
                 </motion.p>
+
+                {/* Floating AI CTA pill — appears after typewriter finishes */}
+                <motion.a
+                  href="/chat"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={heroActive ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 2.75, duration: 0.55, ease: EXPO }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.55rem',
+                    marginTop: '1.6rem',
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '999px',
+                    background: 'rgba(45,212,191,0.12)',
+                    border: '1px solid rgba(45,212,191,0.35)',
+                    color: 'var(--accent-teal)',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* Pulse ring */}
+                  <motion.span
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '999px',
+                      border: '1px solid rgba(45,212,191,0.5)',
+                    }}
+                    animate={{ scale: [1, 1.18], opacity: [0.5, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+                  />
+                  <span style={{ fontSize: '1rem' }}>💬</span>
+                  Talk to Heartstrings AI
+                  <span style={{ opacity: 0.7 }}>→</span>
+                </motion.a>
 
                 <motion.div
                   className="scroll-hint"
