@@ -14,8 +14,9 @@ colors:
   text-muted: "#a89480"
   paper-cream: "#fff4e8"
   paper-muted: "#e8d4bc"
-  landing-bg: "#EDE8DC"
-  landing-bg-soft: "#E8E2D4"
+  landing-bg: "#F2EBE2"
+  landing-bg-soft: "#EAE2D6"
+  landing-bg-paper: "#FFFBF6"
   landing-text: "oklch(28% 0.02 265)"
   landing-text-muted: "oklch(48% 0.02 265)"
   landing-accent: "oklch(52% 0.22 25)"
@@ -104,17 +105,15 @@ A restrained palette: tinted warm neutrals with amber accent and sage secondary.
 
 **The One Accent Rule.** Golden amber carries emphasis on ≤15% of any screen. Sage provides secondary calm, not competing neon.
 
-### Public landing (beige + red — 808s editorial)
-Used on `/`, `/login`, `/register` via `--landing-*` tokens in `styles/globals.css`.
+### Public landing (sunset ocean + bulletin board)
+Used on `/`, `/login`, `/register` via `--landing-*` tokens in `styles/globals.css`. Mood-board placeholders live in `public/images/moodboard/` (see `lib/landingAssets.js`).
 
-- **Flat beige canvas** (`--landing-bg` `#EDE8DC`): Solid on `html`, `body`, `#__next`, `.app-shell`, and `.landing-page` via `body.body--landing` — no charcoal gradients or side gutters.
-- **Transparent home header**: On `/`, logo + heart toggle float on cream (`marketing-header--home`); no grey bar or backdrop blur.
-- **Heart map drawer**: Heart toggle opens a right panel (`min(33vw, 380px)`); SVG heart outline with red thread lines to four tool nodes (Chat, Letter, Diary, Quotes); secondary links below (How it works, Stories, Log in, Talk it out).
-- **Paper grain**: Very low-opacity noise on `.landing-page` and hero section.
-- **Heart red** (`--landing-accent`): Primary CTAs only — solid fill, white label text.
-- **Soft cream cards** (`--landing-bg-soft`): Tool previews, testimonial marquee.
-- **Eyebrows**: Extra-wide letter-spacing uppercase in red; serif display H1 at large scale.
-- **Motion**: Drawer slide from right; node stagger; optional heart-outline breathe when open; marquee pauses with `prefers-reduced-motion`.
+- **Sunset canvas**: Full-viewport hero with sunset palette tokens (`--landing-sunset-*`, `--landing-ocean-*`). Copy sits on a soft scrim so it stays readable.
+- **Hero scene** (`LandingHero` + `SunsetHeroScene`): Three.js painterly sunset with **sun sinking on scroll**; desktop-first WebGL with fallbacks via `useLandingWebGL`.
+- **Typed identity** (`TypedBrandTitle`): “Heartstrings Club” types in on page enter (calm ink-like reveal; not scroll-gated).
+- **Features board** (`BulletinBoardFeatures`): Tactile cork board with pinned notes and **aesthetic strings** (SVG) connecting the tools.
+- **Testimonials** (`AfterglowLettersTestimonials`): “Late-night excerpts” as torn letter cards with timestamps (no generic grid).
+- **CTA**: Closing afterglow band that echoes the sunset warmth without being salesy.
 
 Logged-in app shell remains charcoal + maroon (Phase B may align later).
 

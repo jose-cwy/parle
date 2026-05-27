@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import { spring } from '../lib/motion'
 import { isAppRoute, isLandingThemeRoute } from '../lib/routes'
-import HeartMapDrawer from './landing/HeartMapDrawer'
+import HeartMorphDrawer from './landing/HeartMorphDrawer'
 
 export default function Header() {
   const router = useRouter()
@@ -85,7 +85,7 @@ export default function Header() {
         {isHome ? (
           <nav className="marketing-header__nav marketing-header__nav--landing" aria-label="Site">
             {ready && (
-              <HeartMapDrawer
+              <HeartMorphDrawer
                 user={user}
                 chatHref={chatHref}
                 open={menuOpen}

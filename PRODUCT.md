@@ -37,6 +37,8 @@ Warm, gentle, and honest. Like a trusted friend who listens without fixing. Voic
 4. **Warmth without infantilizing** — Supportive and soft, but respectful of teen intelligence.
 5. **Show the craft** — Hand-drawn illustration, paper textures, and organic shapes signal human care.
 
+**Public landing note:** The marketing homepage (`/`) opens with a **cinematic sunset ocean** hero (sun sinks on scroll; “Heartstrings Club” types in on enter), then transitions into a tactile **bulletin board** of the four tools, “afterglow letters” testimonials, and a calm closing CTA — designed to feel like a private place to talk, not a SaaS landing.
+
 ## Accessibility & Inclusion
 
 - Target WCAG 2.1 AA contrast for body text and interactive elements
