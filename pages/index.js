@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
 import {
   motion,
   useScroll,
@@ -8,19 +8,45 @@ import {
   AnimatePresence,
 } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { spring } from '../lib/motion'
+import { spring, hoverGlow, stagger as motionStagger, journeyBeat } from '../lib/motion'
+import JourneyAtmosphere from '../components/JourneyAtmosphere'
+import GlassQuoteCard from '../components/ui/GlassQuoteCard'
+import GlassTestimonialGrid from '../components/ui/GlassTestimonialGrid'
+import GlassCtaGroup from '../components/ui/GlassCtaGroup'
+import WhisperStarTrigger from '../components/WhisperStarTrigger'
+import { STARS_PHASE_END } from '../components/MoonStoryScene'
+import {
+  buildTrailNodes,
+  getTrailMilestones,
+  panelAnchorFromRect,
+  FEATURE_TRAIL_NODE,
+  updateScriptedStarTargets,
+} from '../lib/trailAnchors'
 
 /* ease-out-expo for all panel entrances */
 const EXPO = [0.16, 1, 0.3, 1]
 
 /* ConstellationScene — Canvas-based 3D star field, no Three.js */
 const ConstellationScene = dynamic(() => import('../components/ConstellationScene'), { ssr: false })
+const MoonStoryScene = dynamic(() => import('../components/MoonStoryScene'), { ssr: false })
+
+const JOURNEY_BEATS = {
+  hero: { support: "You don't have to carry this alone." },
+  moon: { afterQuote: 'Some words need the sky.' },
+  stars: {
+    release: 'Let it go upward.',
+    end: "You've come as far as words can take you.",
+    cta: 'When you\'re ready, release it to the stars.',
+  },
+}
 
 /* ─── Feature panel data — Chat leads as the headline feature ── */
 const features = [
   {
     id: 'chat',
     eyebrow: 'Not alone',
+    heartbreakLine: 'When the thoughts loop at 2am, you need somewhere safe to put them.',
+    healingLine: 'Heartstrings listens without fixing you — just steady presence.',
     title: 'Talk it out with someone who listens.',
     body: 'Heartstrings AI is calm, patient, and always present. It remembers your story and never judges.',
     href: '/chat',
@@ -40,6 +66,8 @@ const features = [
   {
     id: 'letter',
     eyebrow: 'The first step',
+    heartbreakLine: 'Some feelings are too heavy to say out loud — yet.',
+    healingLine: 'Seal your words until future-you is ready to read them.',
     title: 'Write a letter to yourself.',
     body: 'Sit at the warm desk. Write what you cannot yet say out loud. Seal it until you are ready to read it back.',
     href: '/letter-to-yourself',
@@ -53,6 +81,8 @@ const features = [
   {
     id: 'diary',
     eyebrow: 'A page for today',
+    heartbreakLine: 'Heartbreak does not follow a schedule — but your story still deserves a record.',
+    healingLine: 'One private page at a time, no audience, no performance.',
     title: 'Keep a private diary.',
     body: 'Every day is a new page. Track what happened, how you felt, and what you need next — no one else can read this.',
     href: '/diary',
@@ -66,6 +96,8 @@ const features = [
   {
     id: 'quotes',
     eyebrow: 'Words that stay',
+    heartbreakLine: 'When your own words fail, someone else\'s might land gently.',
+    healingLine: 'Bookmark lines that feel written for this exact night.',
     title: 'Find the quote that reaches you.',
     body: 'A library of quotes sorted by heartbreak, healing, and self-love. Bookmark the ones that feel written for right now.',
     href: '/quotes',
@@ -81,17 +113,38 @@ const features = [
   },
 ]
 
-/* Scroll range per phase — 8 segments across 700vh */
+/* Scroll range per phase — 9 segments across 780vh */
 const PHASES = [
-  [0,    0.12],  // 0: hero reveal
-  [0.12, 0.22],  // 1: emotional quote
-  [0.22, 0.36],  // 2: letter
-  [0.36, 0.51],  // 3: diary
-  [0.51, 0.66],  // 4: chat
-  [0.66, 0.80],  // 5: quotes
-  [0.80, 0.90],  // 6: testimonials
-  [0.90, 1.0],   // 7: CTA
+  [0,    0.10],  // 0: hero reveal
+  [0.10, 0.22],  // 1: moon story (figures + moon)
+  [0.22, STARS_PHASE_END],  // 2: stars gate — scroll stops here until button
+  [STARS_PHASE_END, 0.47],  // 3: chat (trail-driven)
+  [0.47, 0.59],  // 4: letter
+  [0.59, 0.71],  // 5: diary
+  [0.71, 0.82],  // 6: quotes
+  [0.82, 0.91],  // 7: testimonials
+  [0.91, 1.0],   // 8: CTA
 ]
+
+const TRAIL_SCROLL_START = STARS_PHASE_END
+const STARS_SCROLL_CAP = STARS_PHASE_END - 0.008
+const TRAIL_SCROLL_END   = PHASES[6][1]  // 0.78 — features only, before testimonials
+
+/** Trail draw progress 0–1; zero outside feature scroll band */
+function trailProgressFromScroll(scroll) {
+  if (scroll < TRAIL_SCROLL_START) return 0
+  if (scroll > TRAIL_SCROLL_END) return 1
+  return (scroll - TRAIL_SCROLL_START) / (TRAIL_SCROLL_END - TRAIL_SCROLL_START)
+}
+
+function featurePanelVisible(idx, trailSeg, activePhase, segmentCount) {
+  if (activePhase < 3 || activePhase >= 7) return false
+  const node = FEATURE_TRAIL_NODE[idx]
+  const nextNode = FEATURE_TRAIL_NODE[idx + 1] ?? segmentCount
+  const revealed = trailSeg >= node - 1 + 0.92
+  const stillHere = trailSeg < nextNode - 0.15
+  return revealed && stillHere
+}
 
 /* ─── CTA Particles — pure CSS, seeded positions ────────────── */
 const PARTICLES = (() => {
@@ -208,34 +261,8 @@ function DiaryDemo({ lines }) {
   )
 }
 
-/*
- * Trail node positions — [x,y] as fraction of viewport (0–1).
- * S-curve from bottom-left to top, passing through each card's area.
- * Cards are at: letter (left, ~y 0.57), diary (right, ~y 0.40),
- *               chat (left, ~y 0.22), quotes (right, ~y 0.08).
- * Milestone indices: 2=letter, 5=diary, 7=chat, 9=quotes.
- */
-const TRAIL_NODES = [
-  [0.12, 0.96],  // 0 — start, bottom-left
-  [0.20, 0.84],  // 1 — rising
-  [0.24, 0.72],  // 2 ★ MILESTONE 0 — letter (left side)
-  [0.32, 0.62],  // 3 — departing left
-  [0.58, 0.55],  // 4 — sweeping right
-  [0.72, 0.48],  // 5 ★ MILESTONE 1 — diary (right side)
-  [0.62, 0.38],  // 6 — departing right
-  [0.26, 0.30],  // 7 ★ MILESTONE 2 — chat (left side)
-  [0.42, 0.20],  // 8 — rising
-  [0.70, 0.14],  // 9 ★ MILESTONE 3 — quotes (right side)
-  [0.48, 0.04],  // 10 — end, top center
-]
-const TRAIL_SEGMENT_COUNT = TRAIL_NODES.length - 1  // 10
-const TRAIL_MILESTONES = new Set([2, 5, 7, 9])
-
-/*
- * Card top positions matched to trail milestone y-values.
- * Indexed to features array (0=letter,1=diary,2=chat,3=quotes).
- */
-const CARD_TOPS = ['8vh', '32vh', '18vh', '4vh']
+/* Card vertical positions — spread to avoid center overlap */
+const CARD_TOPS = ['6vh', '28vh', '48vh', '66vh']
 
 /* ─── OceanTrail — full-screen scroll-drawn constellation trail ─── */
 /*
@@ -244,144 +271,149 @@ const CARD_TOPS = ['8vh', '32vh', '18vh', '4vh']
  * the full shape of the constellation waiting to be drawn in.
  * rAF-throttled: scroll value stored in a ref, one draw per animation frame.
  */
-function OceanTrail({ scrollYProgress }) {
+function OceanTrail({ scrollYProgress, trailNodes, hidden }) {
   const canvasRef  = useRef(null)
   const scrollRef  = useRef(0)
   const rafRef     = useRef(null)
   const sizeRef    = useRef({ W: 0, H: 0 })
+  const nodesRef   = useRef(trailNodes)
+
+  nodesRef.current = trailNodes
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    /* desynchronized hint reduces latency on supporting browsers */
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
 
     const resize = () => {
       canvas.width  = window.innerWidth
       canvas.height = window.innerHeight
       sizeRef.current = { W: canvas.width, H: canvas.height }
-      render(scrollRef.current)
+      drawFrame()
+    }
+
+    const drawFrame = () => {
+      const progress = hidden ? 0 : trailProgressFromScroll(scrollRef.current)
+      render(progress)
     }
 
     const render = (progress) => {
       const { W, H } = sizeRef.current
-      if (!W || !H) return
+      const nodes = nodesRef.current
+      if (!W || !H || !nodes?.length) return
       ctx.clearRect(0, 0, W, H)
+      if (progress <= 0.001 || hidden) return
 
-      const totalProgress = progress * TRAIL_SEGMENT_COUNT
+      const segCount = nodes.length - 1
+      const milestones = getTrailMilestones(nodes.length)
+      const totalProgress = progress * segCount
       const fullSegs = Math.floor(totalProgress)
       const partial  = totalProgress - fullSegs
-
       const px = ([nx, ny]) => [nx * W, ny * H]
 
-      /* 1. Ghost dots for ALL nodes — show the constellation shape ahead */
-      for (let ni = 0; ni < TRAIL_NODES.length; ni++) {
-        const [nx, ny] = px(TRAIL_NODES[ni])
+      /* Ghost: next target only (+ faint line preview) */
+      const nextIdx = Math.min(fullSegs + 1, nodes.length - 1)
+      if (nextIdx < nodes.length) {
+        const [nx, ny] = px(nodes[nextIdx])
+        const isNextMile = milestones.has(nextIdx)
         ctx.beginPath()
-        ctx.arc(nx, ny, 1.5, 0, Math.PI * 2)
-        ctx.fillStyle = TRAIL_MILESTONES.has(ni)
-          ? 'rgba(45,212,191,0.18)'
-          : 'rgba(167,243,208,0.10)'
+        ctx.arc(nx, ny, isNextMile ? 2.2 : 1.5, 0, Math.PI * 2)
+        ctx.fillStyle = isNextMile ? 'rgba(45,212,191,0.35)' : 'rgba(167,243,208,0.14)'
         ctx.fill()
+        if (fullSegs < segCount) {
+          const [ax, ay] = px(nodes[fullSegs])
+          ctx.setLineDash([4, 8])
+          ctx.beginPath()
+          ctx.moveTo(ax, ay)
+          ctx.lineTo(nx, ny)
+          ctx.strokeStyle = 'rgba(167,243,208,0.12)'
+          ctx.lineWidth = 1
+          ctx.stroke()
+          ctx.setLineDash([])
+        }
       }
 
-      /* 2. Completed segments — straight constellation lines */
-      for (let s = 0; s < fullSegs && s < TRAIL_SEGMENT_COUNT; s++) {
-        const [ax, ay] = px(TRAIL_NODES[s])
-        const [bx, by] = px(TRAIL_NODES[s + 1])
-        const ageAlpha = 0.25 + 0.45 * (s / TRAIL_SEGMENT_COUNT)
-
+      /* Completed segments */
+      for (let s = 0; s < fullSegs && s < segCount; s++) {
+        const [ax, ay] = px(nodes[s])
+        const [bx, by] = px(nodes[s + 1])
+        const ageAlpha = 0.3 + 0.4 * (s / segCount)
         const grad = ctx.createLinearGradient(ax, ay, bx, by)
-        grad.addColorStop(0,   `rgba(45,212,191,${(ageAlpha * 0.6).toFixed(2)})`)
+        grad.addColorStop(0, `rgba(45,212,191,${(ageAlpha * 0.55).toFixed(2)})`)
         grad.addColorStop(0.5, `rgba(56,189,248,${ageAlpha.toFixed(2)})`)
-        grad.addColorStop(1,   `rgba(167,243,208,${(ageAlpha * 0.8).toFixed(2)})`)
-
+        grad.addColorStop(1, `rgba(167,243,208,${(ageAlpha * 0.75).toFixed(2)})`)
         ctx.beginPath()
         ctx.moveTo(ax, ay)
         ctx.lineTo(bx, by)
         ctx.strokeStyle = grad
-        ctx.lineWidth   = 1.2
+        ctx.lineWidth = 1.2
         ctx.stroke()
       }
 
-      /* 3. Currently-drawing partial segment — comet drawing toward next node */
-      if (fullSegs < TRAIL_SEGMENT_COUNT && partial > 0.005) {
-        const [ax, ay] = px(TRAIL_NODES[fullSegs])
-        const [bx, by] = px(TRAIL_NODES[fullSegs + 1])
+      /* Active segment — comet toward next card */
+      if (fullSegs < segCount && partial > 0.005) {
+        const [ax, ay] = px(nodes[fullSegs])
+        const [bx, by] = px(nodes[fullSegs + 1])
         const ex = ax + (bx - ax) * partial
         const ey = ay + (by - ay) * partial
-
         const grad = ctx.createLinearGradient(ax, ay, ex, ey)
-        grad.addColorStop(0,   'rgba(45,212,191,0.08)')
-        grad.addColorStop(0.6, 'rgba(56,189,248,0.60)')
-        grad.addColorStop(1,   'rgba(200,252,245,0.96)')
-
+        grad.addColorStop(0, 'rgba(45,212,191,0.1)')
+        grad.addColorStop(0.6, 'rgba(56,189,248,0.65)')
+        grad.addColorStop(1, 'rgba(200,252,245,0.98)')
         ctx.beginPath()
         ctx.moveTo(ax, ay)
         ctx.lineTo(ex, ey)
         ctx.strokeStyle = grad
-        ctx.lineWidth   = 1.6
-        ctx.shadowBlur  = 7
-        ctx.shadowColor = 'rgba(45,212,191,0.65)'
+        ctx.lineWidth = 2
+        ctx.shadowBlur = 8
+        ctx.shadowColor = 'rgba(45,212,191,0.7)'
         ctx.stroke()
-        ctx.shadowBlur  = 0
-
-        /* Comet head */
+        ctx.shadowBlur = 0
         ctx.beginPath()
-        ctx.arc(ex, ey, 2.6, 0, Math.PI * 2)
-        ctx.fillStyle   = 'rgba(200,255,245,0.95)'
-        ctx.shadowBlur  = 12
-        ctx.shadowColor = 'rgba(45,212,191,0.8)'
+        ctx.arc(ex, ey, 3, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(200,255,245,0.96)'
+        ctx.shadowBlur = 14
+        ctx.shadowColor = 'rgba(45,212,191,0.85)'
         ctx.fill()
-        ctx.shadowBlur  = 0
+        ctx.shadowBlur = 0
       }
 
-      /* 4. Bloom arrived nodes */
-      const arrivedCount = Math.min(fullSegs + 1, TRAIL_NODES.length)
-      for (let ni = 0; ni < arrivedCount; ni++) {
-        const [nx, ny] = px(TRAIL_NODES[ni])
-        const isMile   = TRAIL_MILESTONES.has(ni)
-        const bloomR   = isMile ? 22 : 8
-        const dotR     = isMile ? 3.8 : 2.2
-        const bloomA   = isMile ? 0.55 : 0.30
+      /* Arrived nodes — milestone bloom when segment nearly complete */
+      for (let ni = 0; ni <= fullSegs && ni < nodes.length; ni++) {
+        const isMile = milestones.has(ni)
+        const onIncoming = ni > 0 && fullSegs === ni - 1
+        if (isMile && onIncoming && partial < 0.85) continue
 
+        const [nx, ny] = px(nodes[ni])
+        const bloomR = isMile ? 20 : 7
+        const dotR = isMile ? 3.5 : 2
         const bloom = ctx.createRadialGradient(nx, ny, 0, nx, ny, bloomR)
-        bloom.addColorStop(0, `rgba(45,212,191,${bloomA})`)
+        bloom.addColorStop(0, `rgba(45,212,191,${isMile ? 0.5 : 0.25})`)
         bloom.addColorStop(1, 'rgba(45,212,191,0)')
         ctx.beginPath()
         ctx.arc(nx, ny, bloomR, 0, Math.PI * 2)
         ctx.fillStyle = bloom
         ctx.fill()
-
         ctx.beginPath()
         ctx.arc(nx, ny, dotR, 0, Math.PI * 2)
-        ctx.fillStyle   = isMile ? 'rgba(200,255,245,0.95)' : 'rgba(167,243,208,0.85)'
-        ctx.shadowBlur  = isMile ? 14 : 5
-        ctx.shadowColor = 'rgba(45,212,191,0.75)'
+        ctx.fillStyle = isMile ? 'rgba(200,255,245,0.92)' : 'rgba(167,243,208,0.8)'
         ctx.fill()
-        ctx.shadowBlur  = 0
-
-        if (isMile) {
-          ctx.beginPath()
-          ctx.arc(nx, ny, bloomR * 0.60, 0, Math.PI * 2)
-          ctx.strokeStyle = 'rgba(56,189,248,0.28)'
-          ctx.lineWidth   = 1.1
-          ctx.stroke()
-        }
       }
     }
 
-    /* rAF throttle: at most one draw per animation frame */
     const scheduleDraw = () => {
-      if (rafRef.current) return
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null
-        render(scrollRef.current)
+        drawFrame()
       })
     }
 
     resize()
     window.addEventListener('resize', resize)
+    scrollRef.current = scrollYProgress.get()
+    drawFrame()
+
     const unsub = scrollYProgress.on('change', v => {
       scrollRef.current = v
       scheduleDraw()
@@ -391,7 +423,7 @@ function OceanTrail({ scrollYProgress }) {
       unsub()
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [scrollYProgress])
+  }, [scrollYProgress, hidden, trailNodes])
 
   return (
     <canvas
@@ -409,31 +441,34 @@ function OceanTrail({ scrollYProgress }) {
   )
 }
 
-/* ─── Feature panel — bursts from trail milestone node ─── */
-function FeaturePanel({ feature, idx, visible }) {
+/* ─── Feature panel — always mounted for anchor measure; bursts on trail hit ─── */
+function FeaturePanel({ feature, idx, visible, panelRef }) {
   const isLeft = feature.side === 'left'
   const cardTop = CARD_TOPS[idx]
-
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          key={feature.id}
-          className="room-panel"
-          style={{
-            [isLeft ? 'left' : 'right']: 'clamp(1.25rem, 4vw, 4.5rem)',
-            top: cardTop,
-            transformOrigin: isLeft ? 'left center' : 'right center',
-            /* Teal outer glow for the highlighted (chat) card */
-            ...(feature.highlight && {
-              boxShadow: '0 0 48px rgba(45,212,191,0.18), 0 0 0 1px rgba(45,212,191,0.22)',
-            }),
-          }}
-          initial={{ opacity: 0, scale: 0.04, filter: 'blur(28px)' }}
-          animate={{ opacity: 1, scale: 1,    filter: 'blur(0px)' }}
-          exit={{ opacity: 0, scale: 0.88, filter: 'blur(12px)', transition: { duration: 0.28, ease: [0.45, 0, 0.2, 1] } }}
-          transition={{ type: 'spring', stiffness: 180, damping: 20, mass: 1.1, opacity: { duration: 0.3 } }}
-        >
+  const panel = (
+    <motion.div
+      ref={panelRef}
+      className={`room-panel${feature.highlight ? ' room-panel--spotlight' : ''}`}
+      aria-hidden={!visible}
+      style={{
+        [isLeft ? 'left' : 'right']: 'clamp(1.25rem, 4vw, 4.5rem)',
+        top: cardTop,
+        transformOrigin: isLeft ? 'left center' : 'right center',
+        visibility: visible ? 'visible' : 'hidden',
+        pointerEvents: visible ? 'auto' : 'none',
+        ...(feature.highlight && visible && {
+          boxShadow: '0 0 48px rgba(45,212,191,0.18), 0 0 0 1px rgba(45,212,191,0.22)',
+        }),
+      }}
+      initial={false}
+      animate={{
+        opacity: visible ? 1 : 0,
+        scale: visible ? 1 : 0.04,
+        filter: visible ? 'blur(0px)' : 'blur(20px)',
+      }}
+      transition={{ type: 'spring', stiffness: 180, damping: 20, mass: 1.1, opacity: { duration: 0.28 } }}
+      {...(visible ? hoverGlow : {})}
+    >
           {/* Eyebrow row — badge sits inline for highlighted card */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
             <motion.span
@@ -477,6 +512,17 @@ function FeaturePanel({ feature, idx, visible }) {
             {feature.title}
           </motion.h2>
 
+          {feature.heartbreakLine && (
+            <motion.p
+              className="feature-heartbreak-line"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 10 }}
+              transition={{ delay: 0.2, duration: 0.45, ease: EXPO }}
+            >
+              {feature.heartbreakLine}
+            </motion.p>
+          )}
+
           <motion.p
             className="room-panel-body"
             initial={{ opacity: 0, y: 14 }}
@@ -486,24 +532,35 @@ function FeaturePanel({ feature, idx, visible }) {
             {feature.body}
           </motion.p>
 
+          {feature.healingLine && (
+            <motion.p
+              className="feature-healing-line"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 10 }}
+              transition={{ delay: 0.32, duration: 0.5, ease: EXPO }}
+            >
+              {feature.healingLine}
+            </motion.p>
+          )}
+
           {feature.demo.type === 'letter' && <LetterDemo lines={feature.demo.lines} />}
           {feature.demo.type === 'chat'   && <ChatDemo messages={feature.demo.messages} />}
           {feature.demo.type === 'quotes' && <QuotesDemo items={feature.demo.items} />}
           {feature.demo.type === 'diary'  && <DiaryDemo lines={feature.demo.lines} />}
 
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.38, duration: 0.45, ease: EXPO }}
+            initial={false}
+            animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 10 }}
+            transition={{ delay: visible ? 0.38 : 0, duration: 0.45, ease: EXPO }}
           >
             <Link href={feature.href} className="room-panel-link mt-4 inline-flex">
               {feature.link} →
             </Link>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </motion.div>
   )
+
+  return panel
 }
 
 /* ─── DriftParticles — slow upward-drifting firefly particles ── */
@@ -619,11 +676,46 @@ export default function Home() {
     offset: ['start start', 'end end'],
   })
 
+  const panelRefs = useRef(features.map(() => null))
+  const [trailNodes, setTrailNodes] = useState(() => buildTrailNodes(null))
+  const trailSegmentCount = trailNodes.length - 1
+
+  const measurePanelAnchors = useCallback(() => {
+    const W = window.innerWidth
+    const H = window.innerHeight
+    if (!W || !H) return
+    const anchors = features.map((feat, i) => {
+      const el = panelRefs.current[i]
+      if (!el) return null
+      const rect = el.getBoundingClientRect()
+      if (rect.width < 10) return null
+      return panelAnchorFromRect(rect, feat.side, W, H)
+    })
+    if (anchors.every(Boolean)) {
+      setTrailNodes(buildTrailNodes(anchors))
+      updateScriptedStarTargets(anchors)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    measurePanelAnchors()
+    window.addEventListener('resize', measurePanelAnchors)
+    return () => window.removeEventListener('resize', measurePanelAnchors)
+  }, [measurePanelAnchors])
+
   const [entryDone, setEntryDone]   = useState(false)
   const [darkOverlay, setDarkOverlay] = useState(true)
   const [heroActive, setHeroActive]  = useState(false)
   const [activePhase, setActivePhase] = useState(0)
+  const [trailSeg, setTrailSeg]       = useState(0)
   const [ctaUser, setCtaUser]        = useState(null)   // auth state for CTA
+  const [isLaunching, setIsLaunching] = useState(false)
+  const [constellationLaunchToken, setConstellationLaunchToken] = useState(0)
+  const [constellationUnlocked, setConstellationUnlocked] = useState(false)
+
+  const gatedScrollProgress = useTransform(scrollYProgress, (v) =>
+    constellationUnlocked ? v : Math.min(v, STARS_SCROLL_CAP)
+  )
 
   /* Fetch auth state once — only used to personalise the CTA phase */
   useEffect(() => {
@@ -646,6 +738,40 @@ export default function Home() {
     return unsub
   }, [scrollYProgress])
 
+  useEffect(() => {
+    const updateSeg = (scroll) => {
+      const seg = trailProgressFromScroll(scroll) * trailSegmentCount
+      setTrailSeg(prev => (Math.abs(prev - seg) < 0.008 ? prev : seg))
+    }
+    updateSeg(scrollYProgress.get())
+    const unsub = scrollYProgress.on('change', updateSeg)
+    return unsub
+  }, [scrollYProgress, trailSegmentCount])
+
+  /* Block scroll past stars gate until user taps the whisper star */
+  useEffect(() => {
+    if (constellationUnlocked) return undefined
+    const clampScroll = () => {
+      const stage = stageRef.current
+      if (!stage) return
+      const totalHeight = stage.scrollHeight - window.innerHeight
+      if (totalHeight <= 0) return
+      const maxY = stage.offsetTop + STARS_SCROLL_CAP * totalHeight
+      if (window.scrollY > maxY + 1) {
+        window.scrollTo({ top: maxY, behavior: 'auto' })
+      }
+    }
+    clampScroll()
+    window.addEventListener('scroll', clampScroll, { passive: true })
+    return () => window.removeEventListener('scroll', clampScroll)
+  }, [constellationUnlocked])
+
+  const starsEndVisible = useTransform(
+    scrollYProgress,
+    [0.26, 0.30, STARS_SCROLL_CAP],
+    constellationUnlocked ? [0, 0, 0] : [0, 0.6, 1]
+  )
+
   /* Cinematic entry sequence */
   useEffect(() => {
     if (shouldReduceMotion) {
@@ -664,25 +790,115 @@ export default function Home() {
   /* Scroll to phase */
   const scrollToPhase = (i) => {
     if (!stageRef.current) return
+    if (i >= 3 && !constellationUnlocked) {
+      i = 2
+    }
     const totalHeight = stageRef.current.scrollHeight - window.innerHeight
-    const targetY = stageRef.current.offsetTop + (PHASES[i][0] + 0.01) * totalHeight
+    const phaseEnd = i === 2 && !constellationUnlocked ? STARS_SCROLL_CAP : PHASES[i][0] + 0.01
+    const targetY = stageRef.current.offsetTop + phaseEnd * totalHeight
     window.scrollTo({ top: targetY, behavior: 'smooth' })
   }
 
-  /* features are at phases 2-5 now (quote is phase 1, testimonials=6, CTA=7) */
-  const isFeatureVisible = (idx) => activePhase === idx + 2
+  const handleWhisperStarLaunch = useCallback(() => {
+    if (activePhase !== 2 || isLaunching) return
+    setConstellationUnlocked(true)
+    setIsLaunching(true)
+    setConstellationLaunchToken(t => t + 1)
+
+    const scrollDelay = shouldReduceMotion ? 0 : 400
+    const launchDuration = shouldReduceMotion ? 200 : 1200
+
+    setTimeout(() => scrollToPhase(3), scrollDelay)
+    setTimeout(() => setIsLaunching(false), launchDuration)
+  }, [activePhase, isLaunching, shouldReduceMotion])
+
+  const showFeature = (idx) =>
+    featurePanelVisible(idx, trailSeg, activePhase, trailSegmentCount)
+
+  const moonSupportOpacity = useTransform(
+    scrollYProgress,
+    [0.10, 0.14, 0.20, 0.22],
+    shouldReduceMotion ? [1, 1, 1, 1] : [0, 0.4, 1, 1]
+  )
+  const moonSupportY = useTransform(
+    scrollYProgress,
+    [0.10, 0.16, 0.22],
+    shouldReduceMotion ? [0, 0, 0] : [12, 4, 0]
+  )
+
+  const trailFeatureLabel = useMemo(() => {
+    if (activePhase < 3 || activePhase >= 7) return -1
+    for (let i = FEATURE_TRAIL_NODE.length - 1; i >= 0; i--) {
+      if (featurePanelVisible(i, trailSeg, activePhase, trailSegmentCount)) return i
+    }
+    return -1
+  }, [trailSeg, activePhase, trailSegmentCount])
 
   return (
     <>
       <ScrollProgressBar scrollYProgress={scrollYProgress} />
-      {!shouldReduceMotion && <OceanTrail scrollYProgress={scrollYProgress} />}
+      {!shouldReduceMotion && (
+        <OceanTrail
+          scrollYProgress={scrollYProgress}
+          trailNodes={trailNodes}
+          hidden={activePhase < 3 || activePhase >= 7}
+        />
+      )}
       <DriftParticles reduced={shouldReduceMotion} />
 
       <div ref={stageRef} className="room-stage">
-        <div className="room-sticky">
+        <motion.div
+          className={`room-sticky${isLaunching ? ' room-sticky--launching' : ''}`}
+          style={{ transformOrigin: '50% 58%' }}
+          animate={
+            isLaunching && !shouldReduceMotion
+              ? { scale: 1.85, filter: 'brightness(1.08)' }
+              : { scale: 1, filter: 'brightness(1)' }
+          }
+          transition={
+            isLaunching && !shouldReduceMotion
+              ? { ...spring.page, duration: 1.1 }
+              : { duration: 0.5, ease: EXPO }
+          }
+        >
+
+          <JourneyAtmosphere scrollProgress={gatedScrollProgress} />
 
           {/* Constellation scene — Canvas 3D camera dolly */}
-          <ConstellationScene scrollProgress={scrollYProgress} />
+          <ConstellationScene
+            scrollProgress={gatedScrollProgress}
+            launchToken={constellationLaunchToken}
+          />
+
+          {/* Moon story — moon, whisper ripples, handoff */}
+          {!shouldReduceMotion && (
+            <MoonStoryScene
+              scrollProgress={gatedScrollProgress}
+              launchBurst={constellationLaunchToken}
+            />
+          )}
+
+          <WhisperStarTrigger
+            visible={activePhase === 2 && !isLaunching && !constellationUnlocked}
+            onLaunch={handleWhisperStarLaunch}
+            emphasized={activePhase === 2}
+          />
+
+          {/* Stars gate — feels like the end of scroll until button */}
+          <AnimatePresence>
+            {activePhase === 2 && !constellationUnlocked && (
+              <motion.div
+                key="stars-gate-end"
+                className="stars-gate-end"
+                style={{ opacity: starsEndVisible }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: EXPO }}
+              >
+                <p className="stars-gate-end__line">{JOURNEY_BEATS.stars.end}</p>
+                <p className="stars-gate-end__cta">{JOURNEY_BEATS.stars.cta}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ── Cinematic darkness fade-in ── */}
           <AnimatePresence>
@@ -728,6 +944,15 @@ export default function Home() {
                   transition={{ delay: 2.2, duration: 0.6, ease: EXPO }}
                 >
                   A private space to write, reflect, and heal.
+                </motion.p>
+
+                <motion.p
+                  className="journey-hero-support"
+                  initial={journeyBeat.initial}
+                  animate={heroActive ? journeyBeat.animate : journeyBeat.initial}
+                  transition={{ delay: 2.45 }}
+                >
+                  {JOURNEY_BEATS.hero.support}
                 </motion.p>
 
                 {/* Floating AI CTA pill — appears after typewriter finishes */}
@@ -795,11 +1020,11 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* ── PHASE 1: Emotional quote ── */}
+          {/* ── PHASE 1: Moon story copy ── */}
           <AnimatePresence>
             {activePhase === 1 && (
               <motion.div
-                key="quote-phase"
+                key="moon-phase"
                 style={{
                   position: 'absolute',
                   inset: 0,
@@ -808,86 +1033,66 @@ export default function Home() {
                   justifyContent: 'center',
                   zIndex: 30,
                   pointerEvents: 'none',
-                  padding: '0 2rem',
+                  padding: 'clamp(6rem, 18vh, 8rem) 2rem',
                 }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, filter: 'blur(10px)' }}
                 transition={{ duration: 0.6, ease: EXPO }}
               >
-                <motion.div
-                  style={{ textAlign: 'center', maxWidth: 640 }}
-                  initial={{ opacity: 0, y: 28 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: 0.1, duration: 0.65, ease: EXPO }}
-                >
-                  {/* Decorative quote mark */}
-                  <motion.div
-                    aria-hidden="true"
-                    style={{
-                      fontFamily: 'Georgia, serif',
-                      fontSize: '5rem',
-                      lineHeight: 1,
-                      color: 'rgba(45,212,191,0.25)',
-                      marginBottom: '-1rem',
-                      userSelect: 'none',
-                    }}
-                    initial={{ opacity: 0, scale: 0.6 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2, duration: 0.5, ease: EXPO }}
-                  >
-                    &ldquo;
-                  </motion.div>
-
-                  <motion.p
-                    style={{
-                      fontFamily: 'var(--font-serif), Georgia, serif',
-                      fontSize: 'clamp(1.25rem, 3vw, 1.8rem)',
-                      fontStyle: 'italic',
-                      color: 'rgba(220,238,255,0.92)',
-                      lineHeight: 1.65,
-                      letterSpacing: '-0.01em',
-                      textShadow: '0 0 40px rgba(45,212,191,0.2)',
-                    }}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.28, duration: 0.7, ease: EXPO }}
-                  >
-                    Some feelings are too big for words.
-                    <br />
-                    This is a place to try anyway.
-                  </motion.p>
-
-                  {/* Soft teal divider */}
-                  <motion.div
-                    aria-hidden="true"
-                    style={{
-                      width: 48,
-                      height: 1.5,
-                      background: 'linear-gradient(90deg, transparent, rgba(45,212,191,0.55), transparent)',
-                      margin: '1.6rem auto 0',
-                      borderRadius: 2,
-                    }}
-                    initial={{ scaleX: 0, opacity: 0 }}
-                    animate={{ scaleX: 1, opacity: 1 }}
-                    transition={{ delay: 0.5, duration: 0.6, ease: EXPO }}
-                  />
-                </motion.div>
+                <GlassQuoteCard
+                  eyebrow="To the moon"
+                  quote={
+                    <>
+                      I said it to the moon,
+                      <br />
+                      because you were not there to hear it.
+                    </>
+                  }
+                  support={JOURNEY_BEATS.moon.afterQuote}
+                  supportStyle={{ opacity: moonSupportOpacity, y: moonSupportY }}
+                />
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ── PHASES 2-5: Feature panels ── */}
+          {/* ── PHASE 2: Stars release copy ── */}
+          <AnimatePresence>
+            {activePhase === 2 && (
+              <motion.div
+                key="stars-phase"
+                className="journey-stars-overlay"
+                initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
+                animate={{
+                  opacity: isLaunching ? 0 : 1,
+                  y: isLaunching ? -8 : 0,
+                  filter: isLaunching ? 'blur(12px)' : 'blur(0px)',
+                }}
+                exit={{ opacity: 0, y: -12, filter: 'blur(8px)' }}
+                transition={{ duration: 0.55, ease: EXPO }}
+              >
+                <p className="journey-stars-overlay__text">{JOURNEY_BEATS.stars.release}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── PHASES 3-6: Feature panels ── */}
           {features.map((feat, i) => (
-            <FeaturePanel key={feat.id} feature={feat} idx={i} visible={isFeatureVisible(i)} />
+            <FeaturePanel
+              key={feat.id}
+              feature={feat}
+              idx={i}
+              visible={showFeature(i)}
+              panelRef={el => { panelRefs.current[i] = el }}
+            />
           ))}
 
-          {/* ── PHASE 6: Testimonials ── */}
+          {/* ── PHASE 7: Testimonials ── */}
           <AnimatePresence>
-            {activePhase === 6 && (
+            {activePhase === 7 && (
               <motion.div
                 key="testimonials"
+                className="room-testimonials"
                 style={{
                   position: 'absolute',
                   inset: 0,
@@ -895,8 +1100,12 @@ export default function Home() {
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 30,
-                  padding: '2rem clamp(1rem, 5vw, 4rem)',
+                  zIndex: 40,
+                  padding: '2rem clamp(2rem, 8vw, 6rem)',
+                  maxWidth: 'min(960px, 92vw)',
+                  margin: '0 auto',
+                  left: 0,
+                  right: 0,
                 }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -928,71 +1137,23 @@ export default function Home() {
                   Words from people who stayed.
                 </motion.h2>
 
-                <div style={{
-                  display: 'flex',
-                  gap: 'clamp(0.75rem, 2vw, 1.5rem)',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  maxWidth: 900,
-                  width: '100%',
-                }}>
-                  {[
+                <GlassTestimonialGrid
+                  items={[
                     { quote: 'Writing letters to myself changed how I think.', name: 'Jamie', age: 24 },
                     { quote: 'My diary is the only place I am truly honest.', name: 'Priya', age: 31 },
                     { quote: 'The quotes feature got me through a really hard month.', name: 'Marcus', age: 19 },
-                  ].map((t, i) => (
-                    <motion.div
-                      key={t.name}
-                      style={{
-                        flex: '1 1 240px',
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(220,240,255,0.10)',
-                        borderRadius: 16,
-                        padding: 'clamp(1.1rem, 2vw, 1.6rem)',
-                        backdropFilter: 'blur(14px)',
-                        WebkitBackdropFilter: 'blur(14px)',
-                        boxShadow: '0 4px 32px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(45,212,191,0.08) inset',
-                      }}
-                      initial={{ opacity: 0, y: 24, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: i * 0.12 + 0.28, duration: 0.55, ease: EXPO }}
-                    >
-                      {/* Quote mark */}
-                      <div style={{
-                        fontFamily: 'Georgia, serif',
-                        fontSize: '2rem',
-                        lineHeight: 1,
-                        color: 'rgba(45,212,191,0.35)',
-                        marginBottom: '0.5rem',
-                        userSelect: 'none',
-                      }} aria-hidden="true">&ldquo;</div>
-                      <p style={{
-                        fontSize: '0.92rem',
-                        color: 'rgba(210,230,245,0.82)',
-                        lineHeight: 1.7,
-                        fontStyle: 'italic',
-                        marginBottom: '1rem',
-                      }}>{t.quote}</p>
-                      <p style={{
-                        fontSize: '0.75rem',
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        color: 'rgba(45,212,191,0.55)',
-                        fontWeight: 600,
-                      }}>— {t.name}, {t.age}</p>
-                    </motion.div>
-                  ))}
-                </div>
+                  ]}
+                />
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* ── PHASE 7: CTA with CSS particle burst ── */}
           <AnimatePresence>
-            {activePhase === 7 && (
+            {activePhase === 8 && (
               <motion.div
                 key="cta"
-                className="room-cta-panel"
+                className="room-cta-panel room-cta-panel--healing"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -1131,35 +1292,16 @@ export default function Home() {
                     </div>
                   </motion.div>
                 ) : (
-                  /* ── Logged-out: signup CTA ── */
                   <motion.div
-                    className="flex flex-wrap gap-3 justify-center"
                     style={{ position: 'relative', zIndex: 1 }}
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.52, duration: 0.5, ease: EXPO }}
                   >
-                    <Link href="/register" className="room-cta-join-btn">
-                      Start for free
-                    </Link>
-                    <Link
-                      href="/login"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '0.95rem 1.8rem',
-                        borderRadius: 99,
-                        border: '1.5px solid rgba(45,212,191,0.28)',
-                        color: 'rgba(184,224,232,0.82)',
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        transition: 'border-color 0.2s, color 0.2s',
-                        backdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      Already have a space
-                    </Link>
+                    <GlassCtaGroup
+                      primary={{ href: '/register', label: 'Start for free' }}
+                      secondary={[{ href: '/login', label: 'Already have a space' }]}
+                    />
                   </motion.div>
                 )}
 
@@ -1191,11 +1333,11 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* Phase label — show feature eyebrow during phases 2-5 */}
+          {/* Phase label — when trail reaches a feature node */}
           <AnimatePresence mode="wait">
-            {activePhase >= 2 && activePhase <= 5 && (
+            {trailFeatureLabel >= 0 && (
               <motion.div
-                key={`label-${activePhase}`}
+                key={`label-${trailFeatureLabel}`}
                 style={{
                   position: 'absolute',
                   bottom: '1.5rem',
@@ -1213,13 +1355,13 @@ export default function Home() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35 }}
               >
-                {features[activePhase - 2]?.eyebrow}
+                {features[trailFeatureLabel]?.eyebrow}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <NavDots activePhase={activePhase} count={8} onDotClick={scrollToPhase} />
-        </div>
+          <NavDots activePhase={activePhase} count={9} onDotClick={scrollToPhase} />
+        </motion.div>
       </div>
     </>
   )

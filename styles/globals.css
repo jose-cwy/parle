@@ -51,6 +51,21 @@
   --paper-accent:     oklch(78% 0.12 183);
   --paper-accent-sage:oklch(68% 0.13 210);
 
+  /* ── Lunar surface (moon story canvas) ── */
+  --moon-surface-hi:   oklch(88% 0.012 240);
+  --moon-surface-mid:  oklch(72% 0.018 235);
+  --moon-surface-lo:   oklch(48% 0.022 250);
+  --moon-crater-rim:   oklch(92% 0.01 240);
+  --moon-glow-inner:   rgba(248, 250, 255, 0.35);
+  --moon-glow-outer:   rgba(45, 212, 191, 0.14);
+  --moon-glow-dream:   rgba(99, 102, 241, 0.08);
+
+  /* ── Premium landing panels ── */
+  --panel-glass:         rgba(2, 12, 28, 0.82);
+  --panel-glass-hover:   rgba(4, 18, 38, 0.9);
+  --panel-border-glow:   rgba(45, 212, 191, 0.28);
+  --panel-inner-highlight: rgba(220, 248, 255, 0.06);
+
   /* ── Easing ── */
   --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
   --ease-drift:cubic-bezier(0.37, 0, 0.2, 1);
@@ -3175,7 +3190,7 @@ body.cinematic-cursor * {
 /* ── Sticky room stage ── */
 .room-stage {
   position: relative;
-  height: 700vh;
+  height: 780vh;
 }
 
 .room-sticky {
@@ -3197,24 +3212,45 @@ body.cinematic-cursor * {
   pointer-events: none;
 }
 
-/* ── Feature overlay panels — compact glassmorphism cards ── */
+/* ── Moon story DOM halo (Framer pulse behind canvas) ── */
+.moon-halo {
+  position: absolute;
+  left: 50%;
+  top: 13%;
+  transform: translate(-50%, -50%);
+  width: min(44vw, 440px);
+  height: min(44vw, 440px);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--moon-glow-inner) 0%,
+    var(--moon-glow-outer) 42%,
+    var(--moon-glow-dream) 58%,
+    transparent 72%
+  );
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Feature overlay panels — premium glass cards ── */
 .room-panel {
   position: absolute;
   z-index: 30;
-  max-width: 360px;
-  /* Constrain to viewport with breathing room so it never clips */
+  max-width: min(320px, 38vw);
   max-height: min(520px, calc(100svh - 6rem));
   width: calc(100% - 3rem);
   padding: 1.1rem 1.4rem 1.25rem;
   border-radius: 18px;
-  background: rgba(2, 10, 24, 0.78);
-  backdrop-filter: blur(22px) saturate(1.7);
-  -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  border: 1px solid rgba(45, 212, 191, 0.2);
+  background: var(--panel-glass);
+  backdrop-filter: blur(24px) saturate(1.75);
+  -webkit-backdrop-filter: blur(24px) saturate(1.75);
+  border: 1px solid var(--panel-border-glow);
   box-shadow:
     0 28px 64px rgba(0, 0, 0, 0.65),
-    0 1px 0 rgba(45, 212, 191, 0.1) inset,
-    0 0 64px rgba(45, 212, 191, 0.05);
+    0 1px 0 var(--panel-inner-highlight) inset,
+    0 0 48px rgba(45, 212, 191, 0.06);
+  transition: background 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s;
   overflow-y: auto;
   overflow-x: hidden;
   /* Hide scrollbar but keep it functional */
@@ -3250,6 +3286,14 @@ body.cinematic-cursor * {
   margin: 0 0 0.75rem;
 }
 
+.room-panel:hover {
+  background: var(--panel-glass-hover);
+  box-shadow:
+    0 32px 72px rgba(0, 0, 0, 0.7),
+    0 1px 0 var(--panel-inner-highlight) inset,
+    0 0 56px rgba(45, 212, 191, 0.1);
+}
+
 .room-panel-link {
   display: inline-flex;
   align-items: center;
@@ -3258,12 +3302,424 @@ body.cinematic-cursor * {
   font-weight: 600;
   color: var(--accent);
   text-decoration: none;
-  transition: gap 0.2s var(--ease-out), opacity 0.2s;
+  cursor: pointer;
+  transition: gap 0.2s var(--ease-out), opacity 0.2s, text-shadow 0.2s;
 }
 
 .room-panel-link:hover {
   gap: 0.7rem;
-  opacity: 0.85;
+  opacity: 0.92;
+  text-shadow: 0 0 20px rgba(45, 212, 191, 0.35);
+}
+
+.room-testimonial-card {
+  flex: 1 1 240px;
+  background: var(--panel-glass);
+  border: 1px solid var(--panel-border-glow);
+  border-radius: 16px;
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+  backdrop-filter: blur(18px) saturate(1.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.35),
+    0 1px 0 var(--panel-inner-highlight) inset;
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+}
+
+.room-testimonial-card:hover {
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.45),
+    0 0 32px rgba(45, 212, 191, 0.08);
+}
+
+/* Moon phase quote — readable over detailed scene */
+.moon-phase-quote {
+  text-shadow: 0 2px 24px rgba(2, 9, 20, 0.9), 0 0 40px rgba(2, 9, 20, 0.6);
+}
+
+.moon-phase-eyebrow {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(45, 212, 191, 0.72);
+  margin: 0 0 1.25rem;
+  text-shadow: 0 1px 12px rgba(2, 9, 20, 0.85);
+}
+
+.moon-phase-support {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  font-style: italic;
+  color: rgba(167, 243, 208, 0.78);
+  margin: 1.25rem 0 0;
+  text-shadow: 0 2px 16px rgba(2, 9, 20, 0.9);
+}
+
+/* Journey atmosphere — scroll-driven heartbreak → healing */
+.journey-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+  overflow: hidden;
+}
+
+.journey-atmosphere__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 45%,
+    transparent 0%,
+    rgba(2, 9, 20, 0.92) 100%
+  );
+}
+
+.journey-atmosphere__warmth {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 55% at 50% 60%,
+    rgba(45, 212, 191, 0.14) 0%,
+    transparent 65%
+  );
+}
+
+.journey-hero-support {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  font-style: italic;
+  color: rgba(167, 243, 208, 0.82);
+  margin-top: 0.85rem;
+  max-width: 28rem;
+  line-height: 1.55;
+  text-shadow: 0 2px 20px rgba(2, 9, 20, 0.85);
+}
+
+.journey-stars-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 31;
+  pointer-events: none;
+  padding: 0 2rem;
+}
+
+.journey-stars-overlay__text {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+  font-style: italic;
+  color: rgba(200, 252, 245, 0.88);
+  text-align: center;
+  text-shadow: 0 2px 24px rgba(2, 9, 20, 0.95);
+  margin-top: 18vh;
+}
+
+/* Clickable whisper star — phase 2 launch */
+.whisper-star-trigger-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  touch-action: manipulation;
+}
+
+.whisper-star-trigger {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.whisper-star-trigger:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.85);
+  outline-offset: 4px;
+}
+
+.whisper-star-trigger__core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: rgba(220, 255, 248, 0.95);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.75);
+}
+
+.whisper-star-trigger__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(45, 212, 191, 0.45);
+  pointer-events: none;
+}
+
+.whisper-star-trigger__ring--a {
+  animation: whisperRingPulse 2.4s ease-out infinite;
+}
+
+.whisper-star-trigger__ring--b {
+  animation: whisperRingPulse 2.4s ease-out 1.2s infinite;
+}
+
+@keyframes whisperRingPulse {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+.whisper-star-trigger__hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(45, 212, 191, 0.65);
+  text-shadow: 0 1px 12px rgba(2, 9, 20, 0.9);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.room-sticky--launching {
+  overflow: hidden;
+}
+
+/* Stars gate — bottom “end of scroll” before constellation unlock */
+.stars-gate-end {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 28;
+  pointer-events: none;
+  padding: 0 2rem 2.5rem;
+  text-align: center;
+  background: linear-gradient(
+    to top,
+    rgba(2, 9, 20, 0.95) 0%,
+    rgba(2, 9, 20, 0.55) 45%,
+    transparent 100%
+  );
+}
+
+.stars-gate-end__line {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  font-style: italic;
+  color: rgba(200, 230, 245, 0.82);
+  margin: 0 0 0.5rem;
+  text-shadow: 0 2px 20px rgba(2, 9, 20, 0.9);
+}
+
+.stars-gate-end__cta {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(45, 212, 191, 0.7);
+  margin: 0;
+}
+
+.whisper-star-trigger__hint--emphasized {
+  color: rgba(120, 240, 220, 0.95);
+  font-size: 0.7rem;
+}
+
+.feature-heartbreak-line {
+  font-size: 0.88rem;
+  color: rgba(148, 180, 200, 0.75);
+  line-height: 1.55;
+  margin: 0.35rem 0 0.5rem;
+  font-style: italic;
+}
+
+.feature-healing-line {
+  font-size: 0.9rem;
+  color: rgba(45, 212, 191, 0.82);
+  line-height: 1.55;
+  margin: 0.5rem 0 0.75rem;
+  font-weight: 500;
+}
+
+.room-panel--spotlight::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 30% 50%, rgba(45, 212, 191, 0.12), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Glass quote card — moon phase */
+.glass-quote-card {
+  position: relative;
+  text-align: center;
+  max-width: min(480px, 88vw);
+  padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.25rem, 3vw, 2rem);
+  border-radius: 1.25rem;
+  background: rgba(8, 22, 38, 0.55);
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 48px rgba(2, 9, 20, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-quote-card__shine {
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.45), transparent);
+  pointer-events: none;
+}
+
+.glass-quote-card__mark {
+  font-family: Georgia, serif;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: rgba(45, 212, 191, 0.22);
+  margin-bottom: -0.5rem;
+  user-select: none;
+}
+
+.glass-quote-card__text {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1.25rem, 3vw, 1.8rem);
+  font-style: italic;
+  color: rgba(220, 238, 255, 0.92);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.glass-quote-card__divider {
+  width: 48px;
+  height: 1.5px;
+  margin: 1.25rem auto 0;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.55), transparent);
+  border-radius: 2px;
+}
+
+/* Glass testimonial grid */
+.glass-testimonial-grid {
+  display: flex;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 900px;
+  width: 100%;
+}
+
+.glass-testimonial-card {
+  flex: 1 1 240px;
+  max-width: 280px;
+  padding: 1.35rem 1.25rem;
+  border-radius: 1rem;
+  background: rgba(8, 22, 38, 0.6);
+  border: 1px solid rgba(45, 212, 191, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 32px rgba(2, 9, 20, 0.5);
+}
+
+.glass-testimonial-card__mark {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  line-height: 1;
+  color: rgba(45, 212, 191, 0.35);
+  margin-bottom: 0.5rem;
+}
+
+.glass-testimonial-card__quote {
+  font-size: 0.92rem;
+  color: rgba(210, 230, 245, 0.82);
+  line-height: 1.7;
+  font-style: italic;
+  margin: 0 0 1rem;
+}
+
+.glass-testimonial-card__meta {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(45, 212, 191, 0.55);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Glass CTA group */
+.glass-cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.glass-cta-group__primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 1rem 2.25rem;
+  background: linear-gradient(135deg, oklch(78% 0.12 183), oklch(68% 0.13 210));
+  color: #020d1a;
+  font-weight: 700;
+  font-size: 1.05rem;
+  border-radius: 99px;
+  text-decoration: none;
+  box-shadow: 0 8px 32px rgba(45, 212, 191, 0.45), 0 2px 0 rgba(255, 255, 255, 0.14) inset;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-cta-group__secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.95rem 1.8rem;
+  border-radius: 99px;
+  border: 1.5px solid rgba(45, 212, 191, 0.28);
+  color: rgba(184, 224, 232, 0.82);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(8, 22, 38, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.room-cta-panel--healing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 65% 50% at 50% 40%, rgba(45, 212, 191, 0.16), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-quote-card,
+  .glass-testimonial-card {
+    backdrop-filter: none;
+  }
+
+  .whisper-star-trigger__ring--a,
+  .whisper-star-trigger__ring--b {
+    animation: none;
+    opacity: 0.35;
+    transform: scale(1);
+  }
 }
 
 /* ── Hero text (centred over the room) ── */
@@ -3573,9 +4029,13 @@ body.cinematic-cursor * {
 }
 
 /* ── Responsive: reduce panel width and font at medium sizes ── */
+.room-testimonials {
+  pointer-events: none;
+}
+
 @media (max-width: 1100px) and (min-width: 769px) {
   .room-panel {
-    max-width: 340px;
+    max-width: min(300px, 42vw);
     padding: 1.2rem 1.4rem;
   }
   .room-panel-title {

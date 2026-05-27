@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { motion, useTransform } from 'framer-motion'
+import { moonStoryStarFade, STARS_PHASE_START, STARS_PHASE_END } from './MoonStoryScene'
+import { scriptedStarTargets } from '../lib/trailAnchors'
 
 /* ─── Seeded PRNG for stable star positions ─────────────────── */
 function seededRng(seed) {
@@ -175,6 +177,45 @@ function spawnShooter(slot, W, H) {
   slot.active = true
 }
 
+/** Scripted streak along normalized path (moon → trail handoff → chat node) */
+export function spawnDirectedShooter(slot, from, to, W, H) {
+  slot.x = from[0] * W
+  slot.y = from[1] * H
+  const tx = to[0] * W
+  const ty = to[1] * H
+  const dx = tx - slot.x
+  const dy = ty - slot.y
+  const dist = Math.hypot(dx, dy) || 1
+  const speed = 500 + Math.random() * 120
+  slot.vx = (dx / dist) * speed
+  slot.vy = (dy / dist) * speed
+  slot.maxLife = dist / speed + 0.08
+  slot.life = slot.maxLife
+  slot.active = true
+}
+
+let _scriptBeat = -1
+
+export function resetScriptedBeats() {
+  _scriptBeat = -1
+}
+
+/** Fire moon → handoff → chat scripted shooters (click launch or manual). */
+export function fireScriptedJourney(W, H) {
+  const st = scriptedStarTargets
+  resetScriptedBeats()
+  spawnDirectedShooter(SHOOT_POOL[0], st.moon, st.handoff, W, H)
+  _scriptBeat = 0
+  setTimeout(() => {
+    spawnDirectedShooter(SHOOT_POOL[1], st.handoff, st.chat, W, H)
+    _scriptBeat = 1
+  }, 120)
+  setTimeout(() => {
+    spawnDirectedShooter(SHOOT_POOL[2], st.moon, st.chat, W, H)
+    _scriptBeat = 2
+  }, 240)
+}
+
 /* ─── Build full star array (constellation + scattered) ─────── */
 const TOTAL_STARS = 160
 const SCATTER_COUNT = TOTAL_STARS - CONST_STAR_COUNT
@@ -258,7 +299,7 @@ const ORBS = [
 ]
 
 /* ─── Main component ─────────────────────────────────────────── */
-export default function ConstellationScene({ scrollProgress }) {
+export default function ConstellationScene({ scrollProgress, launchToken = 0 }) {
   const canvasRef  = useRef(null)
   const mouseRef   = useRef({ x: -9999, y: -9999 })
   const rafRef     = useRef(null)
@@ -266,8 +307,18 @@ export default function ConstellationScene({ scrollProgress }) {
 
   /* Camera Z driven by scroll: 0 → CAM_MAX */
   const cameraZ = useTransform(scrollProgress, [0, 1], [0, CAM_MAX])
-  /* Constellation alpha: fades in earlier now that warp starts immediately */
-  const constAlpha = useTransform(scrollProgress, [0, 0.08, 0.4], [0, 0, 0.72])
+  /* Constellation lines: visible in warp/features; off during moon/stars band */
+  const constAlpha = useTransform(scrollProgress, [0, 0.08, STARS_PHASE_END, STARS_PHASE_END + 0.10], [0, 0, 0.72, 0.72])
+
+  useEffect(() => {
+    if (launchToken <= 0) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const W = canvas.offsetWidth || window.innerWidth
+    const H = canvas.offsetHeight || window.innerHeight
+    if (!W || !H) return
+    fireScriptedJourney(W, H)
+  }, [launchToken])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -325,6 +376,10 @@ export default function ConstellationScene({ scrollProgress }) {
          scroll advances 0→0.25, giving the "starting from bottom-right"
          perspective that slowly centers as you fly inward */
       const sv = scrollProgress.get()
+      const starFade = moonStoryStarFade(sv)
+      /* Fade constellation mesh lines out below feature band when scrolling back */
+      const trailBand = sv < STARS_PHASE_END ? Math.max(0, (sv - 0.26) / (STARS_PHASE_END - 0.26)) : 1
+      const effAlpha = cAlpha * starFade * trailBand
       const originLerp = Math.max(0, 1 - sv / 0.25)
       const originX = originLerp * 320
       const originY = originLerp * 210
@@ -365,7 +420,7 @@ export default function ConstellationScene({ scrollProgress }) {
       }
 
       /* ── Draw constellation lines ────────────────────────────── */
-      if (cAlpha > 0.005) {
+      if (effAlpha > 0.005) {
         ctx.save()
         ctx.lineWidth = 1.2
 
@@ -377,7 +432,7 @@ export default function ConstellationScene({ scrollProgress }) {
           /* Depth-fade: lines closer to camera are slightly brighter */
           const avgDepth = (pa.depth + pb.depth) * 0.5
           const depthFade = Math.max(0, 1 - avgDepth / 900)
-          const lineAlpha = cAlpha * (0.3 + 0.7 * depthFade)
+          const lineAlpha = effAlpha * (0.3 + 0.7 * depthFade)
 
           const grad = ctx.createLinearGradient(pa.sx, pa.sy, pb.sx, pb.sy)
           grad.addColorStop(0, `rgba(45,212,191,${lineAlpha})`)
@@ -440,6 +495,9 @@ export default function ConstellationScene({ scrollProgress }) {
         const star = STARS[i]
         if (!p || !p.inView || p.r < 0.15 || star.isNode) continue
 
+        const scatterAlpha = p.alpha * starFade
+        if (scatterAlpha < 0.03) continue
+
         const warpT = camZ > 80
           ? Math.max(0, 1 - p.depth / 180) * Math.min((camZ - 80) / 260, 1)
           : 0
@@ -456,7 +514,7 @@ export default function ConstellationScene({ scrollProgress }) {
           const y0   = p.sy - ny * tail
           const grad = ctx.createLinearGradient(x0, y0, p.sx, p.sy)
           grad.addColorStop(0, 'rgba(200,235,255,0)')
-          grad.addColorStop(1, `rgba(220,242,255,${p.alpha * (0.4 + warpT * 0.6)})`)
+          grad.addColorStop(1, `rgba(220,242,255,${scatterAlpha * (0.4 + warpT * 0.6)})`)
           ctx.strokeStyle = grad
           ctx.lineWidth   = Math.max(p.r * 0.7, 0.4)
           ctx.beginPath()
@@ -465,7 +523,7 @@ export default function ConstellationScene({ scrollProgress }) {
           ctx.stroke()
         } else {
           /* Regular dot — batch into single fillStyle where possible */
-          ctx.fillStyle = `rgba(220,240,255,${p.alpha})`
+          ctx.fillStyle = `rgba(220,240,255,${scatterAlpha})`
           ctx.beginPath()
           ctx.arc(p.sx, p.sy, p.r, 0, Math.PI * 2)
           ctx.fill()
@@ -473,7 +531,7 @@ export default function ConstellationScene({ scrollProgress }) {
       }
 
       /* Draw constellation nodes second (radial gradient halos) */
-      if (cAlpha > 0.01) {
+      if (effAlpha > 0.01) {
         for (let i = 0; i < STARS.length; i++) {
           const p    = projected[i]
           const star = STARS[i]
@@ -481,14 +539,14 @@ export default function ConstellationScene({ scrollProgress }) {
 
           const haloR = p.r * 4.5
           const halo  = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, haloR)
-          halo.addColorStop(0, `rgba(45,212,191,${p.alpha * 0.35 * cAlpha})`)
+          halo.addColorStop(0, `rgba(45,212,191,${p.alpha * 0.35 * effAlpha})`)
           halo.addColorStop(1, 'rgba(45,212,191,0)')
           ctx.fillStyle = halo
           ctx.beginPath()
           ctx.arc(p.sx, p.sy, haloR, 0, Math.PI * 2)
           ctx.fill()
 
-          ctx.fillStyle = `rgba(200,248,250,${p.alpha})`
+          ctx.fillStyle = `rgba(200,248,250,${p.alpha * starFade})`
           ctx.beginPath()
           ctx.arc(p.sx, p.sy, p.r * 1.15, 0, Math.PI * 2)
           ctx.fill()
@@ -499,15 +557,36 @@ export default function ConstellationScene({ scrollProgress }) {
       const dt = _lastShootTs > 0 ? Math.min((timestamp - _lastShootTs) / 1000, 0.05) : 0
       _lastShootTs = timestamp
 
+      const inStarBridge = sv >= STARS_PHASE_START && sv < STARS_PHASE_END
+      if (inStarBridge) {
+        const local = (sv - STARS_PHASE_START) / (STARS_PHASE_END - STARS_PHASE_START)
+        const st = scriptedStarTargets
+        if (local > 0.08 && _scriptBeat < 0) {
+          spawnDirectedShooter(SHOOT_POOL[0], st.moon, st.handoff, W, H)
+          _scriptBeat = 0
+        }
+        if (local > 0.38 && _scriptBeat < 1) {
+          spawnDirectedShooter(SHOOT_POOL[1], st.handoff, st.chat, W, H)
+          _scriptBeat = 1
+        }
+        if (local > 0.62 && _scriptBeat < 2) {
+          spawnDirectedShooter(SHOOT_POOL[2], st.moon, st.chat, W, H)
+          _scriptBeat = 2
+        }
+      } else if (sv < STARS_PHASE_START - 0.02 || sv > STARS_PHASE_END + 0.02) {
+        _scriptBeat = -1
+      }
+
       for (let si = 0; si < SHOOT_POOL.length; si++) {
         const s = SHOOT_POOL[si]
 
         if (!s.active) {
           /* Count down to next firing */
           s.nextFire -= dt * 1000
+          const interval = inStarBridge ? 900 + Math.random() * 700 : 3500 + Math.random() * 4000
           if (s.nextFire <= 0) {
             spawnShooter(s, W, H)
-            s.nextFire = 3500 + Math.random() * 4000
+            s.nextFire = interval
           }
           continue
         }
@@ -524,7 +603,7 @@ export default function ConstellationScene({ scrollProgress }) {
 
         /* Draw streak: gradient from transparent tail to bright head */
         const lifeRatio  = s.life / s.maxLife
-        const headAlpha  = Math.min(lifeRatio * 2, 1) * 0.88  // fade in fast, fade out slow
+        const headAlpha  = Math.min(lifeRatio * 2, 1) * 0.88 * Math.max(starFade, 0.35)
         const tailLength = 90 + (1 - lifeRatio) * 60
         const tx = s.x - (s.vx / Math.hypot(s.vx, s.vy)) * tailLength
         const ty = s.y - (s.vy / Math.hypot(s.vx, s.vy)) * tailLength
