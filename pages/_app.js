@@ -3,14 +3,15 @@ import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Head from 'next/head'
-import { Manrope, Cormorant_Garamond } from 'next/font/google'
+import '@fontsource/manrope/400.css'
+import '@fontsource/manrope/600.css'
+import '@fontsource/cormorant-garamond/500.css'
+import '@fontsource/cormorant-garamond/600.css'
+import '@fontsource/cormorant-garamond/700.css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { pageTransition } from '../lib/motion'
 import { isAppRoute, isFullBleedRoute, isLandingThemeRoute } from '../lib/routes'
-
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-sans' })
-const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-serif' })
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -32,7 +33,7 @@ export default function App({ Component, pageProps }) {
 
   return (
     <div
-      className={`${manrope.variable} ${cormorant.variable} min-h-screen flex flex-col app-shell${landingTheme ? ' app-shell--landing-theme' : ''}`}
+      className={`min-h-screen flex flex-col app-shell${landingTheme ? ' app-shell--landing-theme' : ''}`}
       style={isHome ? { scrollBehavior: 'smooth' } : undefined}
     >
       <Head>

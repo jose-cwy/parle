@@ -9,6 +9,7 @@ export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
+  const [hasUserScrolled, setHasUserScrolled] = useState(false)
   const containerRef = useRef(null)
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -17,6 +18,24 @@ export default function Home() {
 
   const gradientOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [1, 0.8, 0.6, 0.4])
   const gradientY = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
+
+  useEffect(() => {
+    function onFirstScroll() {
+      setHasUserScrolled(true)
+      window.removeEventListener('scroll', onFirstScroll)
+      window.removeEventListener('touchmove', onFirstScroll)
+      window.removeEventListener('wheel', onFirstScroll)
+    }
+
+    window.addEventListener('scroll', onFirstScroll, { passive: true })
+    window.addEventListener('touchmove', onFirstScroll, { passive: true })
+    window.addEventListener('wheel', onFirstScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onFirstScroll)
+      window.removeEventListener('touchmove', onFirstScroll)
+      window.removeEventListener('wheel', onFirstScroll)
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -49,7 +68,7 @@ export default function Home() {
     <div ref={containerRef} className="relative min-h-screen overflow-hidden" style={{ backgroundColor: '#fdf8f6' }}>
       <motion.div
         className="fixed inset-0 pointer-events-none"
-        style={{ opacity: gradientOpacity, y: gradientY }}
+        style={{ opacity: hasUserScrolled ? gradientOpacity : 1, y: hasUserScrolled ? gradientY : 0 }}
         aria-hidden="true"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-[#ffd4a3] via-[#f7c6a8] to-[#e6b8c9] opacity-40" />
