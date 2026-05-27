@@ -4,7 +4,9 @@ import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import { spring } from '../lib/motion'
 import { isAppRoute, isLandingThemeRoute } from '../lib/routes'
-import HeartMorphDrawer from './landing/HeartMorphDrawer'
+import HeartstringsMenu from './landing/HeartstringsMenu'
+import AuthButtons from './landing/AuthButtons'
+import HeartLogo from './landing/HeartLogo'
 
 export default function Header() {
   const router = useRouter()
@@ -67,27 +69,19 @@ export default function Header() {
           className="brand-mark text-lg font-semibold"
           style={isHome || landingTheme ? { color: 'var(--landing-text)' } : undefined}
         >
-          <span
-            className={`inline-block w-2 h-2 rounded-full mr-2${isHome || landingTheme ? ' marketing-header__dot' : ''}`}
-            style={
-              isHome || landingTheme
-                ? undefined
-                : {
-                    background: 'var(--accent-maroon)',
-                    boxShadow: '0 0 10px var(--accent-maroon-glow)',
-                  }
-            }
-            aria-hidden="true"
-          />
+          <span className="inline-flex items-center justify-center mr-2 align-middle">
+            <HeartLogo size={18} />
+          </span>
           Heartstrings Club
         </Link>
 
         {isHome ? (
           <nav className="marketing-header__nav marketing-header__nav--landing" aria-label="Site">
+            {!ready && <span className="marketing-header__placeholder" aria-hidden="true" />}
+            {ready && !user && <AuthButtons variant="header" />}
             {ready && (
-              <HeartMorphDrawer
+              <HeartstringsMenu
                 user={user}
-                chatHref={chatHref}
                 open={menuOpen}
                 onOpenChange={setMenuOpen}
               />

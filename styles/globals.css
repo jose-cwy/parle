@@ -7368,6 +7368,211 @@ body.body--landing.body--nav-open {
   color: var(--landing-heart);
 }
 
+/* ── Heartstrings Pull Menu (floating panel) ── */
+.heartstringsMenu {
+  position: relative;
+}
+
+.heartstringsMenu__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(58, 47, 47, 0.88);
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(80, 50, 35, 0.12);
+  border: 1px solid rgba(212, 129, 143, 0.18);
+}
+
+.heartstringsMenu__toggle:focus-visible {
+  outline: 2px solid rgba(212, 129, 143, 0.55);
+  outline-offset: 3px;
+}
+
+.heartstringsMenu__icon {
+  display: block;
+}
+
+.heartstringsMenu__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  border: none;
+  padding: 0;
+  background: rgba(253, 248, 246, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.heartstringsMenu__panel {
+  position: fixed;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 45;
+  width: min(92vw, 420px);
+  border-radius: 22px;
+  padding: 1rem 1rem 1.1rem;
+  background: rgba(255, 248, 240, 0.82);
+  border: 1px solid rgba(212, 129, 143, 0.18);
+  box-shadow: 0 26px 80px rgba(80, 50, 35, 0.22);
+  overflow: hidden;
+}
+
+.heartstringsMenu__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(ellipse 80% 70% at 20% 0%, rgba(247, 198, 168, 0.35), transparent 55%),
+    radial-gradient(ellipse 80% 70% at 100% 30%, rgba(230, 184, 201, 0.28), transparent 55%),
+    radial-gradient(ellipse 90% 70% at 60% 100%, rgba(184, 157, 199, 0.16), transparent 60%);
+}
+
+.heartstringsMenu__panelTop,
+.heartstringsMenu__cards,
+.heartstringsMenu__auth {
+  position: relative;
+  z-index: 1;
+}
+
+.heartstringsMenu__panelTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.heartstringsMenu__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.heartstringsMenu__brandText {
+  line-height: 1.15;
+}
+
+.heartstringsMenu__label {
+  margin: 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(138, 122, 122, 0.9);
+  font-weight: 700;
+}
+
+.heartstringsMenu__brandName {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  color: rgba(58, 47, 47, 0.95);
+}
+
+.heartstringsMenu__close {
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  color: rgba(58, 47, 47, 0.82);
+  border: 1px solid rgba(212, 129, 143, 0.16);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.heartstringsMenu__close:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.heartstringsMenu__cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.heartstringsMenu__card {
+  border-radius: 18px;
+}
+
+.heartstringsMenu__cardLink {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 0.85rem;
+  border-radius: 18px;
+  text-decoration: none;
+  border: 1px solid rgba(212, 129, 143, 0.14);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.heartstringsMenu__cardLink:hover {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(212, 129, 143, 0.22);
+  box-shadow:
+    0 14px 34px rgba(80, 50, 35, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.heartstringsMenu__cardLink:focus-visible {
+  outline: 2px solid rgba(212, 129, 143, 0.55);
+  outline-offset: 3px;
+}
+
+.heartstringsMenu__cardIcon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212, 129, 143, 0.10);
+  color: rgba(212, 129, 143, 0.95);
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.heartstringsMenu__cardTitle {
+  display: block;
+  font-weight: 700;
+  color: rgba(58, 47, 47, 0.95);
+}
+
+.heartstringsMenu__cardDesc {
+  display: block;
+  margin-top: 0.2rem;
+  color: rgba(138, 122, 122, 0.95);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.heartstringsMenu__auth {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(212, 129, 143, 0.14);
+}
+
+.heartstringsMenu__authNote {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(58, 47, 47, 0.7);
+}
+
 .marketing-header.marketing-header--landing {
   background: var(--landing-bg) !important;
   border-bottom: 1px solid var(--landing-border) !important;
