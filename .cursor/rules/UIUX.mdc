@@ -1,0 +1,111 @@
+---
+description: Frontend design
+alwaysApply: true
+---
+
+# Frontend UI/UX Design Rules
+
+When working on frontend design, use **Framer Motion**, **UI UX Pro Max**, **21st.dev**, and **Impeccable** strictly for design-related improvements only.
+
+Do not use these tools to change backend logic, database logic, authentication flow, API behaviour, routing structure, or core business logic unless the design implementation absolutely requires it.
+
+## 1. Framer Motion
+
+Use Framer Motion for animation and interaction design.
+
+Apply it to:
+- Smooth page transitions
+- Section entrance animations
+- Hover effects
+- Floating objects
+- Parallax effects
+- Loading animations
+- Micro-interactions
+- Button/card interactions
+- Modal and drawer transitions
+
+Animations should feel smooth, intentional, and polished. Avoid stiff, excessive, or distracting animations.
+
+## 2. UI UX Pro Max
+
+Use UI UX Pro Max for design thinking and UI/UX decision-making.
+
+Apply it to improve:
+- Layout structure
+- Spacing and alignment
+- Colour palette
+- Font pairing
+- Visual hierarchy
+- User flow
+- Readability
+- Accessibility
+- Responsiveness
+- Overall design quality
+
+Design decisions should be based on the project’s theme, target users, and intended emotional experience. Avoid generic SaaS-style layouts unless they fit the project.
+
+## 3. 21st.dev
+
+Use 21st.dev for modern, high-quality UI components.
+
+Apply it to improve or generate:
+- Buttons
+- Cards
+- Navbars
+- Forms
+- Dashboards
+- Modals
+- Landing page sections
+- Feature sections
+- Empty states
+- Component variations
+
+Components should match the project’s visual identity and should not feel randomly inserted or disconnected from the overall design.
+
+## 4. Impeccable
+
+Use Impeccable for final design polish and quality review.
+
+Use it to identify and fix:
+- Generic AI-looking UI
+- Poor typography
+- Weak spacing
+- Inconsistent colours
+- Unpolished responsiveness
+- Awkward animations
+- Bad hover states
+- Weak interaction states
+- Misaligned components
+- Visual inconsistencies
+
+After each major frontend change, review the page with Impeccable and refine anything that looks unfinished, cheap, generic, or inconsistent.
+
+## Design Workflow
+
+For every frontend design task, follow this order:
+
+1. Use UI UX Pro Max to decide the layout, UX flow, visual hierarchy, spacing, colours, and typography.
+2. Use 21st.dev to improve or generate suitable UI components.
+3. Use Framer Motion to add smooth animations and micro-interactions.
+4. Use Impeccable to review, polish, and refine the final design.
+
+## Design Standards
+
+Every design update should feel:
+- Clean
+- Polished
+- Intentional
+- Responsive
+- Visually consistent
+- Easy to use
+- Aligned with the project theme
+- Not generic or AI-generated
+
+## Important Restrictions
+
+- Only use Framer Motion, UI UX Pro Max, 21st.dev, and Impeccable for frontend design work.
+- Do not change core functionality unless necessary for the design to work.
+- Do not add random design elements without purpose.
+- Do not overcomplicate the UI.
+- Do not use animations that hurt usability.
+- Do not leave placeholder, unfinished, or generic-looking components.

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/clean-next.js",
     "dev": "next dev",
+    "dev:reset": "node scripts/free-port.js && npm run dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

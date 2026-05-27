@@ -4,9 +4,11 @@ import DiaryEntryModal from '../components/DiaryEntryModal'
 import CalendarView from '../components/CalendarView'
 import DiaryRoomHero from '../components/DiaryRoomHero'
 import RequireAuth from '../components/RequireAuth'
+import AppShell from '../components/AppShell'
 import Reveal from '../components/Reveal'
 import { SkeletonDiaryPage, SkeletonText } from '../components/Skeleton'
 import { spring, hoverGlow } from '../lib/motion'
+import { pulseWarmth } from '../lib/warmthPulse'
 
 function formatLocalDateKey(value){
   const date = new Date(value)
@@ -102,6 +104,7 @@ export default function Diary(){
 
       setOpen(false)
       setEditing(null)
+      pulseWarmth(0.8, 1800)
       await fetchEntries()
     } catch (err) {
       setError(err.message || 'Unable to save your entry.')
@@ -126,6 +129,7 @@ export default function Diary(){
 
   return (
     <RequireAuth>
+      <AppShell>
       {loading ? (
         <SkeletonDiaryPage />
       ) : (
@@ -308,6 +312,7 @@ export default function Diary(){
           />
         </div>
       )}
+      </AppShell>
     </RequireAuth>
   )
 }

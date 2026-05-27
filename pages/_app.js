@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Head from 'next/head'
@@ -6,16 +7,34 @@ import { Manrope, Cormorant_Garamond } from 'next/font/google'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { pageTransition } from '../lib/motion'
+import { isAppRoute, isFullBleedRoute, isLandingThemeRoute } from '../lib/routes'
 
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-sans' })
 const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-serif' })
 
-export default function App({ Component, pageProps }){
+export default function App({ Component, pageProps }) {
   const router = useRouter()
-  const isJourney = router.pathname === '/'
+  const fullBleed = isFullBleedRoute(router.pathname)
+  const appLayout = isAppRoute(router.pathname)
+  const landingTheme = isLandingThemeRoute(router.pathname)
+  const isHome = router.pathname === '/'
+
+  useEffect(() => {
+    if (landingTheme) {
+      document.body.classList.add('body--landing')
+    } else {
+      document.body.classList.remove('body--landing', 'body--nav-open')
+    }
+    return () => {
+      document.body.classList.remove('body--landing', 'body--nav-open')
+    }
+  }, [landingTheme])
 
   return (
-    <div className={`${manrope.variable} ${cormorant.variable} min-h-screen flex flex-col app-shell`}>
+    <div
+      className={`${manrope.variable} ${cormorant.variable} min-h-screen flex flex-col app-shell${landingTheme ? ' app-shell--landing-theme' : ''}`}
+      style={isHome ? { scrollBehavior: 'smooth' } : undefined}
+    >
       <Head>
         <title>Heartstrings Club | Teen Heartbreak Support Website</title>
         <meta name="description" content="Heartstrings Club is a teen heartbreak support website with private diary, emotional support chatbot, and healing quotes." />
@@ -23,8 +42,7 @@ export default function App({ Component, pageProps }){
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      {/* Page noise and glows only shown on non-journey pages to avoid clashing */}
-      {!isJourney && (
+      {!fullBleed && !appLayout && !isHome && (
         <>
           <div className="page-noise" />
           <div className="page-glow page-glow-one" />
@@ -33,13 +51,13 @@ export default function App({ Component, pageProps }){
         </>
       )}
 
-      {/* Header sits above everything */}
-      <div className={isJourney ? 'absolute top-0 left-0 right-0 z-40' : 'relative z-30'}>
-        <Header />
-      </div>
+      {!appLayout && (
+        <div className={fullBleed ? 'absolute top-0 left-0 right-0 z-40' : 'relative z-30'}>
+          <Header />
+        </div>
+      )}
 
-      {isJourney ? (
-        /* Journey landing: simple fade only — scale/transform would break sticky positioning */
+      {fullBleed ? (
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={router.asPath}
@@ -52,8 +70,15 @@ export default function App({ Component, pageProps }){
             <Component {...pageProps} />
           </motion.div>
         </AnimatePresence>
+      ) : appLayout ? (
+        <main className="flex-1 relative z-10">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={router.asPath} {...pageTransition} className="h-full min-h-[calc(100vh-0px)]">
+              <Component {...pageProps} />
+            </motion.div>
+          </AnimatePresence>
+        </main>
       ) : (
-        /* Inner pages: standard container layout */
         <main className="flex-1 container py-8 relative z-10">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={router.asPath} {...pageTransition}>
@@ -63,7 +88,7 @@ export default function App({ Component, pageProps }){
         </main>
       )}
 
-      {!isJourney && <Footer />}
+      {!fullBleed && !appLayout && <Footer />}
     </div>
   )
 }

@@ -15,7 +15,7 @@ export default function GlassTestimonialGrid({ items }) {
       {items.map((t) => (
         <motion.article
           key={t.name}
-          className="glass-testimonial-card"
+          className="glass-testimonial-card glass-testimonial-card--late-night"
           variants={stagger.item}
           {...hoverGlow}
         >

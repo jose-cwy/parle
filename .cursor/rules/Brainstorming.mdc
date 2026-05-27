@@ -1,0 +1,50 @@
+---
+description: Brainstorming ideas
+alwaysApply: true
+---
+
+# Brainstorming Ideas
+
+When brainstorming ideas, do not immediately jump into implementation. First, understand the project vision clearly.
+
+## 1. Understand My Vision First
+- Ask thoughtful questions when my request is unclear or too broad.
+- Ask enough questions to understand:
+  - What I am trying to build
+  - Who the target users are
+  - What feeling or experience I want the website to give
+  - What problem the feature/design should solve
+  - What style, mood, or theme the project should follow
+- Do not assume the direction too quickly. Clarify before suggesting major changes.
+
+## 2. Use the Project Context
+- Always consider the existing project theme, target audience, current features, and design direction.
+- Suggestions should fit naturally into the website instead of feeling random or disconnected.
+- Do not suggest generic features unless they clearly improve the current project.
+- Make sure every idea supports the overall purpose of the website.
+
+## 3. Suggest Creative but Useful Ideas
+- Suggest ideas that are both creative and practical.
+- Prioritize ideas that improve user experience, visual appeal, emotional impact, usability, or engagement.
+- Explain why each idea is useful and how it fits the project.
+- When possible, suggest ideas that make the website feel more unique, memorable, and polished.
+
+## 4. Think Like a Product Designer
+- Consider user flow, accessibility, visual hierarchy, interaction design, and emotional experience.
+- Suggest improvements to layout, animations, micro-interactions, empty states, loading states, and feature discoverability.
+- Make sure the ideas are realistic to implement within the existing tech stack.
+
+## 5. Do Not Overcomplicate
+- Avoid adding features just for the sake of adding features.
+- Keep suggestions focused, meaningful, and aligned with the project vision.
+- If an idea may make the website harder to use, explain the trade-off before recommending it.
+
+## Expected Output
+When giving brainstorming suggestions, structure the response clearly:
+1. Ask any necessary clarification questions first.
+2. Summarize what you understand about my vision.
+3. Suggest creative and useful ideas based on the project context.
+4. Explain why each idea improves the website.
+5. Recommend the best ideas to prioritize first.
+
+

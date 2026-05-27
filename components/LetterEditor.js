@@ -42,7 +42,7 @@ export default function LetterEditor({
         <>
           <div className="room-letter-topline">
             <div>
-              <p className="room-letter-label">Letter to Yourself</p>
+              <p className="room-letter-label">Closure letter</p>
               <p className="room-letter-meta">{updatedAt ? `Last saved ${new Date(updatedAt).toLocaleString()}` : 'Write slowly. This room is here for you.'}</p>
             </div>
             <div className="room-letter-meta-wrap">
@@ -73,7 +73,7 @@ export default function LetterEditor({
               onChange={(event) => onChange(event.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Write a letter to yourself..."
+              placeholder="Write what you never got to say..."
               className="letter-textarea room-letter-input"
               disabled={loading || isCompleted || isSealing}
             />
@@ -111,7 +111,7 @@ export default function LetterEditor({
                 className="room-action-chip"
                 {...hoverGlow}
               >
-                Complete Letter
+                Seal letter
               </motion.button>
                 </>
               )}
@@ -125,7 +125,7 @@ export default function LetterEditor({
             <span className="room-envelope-seal" />
           </div>
           <p className="mt-4 text-sm leading-7 subtle">
-            Your letter is sealed now. The words are tucked away until a future feature decides when it can be reopened.
+            Your letter is sealed. The words are tucked away so you do not have to reread them tonight.
           </p>
         </div>
       )}

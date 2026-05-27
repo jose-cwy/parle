@@ -14,6 +14,12 @@ colors:
   text-muted: "#a89480"
   paper-cream: "#fff4e8"
   paper-muted: "#e8d4bc"
+  landing-bg: "#EDE8DC"
+  landing-bg-soft: "#E8E2D4"
+  landing-text: "oklch(28% 0.02 265)"
+  landing-text-muted: "oklch(48% 0.02 265)"
+  landing-accent: "oklch(52% 0.22 25)"
+  landing-accent-hover: "oklch(45% 0.22 25)"
 typography:
   display:
     fontFamily: "Cormorant Garamond, Georgia, serif"
@@ -97,6 +103,20 @@ A restrained palette: tinted warm neutrals with amber accent and sage secondary.
 **The Warm Tint Rule.** Never use pure #000 or #fff. All neutrals are tinted toward terracotta or cream.
 
 **The One Accent Rule.** Golden amber carries emphasis on ≤15% of any screen. Sage provides secondary calm, not competing neon.
+
+### Public landing (beige + red — 808s editorial)
+Used on `/`, `/login`, `/register` via `--landing-*` tokens in `styles/globals.css`.
+
+- **Flat beige canvas** (`--landing-bg` `#EDE8DC`): Solid on `html`, `body`, `#__next`, `.app-shell`, and `.landing-page` via `body.body--landing` — no charcoal gradients or side gutters.
+- **Transparent home header**: On `/`, logo + heart toggle float on cream (`marketing-header--home`); no grey bar or backdrop blur.
+- **Heart map drawer**: Heart toggle opens a right panel (`min(33vw, 380px)`); SVG heart outline with red thread lines to four tool nodes (Chat, Letter, Diary, Quotes); secondary links below (How it works, Stories, Log in, Talk it out).
+- **Paper grain**: Very low-opacity noise on `.landing-page` and hero section.
+- **Heart red** (`--landing-accent`): Primary CTAs only — solid fill, white label text.
+- **Soft cream cards** (`--landing-bg-soft`): Tool previews, testimonial marquee.
+- **Eyebrows**: Extra-wide letter-spacing uppercase in red; serif display H1 at large scale.
+- **Motion**: Drawer slide from right; node stagger; optional heart-outline breathe when open; marquee pauses with `prefers-reduced-motion`.
+
+Logged-in app shell remains charcoal + maroon (Phase B may align later).
 
 ## 3. Typography
 

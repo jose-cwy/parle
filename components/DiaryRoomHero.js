@@ -21,7 +21,7 @@ export default function DiaryRoomHero(){
           <p className="eyebrow">Your writing nook</p>
           <h2 className="mt-2 text-2xl font-semibold md:text-3xl">A quiet room for today&apos;s pages</h2>
           <p className="mt-2 max-w-md text-sm subtle">
-            Open your journal under the stars. Each entry stays private and yours.
+            Put the day somewhere safe. If the breakup keeps looping, write one honest page and leave it here.
           </p>
         </motion.div>
         <motion.div

@@ -9,11 +9,11 @@ export default function RequireAuth({ children }){
   useEffect(()=>{
     fetch('/api/auth/me').then(r=>{
       if(!r.ok) {
-        router.push('/login')
+        router.push(`/login?next=${encodeURIComponent(router.asPath)}`)
         return
       }
       r.json().then(payload => {
-        if(!payload?.user) router.push('/login')
+        if(!payload?.user) router.push(`/login?next=${encodeURIComponent(router.asPath)}`)
         else setReady(true)
       })
     })

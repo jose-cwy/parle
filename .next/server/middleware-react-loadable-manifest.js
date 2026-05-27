@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"index.js -> ../components/ConstellationScene":{"id":3499,"files":["static/chunks/499.13f00121a29f361d.js"]},"index.js -> ../components/MoonStoryScene":{"id":6268,"files":[]}}';

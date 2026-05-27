@@ -2,12 +2,19 @@ import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { SkeletonChatBox, SkeletonBlock, SkeletonButton } from './Skeleton'
 import { spring, hoverGlow } from '../lib/motion'
+import { pulseWarmth } from '../lib/warmthPulse'
 
 export default function ChatBox(){
   const [messages, setMessages] = useState(null)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef()
+
+  const PROMPTS = [
+    'I keep rereading our last messages.',
+    'I miss them, and I hate it.',
+    'I feel angry and embarrassed.',
+  ]
 
   useEffect(()=>{
     fetch('/api/chat/history')
@@ -30,6 +37,7 @@ export default function ChatBox(){
     if(res.ok){
       const data = await res.json();
       setMessages(prev=>[...(prev || []), { role:'assistant', text: data.reply }])
+      pulseWarmth(1, 1600)
       await fetch('/api/gamification/progress',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -58,6 +66,19 @@ export default function ChatBox(){
           <span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-teal)] shadow-[0_0_8px_var(--accent-teal-glow)]" aria-hidden="true" />
           Online
         </div>
+      </div>
+      <div className="chat-prompts" aria-label="Quick starters">
+        {PROMPTS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            className="chat-prompt-chip"
+            disabled={loading}
+            onClick={() => setInput(p)}
+          >
+            {p}
+          </button>
+        ))}
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto mb-3 space-y-3 pr-1">
         <AnimatePresence initial={false}>
@@ -93,7 +114,7 @@ export default function ChatBox(){
           value={input}
           onChange={e=>setInput(e.target.value)}
           className="input-field flex-1 !mt-0"
-          placeholder="Say how you feel..."
+          placeholder="Say what happened…"
           disabled={loading}
           onKeyDown={(e) => {
             if(e.key === 'Enter' && !e.shiftKey){

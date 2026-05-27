@@ -23,7 +23,7 @@ export default function Register({ acceptedTermsInitially }){
 
     setLoading(true)
     const res = await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})})
-    if(res.ok) router.push('/letter-to-yourself')
+    if(res.ok) router.push('/dashboard')
     else {
       const payload = await res.json().catch(()=>null)
       alert(payload?.error || 'Registration failed')

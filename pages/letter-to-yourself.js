@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { motion, AnimatePresence } from 'framer-motion'
 import RequireAuth from '../components/RequireAuth'
+import AppShell from '../components/AppShell'
 import DeskScene from '../components/DeskScene'
 import LetterEditor from '../components/LetterEditor'
 import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
 import { SkeletonLetterRoom } from '../components/Skeleton'
+import { pulseWarmth } from '../lib/warmthPulse'
 
 const EXPO = [0.16, 1, 0.3, 1]
 
@@ -75,6 +77,7 @@ export default function LetterToYourselfPage(){
     setLetter(data.letter)
     setDraft(data.letter?.content || '')
     setShowSavedToast(true)
+    pulseWarmth(0.9, 1800)
   }
 
   function handleRequestComplete(){
@@ -86,8 +89,8 @@ export default function LetterToYourselfPage(){
     setModalState({
       open: true,
       mode: 'confirm-complete',
-      title: 'Complete this letter?',
-      description: 'Your letter will fold away and stay locked until your journey is complete.'
+      title: 'Seal this letter?',
+      description: 'It will fold away and stay private. You can stop carrying these words tonight.'
     })
   }
 
@@ -120,6 +123,7 @@ export default function LetterToYourselfPage(){
     setPendingCompletedLetter(data.letter)
     setModalState({ open: false, mode: 'status', title: '', description: '' })
     setIsSealing(true)
+    pulseWarmth(1, 2200)
   }
 
   function handleSealAnimationComplete(){
@@ -131,12 +135,20 @@ export default function LetterToYourselfPage(){
       open: true,
       mode: 'status',
       title: 'Your letter is now locked',
-      description: 'It will stay sealed until your journey is complete.'
+      description: 'It is sealed and kept private. You can come back when you are ready.'
     })
   }
 
   return (
     <RequireAuth>
+      <AppShell>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <p className="eyebrow">Closure letter</p>
+        <h2 className="mt-2 section-title">Write what you never got to say.</h2>
+        <p className="subtle text-base leading-7 mt-2" style={{ maxWidth: 720 }}>
+          This stays private. When you are ready, you can seal it away and stop carrying it in your head.
+        </p>
+      </div>
       {/* First-time welcome banner */}
       <AnimatePresence>
         {showWelcome && (
@@ -239,6 +251,7 @@ export default function LetterToYourselfPage(){
           setModalState({ open: false, mode: 'status', title: '', description: '' })
         }}
       />
+      </AppShell>
     </RequireAuth>
   )
 }
