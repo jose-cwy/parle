@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { BookOpen, MessageCircle, Quote } from 'lucide-react'
 import { ease, spring } from '../../lib/motion'
@@ -95,12 +97,17 @@ function HeartstringsMenuButton({ open, onToggle, controlsId }) {
 
 export default function HeartstringsMenu({ user, open, onOpenChange }) {
   const reduceMotion = useReducedMotion()
+  const router = useRouter()
   const id = useId()
   const controlsId = `heartstrings-menu-panel-${id}`
   const panelRef = useRef(null)
 
   const close = useCallback(() => onOpenChange(false), [onOpenChange])
   const toggle = useCallback(() => onOpenChange(!open), [onOpenChange, open])
+
+  useEffect(() => {
+    close()
+  }, [router.asPath, close])
 
   useEffect(() => {
     if (!open) return undefined
@@ -212,8 +219,19 @@ export default function HeartstringsMenu({ user, open, onOpenChange }) {
               </div>
 
               <div className="heartstringsMenu__auth">
-                <p className="heartstringsMenu__authNote">Ready when you are.</p>
-                <AuthButtons variant="menu" />
+                {user ? (
+                  <>
+                    <p className="heartstringsMenu__authNote">You are signed in.</p>
+                    <Link href="/dashboard" className="heartstringsMenu__dashboardCta" onClick={close}>
+                      Go to Dashboard
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="heartstringsMenu__authNote">Ready when you are.</p>
+                    <AuthButtons variant="menu" />
+                  </>
+                )}
               </div>
             </motion.aside>
           </>

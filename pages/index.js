@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { MessageCircle, Mail, BookOpen, Quote } from 'lucide-react'
@@ -18,6 +19,10 @@ export default function Home() {
 
   const gradientOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [1, 0.8, 0.6, 0.4])
   const gradientY = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
+
+  function featureHref(path) {
+    return loggedIn ? path : `/login?next=${path}`
+  }
 
   useEffect(() => {
     function onFirstScroll() {
@@ -98,14 +103,14 @@ export default function Home() {
             <p className="text-xl md:text-2xl mb-8 leading-relaxed" style={{ color: 'rgba(58, 47, 47, 0.7)' }}>
               When your heart needs space to heal, we're here
             </p>
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              href={loggedIn ? '/chat' : '/login?next=/chat'}
-              className="inline-flex px-8 py-4 bg-[#d4818f] text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl transition-shadow"
-            >
-              Join Heartstrings Club
-            </motion.a>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                href={featureHref('/register')}
+                className="inline-flex px-8 py-4 bg-[#d4818f] text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl transition-shadow"
+              >
+                Join Heartstrings Club
+              </Link>
+            </motion.div>
           </motion.div>
 
           <motion.div
@@ -153,24 +158,28 @@ export default function Home() {
                 title="Talk it through"
                 description="Chat with an AI that listens without judgment. Share your thoughts whenever you need to, day or night."
                 delay={0.1}
+                href={featureHref('/chat')}
               />
               <FeatureCard
                 icon={Mail}
                 title="Write what you can't say"
                 description="Compose letters you'll never send. Get it all out in words meant only for you."
                 delay={0.2}
+                href={featureHref('/letter-to-yourself')}
               />
               <FeatureCard
                 icon={BookOpen}
                 title="Keep it private"
                 description="Your personal diary to track your feelings, progress, and reflections over time."
                 delay={0.3}
+                href={featureHref('/diary')}
               />
               <FeatureCard
                 icon={Quote}
                 title="Feel understood"
                 description="Curated quotes and thoughts from others who've been where you are now."
                 delay={0.4}
+                href={featureHref('/quotes')}
               />
             </div>
           </div>
@@ -251,14 +260,14 @@ export default function Home() {
             <p className="text-lg md:text-xl mb-8" style={{ color: '#8a7a7a' }}>
               Join Heartstrings Club and find your quiet space to heal
             </p>
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              href={loggedIn ? '/chat' : '/login?next=/chat'}
-              className="inline-flex px-10 py-5 bg-[#d4818f] text-white rounded-full text-lg font-medium shadow-xl hover:shadow-2xl transition-all"
-            >
-              Get Started
-            </motion.a>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                href={featureHref(loggedIn ? '/chat' : '/register')}
+                className="inline-flex px-10 py-5 bg-[#d4818f] text-white rounded-full text-lg font-medium shadow-xl hover:shadow-2xl transition-all"
+              >
+                Get Started
+              </Link>
+            </motion.div>
             <p className="mt-6 text-sm" style={{ color: '#8a7a7a' }}>
               Free to start. Your privacy protected.
             </p>

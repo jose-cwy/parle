@@ -52,7 +52,7 @@ export default function TermsGateModal({
               type="button"
               onClick={onAccept}
               disabled={!hasReachedBottom}
-              className="w-full rounded-[12px] bg-[#111111] px-4 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="auth-page__submit w-full"
             >
               Accept
             </button>

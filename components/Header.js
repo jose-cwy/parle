@@ -78,6 +78,11 @@ export default function Header() {
         {isHome ? (
           <nav className="marketing-header__nav marketing-header__nav--landing" aria-label="Site">
             {!ready && <span className="marketing-header__placeholder" aria-hidden="true" />}
+            {ready && user && (
+              <Link href="/dashboard" className="marketing-header__link marketing-header__link--landing">
+                Dashboard
+              </Link>
+            )}
             {ready && !user && <AuthButtons variant="header" />}
             {ready && (
               <HeartstringsMenu

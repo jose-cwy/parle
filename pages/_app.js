@@ -19,6 +19,7 @@ export default function App({ Component, pageProps }) {
   const appLayout = isAppRoute(router.pathname)
   const landingTheme = isLandingThemeRoute(router.pathname)
   const isHome = router.pathname === '/'
+  const isAuthPage = router.pathname === '/login' || router.pathname === '/register'
 
   useEffect(() => {
     if (landingTheme) {
@@ -43,7 +44,7 @@ export default function App({ Component, pageProps }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      {!fullBleed && !appLayout && !isHome && (
+      {!fullBleed && !appLayout && !isHome && !isAuthPage && (
         <>
           <div className="page-noise" />
           <div className="page-glow page-glow-one" />
@@ -79,6 +80,14 @@ export default function App({ Component, pageProps }) {
             </motion.div>
           </AnimatePresence>
         </main>
+      ) : isAuthPage ? (
+        <main className="flex-1 relative z-10 auth-page-main">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={router.asPath} {...pageTransition}>
+              <Component {...pageProps} />
+            </motion.div>
+          </AnimatePresence>
+        </main>
       ) : (
         <main className="flex-1 container py-8 relative z-10">
           <AnimatePresence mode="wait" initial={false}>
@@ -89,7 +98,7 @@ export default function App({ Component, pageProps }) {
         </main>
       )}
 
-      {!fullBleed && !appLayout && <Footer />}
+      {!fullBleed && !appLayout && !isAuthPage && <Footer />}
     </div>
   )
 }
