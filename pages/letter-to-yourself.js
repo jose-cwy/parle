@@ -7,7 +7,7 @@ import DeskScene from '../components/DeskScene'
 import LetterEditor from '../components/LetterEditor'
 import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
-import { SkeletonLetterRoom } from '../components/Skeleton'
+import { LetterSkeleton } from '../components/loading'
 import { pulseWarmth } from '../lib/warmthPulse'
 
 const EXPO = [0.16, 1, 0.3, 1]
@@ -142,10 +142,12 @@ export default function LetterToYourselfPage(){
   return (
     <RequireAuth>
       <AppShell>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <p className="eyebrow">Closure letter</p>
-        <h2 className="mt-2 section-title">Write what you never got to say.</h2>
-        <p className="subtle text-base leading-7 mt-2" style={{ maxWidth: 720 }}>
+      <div className="app-page-intro" style={{ marginBottom: '1.25rem' }}>
+        <div>
+          <p className="eyebrow">Closure letter</p>
+          <h2 className="mt-2 section-title">Write what you never got to say.</h2>
+        </div>
+        <p className="subtle text-base leading-7 md:text-right">
           This stays private. When you are ready, you can seal it away and stop carrying it in your head.
         </p>
       </div>
@@ -154,6 +156,7 @@ export default function LetterToYourselfPage(){
         {showWelcome && (
           <motion.div
             key="welcome-banner"
+            className="app-welcome-banner"
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
@@ -166,42 +169,21 @@ export default function LetterToYourselfPage(){
               zIndex: 50,
               maxWidth: 560,
               width: 'calc(100% - 2rem)',
-              background: 'rgba(3,12,28,0.88)',
-              border: '1px solid rgba(45,212,191,0.28)',
-              borderRadius: '14px',
-              padding: '1rem 1.4rem',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
               display: 'flex',
               alignItems: 'flex-start',
               gap: '0.85rem',
             }}
           >
-            <span style={{ fontSize: '1.3rem', flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+            <span style={{ fontSize: '1.2rem', flexShrink: 0, marginTop: '0.1rem' }} aria-hidden="true">♡</span>
             <div style={{ flex: 1 }}>
-              <p style={{
-                fontFamily: 'var(--font-serif), Georgia, serif',
-                fontStyle: 'italic',
-                fontSize: '0.95rem',
-                color: 'rgba(180,240,225,0.92)',
-                lineHeight: 1.6,
-                margin: 0,
-              }}>
+              <p>
                 This is your first letter. Write to the future you — seal it, and open it when you are ready.
               </p>
             </div>
             <button
+              type="button"
               onClick={() => setShowWelcome(false)}
               aria-label="Dismiss"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'rgba(150,200,210,0.5)',
-                fontSize: '1.1rem',
-                cursor: 'pointer',
-                flexShrink: 0,
-                padding: '0 0.2rem',
-              }}
             >
               ×
             </button>
@@ -210,7 +192,7 @@ export default function LetterToYourselfPage(){
       </AnimatePresence>
 
       {loading ? (
-        <SkeletonLetterRoom />
+        <LetterSkeleton />
       ) : (
         <>
           <DeskScene

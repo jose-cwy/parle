@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { SkeletonQuotesBook } from './Skeleton'
+import { QuotesSkeleton } from './loading'
 import { spring, hoverLift } from '../lib/motion'
 
 export default function QuotesBook(){
@@ -43,7 +43,7 @@ export default function QuotesBook(){
     await fetch('/api/quotes/read',{method:'POST'})
   }
 
-  if(loading) return <SkeletonQuotesBook />
+  if(loading) return <QuotesSkeleton />
 
   if(error){
     return (
@@ -94,7 +94,7 @@ export default function QuotesBook(){
                 <p className="eyebrow">Current chapter</p>
                 <h3 className="mt-1 font-semibold text-2xl">{active}</h3>
               </div>
-              <div className="rounded-full border border-[var(--border)] bg-[rgba(3,12,28,0.72)] px-3 py-1 text-sm text-[var(--muted)]">
+              <div className="quotes-count-badge">
                 {(chapters[active] || []).length} quotes
               </div>
             </div>

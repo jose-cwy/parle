@@ -6,7 +6,7 @@ import DiaryRoomHero from '../components/DiaryRoomHero'
 import RequireAuth from '../components/RequireAuth'
 import AppShell from '../components/AppShell'
 import Reveal from '../components/Reveal'
-import { SkeletonDiaryPage, SkeletonText } from '../components/Skeleton'
+import { DiarySkeleton, SkeletonText } from '../components/loading'
 import { spring, hoverGlow } from '../lib/motion'
 import { pulseWarmth } from '../lib/warmthPulse'
 
@@ -131,7 +131,7 @@ export default function Diary(){
     <RequireAuth>
       <AppShell>
       {loading ? (
-        <SkeletonDiaryPage />
+        <DiarySkeleton />
       ) : (
         <div className="space-y-6">
           <Reveal>
@@ -152,7 +152,7 @@ export default function Diary(){
           <div className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
               <Reveal delay={0.06}>
-                <div className="page-intro">
+                <div className="app-page-intro page-intro">
                   <div>
                     <p className="eyebrow">Private diary</p>
                     <h2 className="mt-2 section-title">Capture what today felt like.</h2>

@@ -1,4 +1,6 @@
 import '../styles/globals.css'
+import '../styles/loading.css'
+import '../styles/app-theme.css'
 import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -27,10 +29,15 @@ export default function App({ Component, pageProps }) {
     } else {
       document.body.classList.remove('body--landing', 'body--nav-open')
     }
-    return () => {
-      document.body.classList.remove('body--landing', 'body--nav-open')
+    if (appLayout) {
+      document.body.classList.add('body--app')
+    } else {
+      document.body.classList.remove('body--app')
     }
-  }, [landingTheme])
+    return () => {
+      document.body.classList.remove('body--landing', 'body--nav-open', 'body--app')
+    }
+  }, [landingTheme, appLayout])
 
   return (
     <div

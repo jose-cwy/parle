@@ -993,42 +993,7 @@ body::after{
   display: none;
 }
 
-/* Skeleton loading — warm golden shimmer, no spinners */
-.skeleton-block{
-  position: relative;
-  overflow: hidden;
-  background: rgba(255, 179, 71, 0.05);
-  border: 1px solid rgba(255, 179, 71, 0.08);
-}
-
-.skeleton-block::after,
-.skeleton-shell::after{
-  content: '';
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 179, 71, 0.06) 30%,
-    rgba(255, 220, 180, 0.2) 50%,
-    rgba(192, 64, 0, 0.08) 70%,
-    transparent 100%
-  );
-  animation: skeletonShimmer 2.8s var(--ease-drift) infinite;
-  pointer-events: none;
-}
-
-.skeleton-shell{
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton-shell::after{
-  z-index: 2;
-  border-radius: inherit;
-}
-
+/* Skeleton loading — see styles/loading.css (soft cream/pink theme) */
 .skeleton-room .room-scene{
   pointer-events: none;
 }

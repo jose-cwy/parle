@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { SkeletonBlock } from './Skeleton'
+import { SkeletonBlock } from './loading'
 import { spring, hoverGlow } from '../lib/motion'
 
 /**

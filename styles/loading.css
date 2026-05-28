@@ -1,0 +1,313 @@
+/* ── Heartstrings soft loading & skeleton system ── */
+
+.hs-loading-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.hs-loading-shell--page {
+  min-height: 100vh;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 0%, rgba(255, 212, 163, 0.35), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 8%, rgba(230, 184, 201, 0.28), transparent 52%),
+    linear-gradient(165deg, #fdf8f6 0%, #faf3ee 42%, #f6ebe8 100%);
+}
+
+.hs-loading-shell--inline {
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.hs-loading-shell__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  text-align: center;
+}
+
+.hs-loading-shell--inline .hs-loading-shell__header {
+  flex-direction: row;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 0.75rem;
+}
+
+.hs-loading-shell__message {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(138, 122, 122, 0.95);
+}
+
+.hs-loading-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hs-loading-dots {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  padding-top: 0.25rem;
+}
+
+.hs-loading-dots span {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: rgba(212, 129, 143, 0.55);
+  animation: hsLoadingDot 1.6s ease-in-out infinite;
+}
+
+.hs-loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.hs-loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes hsLoadingDot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Skeleton blocks */
+.hs-skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: rgba(212, 129, 143, 0.1);
+  border: 1px solid rgba(212, 129, 143, 0.12);
+}
+
+.hs-skeleton-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 35%,
+    rgba(247, 198, 168, 0.45) 50%,
+    rgba(255, 255, 255, 0.35) 65%,
+    transparent 100%
+  );
+  animation: hsSkeletonShimmer 2.4s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes hsSkeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.hs-skeleton-block--round-full {
+  border-radius: 999px;
+}
+
+.hs-skeleton-block--round-lg {
+  border-radius: 16px;
+}
+
+.hs-skeleton-block--round-md {
+  border-radius: 12px;
+}
+
+.hs-skeleton-block--line {
+  height: 0.75rem;
+}
+
+.hs-skeleton-block--btn {
+  height: 2.75rem;
+  width: 100%;
+}
+
+.hs-skeleton-block--bubble {
+  border-radius: 20px;
+}
+
+.hs-skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+/* Skeleton cards — never use dark .card glass */
+.hs-skeleton-card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 129, 143, 0.16);
+  background: rgba(255, 252, 247, 0.94);
+  box-shadow: 0 14px 40px rgba(80, 50, 35, 0.08);
+}
+
+.hs-skeleton-card--auth {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.hs-skeleton-block--logo {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto;
+}
+
+.hs-skeleton-block--title {
+  height: 1.5rem;
+  width: 14rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hs-skeleton-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hs-skeleton-block--field {
+  height: 2.75rem;
+  width: 100%;
+  border-radius: 14px;
+}
+
+.hs-skeleton-block--submit {
+  height: 2.75rem;
+  width: 68%;
+  margin: 0.25rem auto 0;
+}
+
+.hs-skeleton-card--intro .hs-skeleton-grid-intro {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .hs-skeleton-card--intro .hs-skeleton-grid-intro {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+}
+
+.hs-skeleton-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(212, 129, 143, 0.12);
+  background: rgba(255, 248, 240, 0.75);
+}
+
+.hs-skeleton-quote-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(212, 129, 143, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.hs-page-skeleton {
+  width: 100%;
+}
+
+/* Landing / redirect minimal loader */
+.hs-app-loading--minimal .hs-loading-shell__header {
+  margin-bottom: 0;
+}
+
+.landing-page__loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 0%, rgba(255, 212, 163, 0.35), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 8%, rgba(230, 184, 201, 0.28), transparent 52%),
+    linear-gradient(165deg, #fdf8f6 0%, #faf3ee 42%, #f6ebe8 100%);
+}
+
+/* Legacy class names mapped to soft theme (backward compat) */
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: rgba(212, 129, 143, 0.1);
+  border: 1px solid rgba(212, 129, 143, 0.12);
+}
+
+.skeleton-block::after,
+.hs-skeleton-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 35%,
+    rgba(247, 198, 168, 0.45) 50%,
+    rgba(255, 255, 255, 0.35) 65%,
+    transparent 100%
+  );
+  animation: hsSkeletonShimmer 2.4s cubic-bezier(0.37, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.skeleton-shell {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 252, 247, 0.94) !important;
+  border: 1px solid rgba(212, 129, 143, 0.16) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 14px 40px rgba(80, 50, 35, 0.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.skeleton-shell::before,
+.skeleton-shell::after {
+  /* disable dark card pseudo-elements if .card leaked in */
+}
+
+.skeleton-shell.card::before,
+.skeleton-shell.card::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-skeleton-block::after,
+  .skeleton-block::after,
+  .hs-skeleton-card::after,
+  .hs-loading-dots span {
+    animation: none;
+  }
+
+  .hs-loading-mark {
+    animation: none !important;
+  }
+}

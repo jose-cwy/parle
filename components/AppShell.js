@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
+import HeartLogo from './landing/HeartLogo'
 
 const NAV = [
   { href: '/dashboard', label: 'Home' },
@@ -29,8 +31,8 @@ export default function AppShell({ children }) {
       <aside className={`app-shell-sidebar${menuOpen ? ' app-shell-sidebar--open' : ''}`}>
         <div className="app-shell-brand">
           <Link href="/dashboard" className="app-shell-brand-link">
-            <span className="app-shell-brand-dot" aria-hidden="true" />
-            Heartstrings
+            <HeartLogo size={22} />
+            <span>Heartstrings</span>
           </Link>
         </div>
         <nav id="app-shell-nav" className="app-shell-nav" aria-label="Main">
@@ -74,7 +76,15 @@ export default function AppShell({ children }) {
             Heartstrings
           </Link>
         </header>
-        <div className="app-shell-content">{children}</div>
+        <motion.div
+          className="app-shell-content"
+          key={router.pathname}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {children}
+        </motion.div>
       </div>
     </div>
   )

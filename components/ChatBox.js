@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { SkeletonChatBox, SkeletonBlock, SkeletonButton } from './Skeleton'
+import { ChatSkeleton, SkeletonBlock, SkeletonButton } from './loading'
 import { spring, hoverGlow } from '../lib/motion'
 import { pulseWarmth } from '../lib/warmthPulse'
 
@@ -48,23 +48,25 @@ export default function ChatBox(){
     setLoading(false)
   }
 
-  if(messages === null) return <SkeletonChatBox />
+  if(messages === null) return <ChatSkeleton />
+
+  const isEmpty = messages.length === 0 && !loading
 
   return (
     <motion.div
       className="chat-shell card p-3 flex flex-col h-[32rem]"
-      initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      transition={{ ...spring.gentle, opacity: { duration: 0.5 } }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...spring.gentle, opacity: { duration: 0.45 } }}
     >
-      <div className="mb-4 flex items-center justify-between sketch-frame rounded-[18px] border border-[var(--border)] bg-[rgba(3,12,28,0.82)] px-4 py-3">
+      <div className="mb-4 chat-shell-header flex items-center justify-between">
         <div>
           <p className="eyebrow">Heartstrings AI</p>
-          <p className="mt-1 text-sm subtle">Steady, supportive conversation when you need somewhere to start.</p>
+          <p className="mt-1 text-sm subtle">A quiet place to say what happened.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-          <span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-teal)] shadow-[0_0_8px_var(--accent-teal-glow)]" aria-hidden="true" />
-          Online
+        <div className="flex items-center gap-2">
+          <span className="chat-status-dot inline-block w-2 h-2 rounded-full" aria-hidden="true" />
+          <span className="chat-status-label">Here with you</span>
         </div>
       </div>
       <div className="chat-prompts" aria-label="Quick starters">
@@ -81,13 +83,16 @@ export default function ChatBox(){
         ))}
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto mb-3 space-y-3 pr-1">
+        {isEmpty ? (
+          <p className="chat-empty">Start with one sentence. I&apos;m here.</p>
+        ) : null}
         <AnimatePresence initial={false}>
           {messages.map((m,i)=> (
             <motion.div
               key={`${m.role}-${i}-${m.text.slice(0, 12)}`}
-              initial={{ opacity: 0, y: 20, scale: 0.96, filter: 'blur(6px)' }}
-              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.99 }}
               transition={spring.gentle}
               layout
               className={`chat-bubble ${m.role==='user' ? 'chat-bubble-user ml-auto' : 'chat-bubble-assistant'}`}
@@ -99,7 +104,7 @@ export default function ChatBox(){
         </AnimatePresence>
         {loading ? (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="chat-bubble chat-bubble-assistant w-[72%] space-y-2 p-4"
           >
@@ -116,6 +121,7 @@ export default function ChatBox(){
           className="input-field flex-1 !mt-0"
           placeholder="Say what happened…"
           disabled={loading}
+          aria-label="Message"
           onKeyDown={(e) => {
             if(e.key === 'Enter' && !e.shiftKey){
               e.preventDefault()
@@ -127,6 +133,7 @@ export default function ChatBox(){
           <SkeletonButton className="h-12 w-24 shrink-0" />
         ) : (
           <motion.button
+            type="button"
             onClick={send}
             className="soft-button soft-button-primary border-transparent px-4"
             {...hoverGlow}

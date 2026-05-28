@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import AnimatedCard from '../components/AnimatedCard'
 import Reveal from '../components/Reveal'
-import { SkeletonButton } from '../components/Skeleton'
+import { SkeletonButton } from '../components/loading'
 import { termsSections } from '../data/termsContent'
 
 export default function TermsPage(){

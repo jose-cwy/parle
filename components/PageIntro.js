@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion'
 import Reveal from './Reveal'
-import { hoverGlow, hoverLift } from '../lib/motion'
+import { hoverLift } from '../lib/motion'
 
 export default function PageIntro({ eyebrow, title, description, action }){
   return (
     <Reveal>
-      <div className="page-intro md:grid-cols-[0.9fr_1.1fr]">
+      <div className="app-page-intro page-intro md:grid-cols-[0.9fr_1.1fr]">
         <div>
           {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
           <h2 className="mt-2 section-title">{title}</h2>

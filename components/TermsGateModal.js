@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { termsSections } from '../data/termsContent'
-import { SkeletonButton } from './Skeleton'
+import { SkeletonButton } from './loading'
 import { spring } from '../lib/motion'
 
 export default function TermsGateModal({

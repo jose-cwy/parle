@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { SkeletonAuthGate } from './Skeleton'
+import AuthLoading from './loading/AuthLoading'
 
 export default function RequireAuth({ children }){
   const [ready, setReady] = useState(false)
@@ -19,6 +19,6 @@ export default function RequireAuth({ children }){
     })
   },[router])
 
-  if(!ready) return <SkeletonAuthGate />
+  if(!ready) return <AuthLoading />
   return children
 }

@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { MessageCircle, Mail, BookOpen, Quote } from 'lucide-react'
 import HeartstringsSVG from '../components/landing/HeartstringsSVG'
 import FeatureCard from '../components/landing/FeatureCard'
+import AppLoading from '../components/loading/AppLoading'
 
 export default function Home() {
   const router = useRouter()
@@ -63,8 +64,8 @@ export default function Home() {
 
   if (checking) {
     return (
-      <div className="landing-page__loading" aria-busy="true">
-        <p>Loading…</p>
+      <div className="landing-page__loading">
+        <AppLoading message="Preparing your quiet space…" fullPage={false} className="hs-app-loading--minimal" />
       </div>
     )
   }

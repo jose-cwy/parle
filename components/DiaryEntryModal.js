@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SkeletonButton } from './Skeleton'
+import { SkeletonButton } from './loading'
 import { spring } from '../lib/motion'
 
 export default function DiaryEntryModal({ open, onClose, onSave, entry, saving = false, error = '' }){

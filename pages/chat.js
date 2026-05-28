@@ -11,7 +11,7 @@ export default function Chat(){
           <PageIntro
             eyebrow="Private support"
             title="Chat with Heartstrings AI"
-            description="For the nights you keep rereading the messages. Say what happened. Heartstrings listens without judgment, and helps you take the next small step."
+            description="For the nights you keep rereading the messages. Say what happened — one sentence at a time. Heartstrings listens without judgment."
           />
           <ChatBox />
         </div>
