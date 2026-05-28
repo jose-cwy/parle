@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import RequireAuth from '../components/RequireAuth'
 import AppShell from '../components/AppShell'
 import DashboardHome from '../components/DashboardHome'
+import AppPage from '../components/app/AppPage'
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
@@ -36,12 +37,14 @@ export default function DashboardPage() {
   return (
     <RequireAuth>
       <AppShell>
+        <AppPage>
         <DashboardHome
           user={user}
           firstTime={firstTime}
           hasDiary={hasDiary}
           hasLetterDraft={hasLetterDraft}
         />
+        </AppPage>
       </AppShell>
     </RequireAuth>
   )

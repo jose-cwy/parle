@@ -71,7 +71,7 @@ export default function Home() {
   }
 
   return (
-    <div ref={containerRef} className="relative min-h-screen overflow-hidden" style={{ backgroundColor: '#fdf8f6' }}>
+    <div ref={containerRef} className="relative min-h-screen overflow-hidden" style={{ backgroundColor: '#f9f6f1' }}>
       <motion.div
         className="fixed inset-0 pointer-events-none"
         style={{ opacity: hasUserScrolled ? gradientOpacity : 1, y: hasUserScrolled ? gradientY : 0 }}
@@ -98,7 +98,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 bg-gradient-to-r from-[#d4818f] via-[#f7c6a8] to-[#e6b8c9] bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 bg-gradient-to-r from-[#a86f52] via-[#c4a090] to-[#8a9a94] bg-clip-text text-transparent">
               A quiet place to let it out
             </h1>
             <p className="text-xl md:text-2xl mb-8 leading-relaxed" style={{ color: 'rgba(58, 47, 47, 0.7)' }}>
@@ -107,7 +107,7 @@ export default function Home() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href={featureHref('/register')}
-                className="inline-flex px-8 py-4 bg-[#d4818f] text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl transition-shadow"
+                className="inline-flex px-8 py-4 bg-[#a86f52] text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl hover:bg-[#966045] transition-all"
               >
                 Join Heartstrings Club
               </Link>
@@ -129,7 +129,7 @@ export default function Home() {
               className="mt-2"
               aria-hidden="true"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto text-[#d4818f]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto text-[#b8877a]">
                 <path d="M12 5v14m0 0l-7-7m7 7l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </motion.div>
@@ -264,7 +264,7 @@ export default function Home() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href={featureHref(loggedIn ? '/chat' : '/register')}
-                className="inline-flex px-10 py-5 bg-[#d4818f] text-white rounded-full text-lg font-medium shadow-xl hover:shadow-2xl transition-all"
+                className="inline-flex px-10 py-5 bg-[#a86f52] text-white rounded-full text-lg font-medium shadow-xl hover:shadow-2xl hover:bg-[#966045] transition-all"
               >
                 Get Started
               </Link>

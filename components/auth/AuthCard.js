@@ -42,11 +42,11 @@ export default function AuthCard({
         <path
           d="M8 14 C 80 6, 240 6, 312 14"
           fill="none"
-          stroke="rgba(212, 129, 143, 0.35)"
+          stroke="rgba(184, 135, 122, 0.35)"
           strokeWidth="1.5"
           strokeLinecap="round"
         />
-        <circle cx="160" cy="10" r="2.5" fill="rgba(212, 129, 143, 0.4)" />
+        <circle cx="160" cy="10" r="2.5" fill="rgba(184, 135, 122, 0.4)" />
       </svg>
 
       <div className="auth-page__logoWrap">

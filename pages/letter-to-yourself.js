@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import RequireAuth from '../components/RequireAuth'
 import AppShell from '../components/AppShell'
 import DeskScene from '../components/DeskScene'
+import AppPage from '../components/app/AppPage'
+import PageIntro from '../components/PageIntro'
 import LetterEditor from '../components/LetterEditor'
 import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
@@ -142,15 +144,12 @@ export default function LetterToYourselfPage(){
   return (
     <RequireAuth>
       <AppShell>
-      <div className="app-page-intro" style={{ marginBottom: '1.25rem' }}>
-        <div>
-          <p className="eyebrow">Closure letter</p>
-          <h2 className="mt-2 section-title">Write what you never got to say.</h2>
-        </div>
-        <p className="subtle text-base leading-7 md:text-right">
-          This stays private. When you are ready, you can seal it away and stop carrying it in your head.
-        </p>
-      </div>
+      <AppPage width="letter">
+      <PageIntro
+        eyebrow="Closure letter"
+        title="Write what you never got to say"
+        description="This stays private. When you are ready, seal it away and stop carrying it in your head."
+      />
       {/* First-time welcome banner */}
       <AnimatePresence>
         {showWelcome && (
@@ -194,7 +193,7 @@ export default function LetterToYourselfPage(){
       {loading ? (
         <LetterSkeleton />
       ) : (
-        <>
+        <div className="hs-letter-wrap">
           <DeskScene
             isSealing={isSealing}
             onSealAnimationComplete={handleSealAnimationComplete}
@@ -212,8 +211,9 @@ export default function LetterToYourselfPage(){
           </DeskScene>
 
           <Notification open={showSavedToast} message="Saved!" />
-        </>
+        </div>
       )}
+      </AppPage>
 
       <ConfirmationModal
         open={modalState.open}

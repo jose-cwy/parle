@@ -199,6 +199,11 @@ body::after{
   z-index: 0;
 }
 
+/* Logged-in app uses soft cream shell — no dark vignette */
+body.body--app .app-shell::before {
+  display: none;
+}
+
 .card,
 .glass-panel{
   background:var(--card);
@@ -7293,15 +7298,14 @@ body.body--landing.body--nav-open {
 .auth-page__bgGradient {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(165deg, #fdf8f6 0%, #f7ebe3 42%, #f3e4dc 100%);
+  background: linear-gradient(165deg, var(--hs-bg) 0%, var(--hs-bg-warm) 50%, var(--hs-surface-muted) 100%);
 }
 
 .auth-page__bgGlow {
   position: absolute;
   border-radius: 999px;
   filter: blur(72px);
-  opacity: 0.45;
+  opacity: 0.35;
 }
 
 .auth-page__bgGlow--one {
@@ -7309,7 +7313,7 @@ body.body--landing.body--nav-open {
   height: min(70vw, 520px);
   top: -12%;
   left: -8%;
-  background: radial-gradient(circle, rgba(255, 212, 163, 0.55) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(228, 218, 205, 0.5) 0%, transparent 68%);
 }
 
 .auth-page__bgGlow--two {
@@ -7317,7 +7321,7 @@ body.body--landing.body--nav-open {
   height: min(65vw, 480px);
   right: -10%;
   bottom: -8%;
-  background: radial-gradient(circle, rgba(230, 184, 201, 0.45) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(212, 200, 188, 0.4) 0%, transparent 70%);
 }
 
 .auth-page__inner {
@@ -7333,10 +7337,10 @@ body.body--landing.body--nav-open {
   width: 100%;
   padding: clamp(1.75rem, 4vw, 2.25rem) clamp(1.5rem, 4vw, 2rem) 1.75rem;
   border-radius: 24px;
-  background: rgba(255, 252, 247, 0.92);
-  border: 1px solid rgba(212, 129, 143, 0.18);
+  background: rgba(255, 252, 248, 0.94);
+  border: 1px solid var(--hs-border);
   box-shadow:
-    0 24px 64px rgba(80, 50, 35, 0.1),
+    0 20px 48px rgba(61, 53, 48, 0.08),
     0 2px 0 rgba(255, 255, 255, 0.85) inset;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -7357,9 +7361,9 @@ body.body--landing.body--nav-open {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(247, 198, 168, 0.5) 30%,
-    rgba(212, 129, 143, 0.45) 50%,
-    rgba(247, 198, 168, 0.5) 70%,
+    rgba(212, 200, 188, 0.45) 30%,
+    rgba(184, 135, 122, 0.35) 50%,
+    rgba(212, 200, 188, 0.45) 70%,
     transparent 100%
   );
   pointer-events: none;
@@ -7436,11 +7440,11 @@ body.body--landing.body--nav-open {
 .auth-page__input {
   width: 100%;
   border-radius: 14px;
-  border: 1px solid rgba(212, 129, 143, 0.22);
-  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--hs-border);
+  background: var(--hs-surface);
   padding: 0.8rem 1rem;
   font-size: 1rem;
-  color: rgba(58, 47, 47, 0.95);
+  color: var(--hs-text);
   outline: none;
   transition:
     border-color 0.2s ease,
@@ -7453,9 +7457,9 @@ body.body--landing.body--nav-open {
 }
 
 .auth-page__input:focus {
-  border-color: rgba(212, 129, 143, 0.55);
+  border-color: var(--hs-accent);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(212, 129, 143, 0.12);
+  box-shadow: 0 0 0 3px var(--hs-focus-ring);
 }
 
 .auth-page__input:disabled {
@@ -7473,19 +7477,19 @@ body.body--landing.body--nav-open {
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #d4818f 0%, #c97280 100%);
-  box-shadow: 0 12px 32px rgba(212, 129, 143, 0.28);
+  background: linear-gradient(135deg, var(--hs-accent-strong) 0%, var(--hs-accent-strong-hover) 100%);
+  box-shadow: 0 10px 28px rgba(168, 111, 82, 0.2);
   cursor: pointer;
   transition: box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .auth-page__submit:hover:not(:disabled) {
-  box-shadow: 0 16px 36px rgba(212, 129, 143, 0.34);
+  box-shadow: 0 14px 32px rgba(168, 111, 82, 0.24);
   filter: brightness(1.02);
 }
 
 .auth-page__submit:focus-visible {
-  outline: 2px solid rgba(212, 129, 143, 0.55);
+  outline: 2px solid var(--hs-focus-ring);
   outline-offset: 3px;
 }
 
@@ -7504,9 +7508,9 @@ body.body--landing.body--nav-open {
 
 .auth-page__switchLink {
   font-weight: 600;
-  color: #d4818f;
+  color: var(--hs-accent-strong);
   text-decoration: none;
-  border-bottom: 1px solid rgba(212, 129, 143, 0.35);
+  border-bottom: 1px solid rgba(184, 135, 122, 0.35);
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -7518,7 +7522,7 @@ body.body--landing.body--nav-open {
 .auth-page__privacy {
   margin: 1rem 0 0;
   padding-top: 1rem;
-  border-top: 1px solid rgba(212, 129, 143, 0.12);
+  border-top: 1px solid rgba(184, 135, 122, 0.12);
   font-size: 0.78rem;
   line-height: 1.45;
   color: rgba(138, 122, 122, 0.9);
@@ -7537,12 +7541,7 @@ body.body--landing.body--nav-open {
 }
 
 /* ── Marketing header ── */
-.marketing-header {
-  background: rgba(2, 13, 26, 0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(245, 232, 236, 0.08);
-}
+/* marketing-header — see styles/tokens.css (warm ivory navbar) */
 
 .marketing-header__nav {
   display: flex;
@@ -7553,27 +7552,11 @@ body.body--landing.body--nav-open {
 .marketing-header__link {
   font-size: 0.88rem;
   font-weight: 500;
-  color: rgba(184, 224, 232, 0.8);
   text-decoration: none;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0.35rem 0.5rem;
-}
-
-.marketing-header__link:hover {
-  color: var(--text);
-}
-
-.marketing-header__cta {
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  background: rgba(210, 70, 85, 0.14);
-  border: 1px solid rgba(210, 70, 85, 0.35);
-  color: var(--accent-maroon);
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-decoration: none;
 }
 
 .marketing-header__placeholder {
@@ -7626,11 +7609,11 @@ body.body--landing.body--nav-open {
   color: rgba(58, 47, 47, 0.88);
   cursor: pointer;
   box-shadow: 0 10px 28px rgba(80, 50, 35, 0.12);
-  border: 1px solid rgba(212, 129, 143, 0.18);
+  border: 1px solid rgba(184, 135, 122, 0.18);
 }
 
 .heartstringsMenu__toggle:focus-visible {
-  outline: 2px solid rgba(212, 129, 143, 0.55);
+  outline: 2px solid var(--hs-focus-ring);
   outline-offset: 3px;
 }
 
@@ -7659,7 +7642,7 @@ body.body--landing.body--nav-open {
   border-radius: 22px;
   padding: 1rem 1rem 1.1rem;
   background: rgba(255, 248, 240, 0.82);
-  border: 1px solid rgba(212, 129, 143, 0.18);
+  border: 1px solid rgba(184, 135, 122, 0.18);
   box-shadow: 0 26px 80px rgba(80, 50, 35, 0.22);
   overflow: hidden;
 }
@@ -7671,8 +7654,8 @@ body.body--landing.body--nav-open {
   pointer-events: none;
   opacity: 0.55;
   background:
-    radial-gradient(ellipse 80% 70% at 20% 0%, rgba(247, 198, 168, 0.35), transparent 55%),
-    radial-gradient(ellipse 80% 70% at 100% 30%, rgba(230, 184, 201, 0.28), transparent 55%),
+    radial-gradient(ellipse 80% 70% at 20% 0%, rgba(212, 200, 188, 0.35), transparent 55%),
+    radial-gradient(ellipse 80% 70% at 100% 30%, rgba(212, 200, 188, 0.28), transparent 55%),
     radial-gradient(ellipse 90% 70% at 60% 100%, rgba(184, 157, 199, 0.16), transparent 60%);
 }
 
@@ -7721,7 +7704,7 @@ body.body--landing.body--nav-open {
   border: none;
   background: rgba(255, 255, 255, 0.35);
   color: rgba(58, 47, 47, 0.82);
-  border: 1px solid rgba(212, 129, 143, 0.16);
+  border: 1px solid rgba(184, 135, 122, 0.16);
   border-radius: 999px;
   padding: 0.35rem 0.65rem;
   font-size: 0.82rem;
@@ -7750,7 +7733,7 @@ body.body--landing.body--nav-open {
   padding: 0.85rem 0.85rem;
   border-radius: 18px;
   text-decoration: none;
-  border: 1px solid rgba(212, 129, 143, 0.14);
+  border: 1px solid rgba(184, 135, 122, 0.14);
   background: rgba(255, 255, 255, 0.55);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
@@ -7758,14 +7741,14 @@ body.body--landing.body--nav-open {
 
 .heartstringsMenu__cardLink:hover {
   background: rgba(255, 255, 255, 0.72);
-  border-color: rgba(212, 129, 143, 0.22);
+  border-color: rgba(184, 135, 122, 0.22);
   box-shadow:
     0 14px 34px rgba(80, 50, 35, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 .heartstringsMenu__cardLink:focus-visible {
-  outline: 2px solid rgba(212, 129, 143, 0.55);
+  outline: 2px solid var(--hs-focus-ring);
   outline-offset: 3px;
 }
 
@@ -7776,8 +7759,8 @@ body.body--landing.body--nav-open {
   border-radius: 999px;
   align-items: center;
   justify-content: center;
-  background: rgba(212, 129, 143, 0.10);
-  color: rgba(212, 129, 143, 0.95);
+  background: rgba(184, 135, 122, 0.10);
+  color: rgba(184, 135, 122, 0.95);
   flex-shrink: 0;
   margin-top: 0.05rem;
 }
@@ -7802,7 +7785,7 @@ body.body--landing.body--nav-open {
   justify-content: space-between;
   gap: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(212, 129, 143, 0.14);
+  border-top: 1px solid rgba(184, 135, 122, 0.14);
 }
 
 .heartstringsMenu__authNote {
@@ -7821,7 +7804,7 @@ body.body--landing.body--nav-open {
   font-weight: 600;
   text-decoration: none;
   color: #fff;
-  background: #d4818f;
+  background: #a86f52;
   box-shadow: 0 8px 24px rgba(80, 50, 35, 0.14);
   transition: box-shadow 0.2s, filter 0.2s;
 }
@@ -7832,7 +7815,7 @@ body.body--landing.body--nav-open {
 }
 
 .heartstringsMenu__dashboardCta:focus-visible {
-  outline: 2px solid rgba(212, 129, 143, 0.55);
+  outline: 2px solid var(--hs-focus-ring);
   outline-offset: 3px;
 }
 

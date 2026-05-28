@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════════════════════════
+   Heartstrings Club — gender-neutral warm palette
+   Cream · ivory · taupe · dusty rose accent · clay CTA
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --hs-bg: #f9f6f1;
+  --hs-bg-warm: #f5f0e8;
+  --hs-surface: #fffcf8;
+  --hs-surface-muted: #f3ede4;
+  --hs-ivory: #faf7f2;
+
+  /* Borders */
+  --hs-border: #e5ddd2;
+  --hs-border-soft: #ebe6dc;
+
+  /* Text */
+  --hs-text: #3d3530;
+  --hs-text-soft: #5c544d;
+  --hs-text-muted: #8a8178;
+
+  /* Accents — restrained */
+  --hs-accent: #b8877a;
+  --hs-accent-strong: #a86f52;
+  --hs-accent-strong-hover: #966045;
+  --hs-accent-soft: #e8ddd6;
+  --hs-accent-blush: #d4b8ad;
+  --hs-sage: #8a9a94;
+
+  /* Focus & shadow */
+  --hs-focus-ring: rgba(168, 111, 82, 0.28);
+  --hs-shadow: 0 8px 28px rgba(61, 53, 48, 0.06);
+  --hs-shadow-hover: 0 12px 32px rgba(61, 53, 48, 0.09);
+
+  /* Skeleton / loading */
+  --hs-skeleton-base: #ede8e0;
+  --hs-skeleton-highlight: #f7f3ec;
+  --hs-skeleton-border: #e3dcd2;
+
+  /* Radius */
+  --hs-radius: 18px;
+  --hs-radius-lg: 22px;
+
+  /* Landing / marketing aliases */
+  --landing-bg: var(--hs-bg);
+  --landing-bg-soft: var(--hs-bg-warm);
+  --landing-bg-paper: var(--hs-surface);
+  --landing-text: var(--hs-text);
+  --landing-text-muted: var(--hs-text-muted);
+  --landing-accent: var(--hs-accent-strong);
+  --landing-accent-hover: var(--hs-accent-strong-hover);
+  --landing-heart: var(--hs-accent);
+  --landing-accent-glow: rgba(168, 111, 82, 0.18);
+  --landing-border: var(--hs-border);
+  --landing-card-shadow: rgba(61, 53, 48, 0.08);
+}
+
+/* ── Marketing navbar ── */
+.marketing-header {
+  background: rgba(250, 247, 242, 0.97);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hs-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.marketing-header__link {
+  color: var(--hs-text-muted);
+}
+
+.marketing-header__link:hover {
+  color: var(--hs-text);
+}
+
+.marketing-header__cta {
+  background: var(--hs-surface-muted);
+  border: 1px solid var(--hs-border);
+  color: var(--hs-accent-strong);
+}
+
+.marketing-header.marketing-header--home {
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.marketing-header--landing {
+  background: var(--hs-ivory) !important;
+  border-bottom: 1px solid var(--hs-border) !important;
+}
+
+.marketing-header--landing .marketing-header__cta-talk {
+  background: var(--hs-accent-strong);
+  color: #fff;
+}
+
+.marketing-header--landing .marketing-header__cta-talk:hover {
+  background: var(--hs-accent-strong-hover);
+}
+
+/* Auth header buttons */
+.hs-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.hs-auth-btn--login {
+  padding: 0.45rem 0.85rem;
+  color: var(--hs-text-soft);
+  background: transparent;
+}
+
+.hs-auth-btn--login:hover {
+  color: var(--hs-text);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.hs-auth-btn--register {
+  padding: 0.5rem 1.05rem;
+  color: #fff;
+  background: var(--hs-accent-strong);
+  box-shadow: var(--hs-shadow);
+}
+
+.hs-auth-btn--register:hover {
+  background: var(--hs-accent-strong-hover);
+  box-shadow: var(--hs-shadow-hover);
+}
+
+.hs-auth-btn:focus-visible {
+  outline: 2px solid var(--hs-focus-ring);
+  outline-offset: 2px;
+}
+
+.hs-auth-btn--menu.hs-auth-btn--login {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--hs-border);
+  background: var(--hs-surface);
+}
+
+.hs-auth-btn--menu.hs-auth-btn--register {
+  padding: 0.5rem 1.1rem;
+}

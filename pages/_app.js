@@ -1,3 +1,4 @@
+import '../styles/tokens.css'
 import '../styles/globals.css'
 import '../styles/loading.css'
 import '../styles/app-theme.css'

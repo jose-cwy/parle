@@ -17,7 +17,7 @@ const INNER_HEART_LEFT = 'M320,140 Q360,160 380,180 T400,220'
 const INNER_HEART_RIGHT = 'M480,140 Q440,160 420,180 T400,220'
 
 /** Barely-visible stroke glow — follows the path, not a circular blob */
-const STROKE_GLOW_REST = 'drop-shadow(0 0 1px rgba(212, 129, 143, 0.08))'
+const STROKE_GLOW_REST = 'drop-shadow(0 0 1px rgba(184, 135, 122, 0.08))'
 const STROKE_GLOW_PULSE = 'drop-shadow(0 0 3px rgba(247, 198, 168, 0.18))'
 
 export default function HeartstringsSVG({ className }) {
@@ -110,20 +110,20 @@ export default function HeartstringsSVG({ className }) {
     >
       <defs>
         <linearGradient id={`${uid}-g1`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#d4818f" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="#b8877a" stopOpacity="0.8" />
           <stop offset="50%" stopColor="#f7c6a8" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#e6b8c9" stopOpacity="0.8" />
         </linearGradient>
         <linearGradient id={`${uid}-g2`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#e6b8c9" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#d4818f" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#b8877a" stopOpacity="0.7" />
         </linearGradient>
         <linearGradient id={`${uid}-g3`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#f7c6a8" stopOpacity="0.7" />
           <stop offset="100%" stopColor="#e6b8c9" stopOpacity="0.7" />
         </linearGradient>
         <linearGradient id={`${uid}-g4`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#d4818f" stopOpacity="0.6" />
+          <stop offset="0%" stopColor="#a86f52" stopOpacity="0.6" />
           <stop offset="100%" stopColor="#b89dc7" stopOpacity="0.6" />
         </linearGradient>
       </defs>

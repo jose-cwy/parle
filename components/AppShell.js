@@ -27,7 +27,7 @@ export default function AppShell({ children }) {
   }
 
   return (
-    <div className="app-shell-layout">
+    <div className="app-shell-layout hs-app-shell">
       <aside className={`app-shell-sidebar${menuOpen ? ' app-shell-sidebar--open' : ''}`}>
         <div className="app-shell-brand">
           <Link href="/dashboard" className="app-shell-brand-link">
@@ -79,9 +79,9 @@ export default function AppShell({ children }) {
         <motion.div
           className="app-shell-content"
           key={router.pathname}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           {children}
         </motion.div>

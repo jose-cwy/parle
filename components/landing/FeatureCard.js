@@ -4,8 +4,8 @@ import { motion } from 'framer-motion'
 export default function FeatureCard({ icon: Icon, title, description, delay = 0, href }) {
   const inner = (
     <>
-      <div className="mb-4 w-12 h-12 rounded-full bg-[#d4818f]/10 flex items-center justify-center">
-        <Icon className="w-6 h-6 text-[#d4818f]" />
+      <div className="mb-4 w-12 h-12 rounded-full bg-[#a86f52]/10 flex items-center justify-center">
+        <Icon className="w-6 h-6 text-[#b8877a]" />
       </div>
       <h3 className="mb-2 text-[#3a2f2f] text-lg font-semibold">{title}</h3>
       <p className="text-[#8a7a7a] leading-relaxed">{description}</p>
@@ -23,7 +23,7 @@ export default function FeatureCard({ icon: Icon, title, description, delay = 0,
       {href ? (
         <Link
           href={href}
-          className="block rounded-2xl -m-2 p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d4818f]/50 focus-visible:ring-offset-2"
+          className="block rounded-2xl -m-2 p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#a86f52]/40 focus-visible:ring-offset-2"
         >
           {inner}
         </Link>

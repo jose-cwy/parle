@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DiaryEntryModal from '../components/DiaryEntryModal'
 import CalendarView from '../components/CalendarView'
-import DiaryRoomHero from '../components/DiaryRoomHero'
 import RequireAuth from '../components/RequireAuth'
 import AppShell from '../components/AppShell'
+import AppPage from '../components/app/AppPage'
+import PageIntro from '../components/PageIntro'
 import Reveal from '../components/Reveal'
 import { DiarySkeleton, SkeletonText } from '../components/loading'
 import { spring, hoverGlow } from '../lib/motion'
@@ -133,10 +134,26 @@ export default function Diary(){
       {loading ? (
         <DiarySkeleton />
       ) : (
-        <div className="space-y-6">
-          <Reveal>
-            <DiaryRoomHero />
-          </Reveal>
+        <AppPage>
+          <PageIntro
+            eyebrow="Private diary"
+            title="Capture what today felt like"
+            description={
+              selectedDate
+                ? `Showing entries for ${new Date(`${selectedDate}T00:00:00`).toLocaleDateString()}.`
+                : 'One honest page at a time. Your reflections stay here, just for you.'
+            }
+            action={
+              <motion.button
+                type="button"
+                onClick={openNewEntry}
+                className="soft-button soft-button-primary border-transparent whitespace-nowrap cursor-pointer"
+                {...hoverGlow}
+              >
+                New entry
+              </motion.button>
+            }
+          />
 
           {error ? (
             <motion.div
@@ -149,33 +166,8 @@ export default function Diary(){
             </motion.div>
           ) : null}
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-6">
-              <Reveal delay={0.06}>
-                <div className="app-page-intro page-intro">
-                  <div>
-                    <p className="eyebrow">Private diary</p>
-                    <h2 className="mt-2 section-title">Capture what today felt like.</h2>
-                  </div>
-                  <div className="flex flex-col gap-4 md:items-end md:justify-between">
-                    <p className="subtle text-base leading-7 md:text-right">
-                      {selectedDate
-                        ? `Showing entries for ${new Date(`${selectedDate}T00:00:00`).toLocaleDateString()}.`
-                        : 'Your reflections arrive with softer motion and warmer presence around each saved moment.'}
-                    </p>
-                    <motion.div {...hoverGlow}>
-                      <button
-                        type="button"
-                        onClick={openNewEntry}
-                        className="soft-button soft-button-primary border-transparent whitespace-nowrap cursor-pointer"
-                      >
-                        New entry
-                      </button>
-                    </motion.div>
-                  </div>
-                </div>
-              </Reveal>
-
+          <div className="diary-layout">
+            <div className="diary-main space-y-4">
               {selectedDate ? (
                 <Reveal delay={0.08}>
                   <button
@@ -198,7 +190,7 @@ export default function Diary(){
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -12, scale: 0.98 }}
                       transition={{ delay: index * 0.04, ...spring.gentle }}
-                      className="card diary-entry-card p-4 cursor-default"
+                      className="hs-app-card diary-entry-card p-4 cursor-default"
                     >
                       <div className="flex justify-between items-start gap-4">
                         <div className="min-w-0 flex-1">
@@ -234,7 +226,7 @@ export default function Diary(){
 
                 {!visibleEntries.length ? (
                   <Reveal>
-                    <div className="card diary-empty-state p-8 text-center">
+                    <div className="hs-app-card diary-empty-state p-8 text-center">
                       <p className="text-lg font-semibold">
                         {selectedDate ? 'No entries on this day' : 'No entries yet'}
                       </p>
@@ -258,7 +250,7 @@ export default function Diary(){
               </div>
             </div>
 
-            <aside className="space-y-4">
+            <aside className="diary-sidebar space-y-4">
               <Reveal delay={0.08}>
                 <CalendarView
                   year={new Date().getFullYear()}
@@ -269,8 +261,8 @@ export default function Diary(){
                 />
               </Reveal>
               <Reveal delay={0.12}>
-                <div className="card p-4">
-                  <h4 className="font-semibold text-lg">Selected date</h4>
+                <div className="hs-app-card p-4">
+                  <h4 className="font-semibold">Selected date</h4>
                   <p className="mt-2 subtle">
                     {selectedDate
                       ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
@@ -281,15 +273,15 @@ export default function Diary(){
                       : 'Tap a highlighted day to filter entries.'}
                   </p>
                   {selectedDate && entriesByDate[selectedDate]?.length ? (
-                    <p className="mt-2 text-sm text-[var(--accent)]">
+                    <p className="mt-2 text-sm" style={{ color: 'var(--hs-accent-deep, #c96b7a)' }}>
                       {entriesByDate[selectedDate].length} entr{entriesByDate[selectedDate].length === 1 ? 'y' : 'ies'}
                     </p>
                   ) : null}
                 </div>
               </Reveal>
               <Reveal delay={0.16}>
-                <div className="card p-4">
-                  <h4 className="font-semibold text-lg">Milestones</h4>
+                <div className="hs-app-card p-4">
+                  <h4 className="font-semibold">Milestones</h4>
                   <div className="mt-3">
                     <GamificationPanel />
                   </div>
@@ -310,7 +302,7 @@ export default function Diary(){
             onSave={handleSave}
             entry={editing}
           />
-        </div>
+        </AppPage>
       )}
       </AppShell>
     </RequireAuth>

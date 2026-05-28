@@ -5,20 +5,18 @@ import { hoverLift } from '../lib/motion'
 export default function PageIntro({ eyebrow, title, description, action }){
   return (
     <Reveal>
-      <div className="app-page-intro page-intro md:grid-cols-[0.9fr_1.1fr]">
-        <div>
+      <header className="hs-app-header app-page-intro">
+        <div className="hs-app-header__main">
           {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-          <h2 className="mt-2 section-title">{title}</h2>
+          {title ? <h1 className="hs-app-header__title">{title}</h1> : null}
+          {description ? <p className="hs-app-header__desc">{description}</p> : null}
         </div>
-        <div className="flex flex-col gap-4 md:items-end md:justify-between">
-          {description ? <p className="subtle text-base leading-7 md:text-right">{description}</p> : null}
-          {action ? (
-            <motion.div {...hoverLift}>
-              {action}
-            </motion.div>
-          ) : null}
-        </div>
-      </div>
+        {action ? (
+          <motion.div className="hs-app-header__action" {...hoverLift}>
+            {action}
+          </motion.div>
+        ) : null}
+      </header>
     </Reveal>
   )
 }

@@ -54,22 +54,23 @@ export default function ChatBox(){
 
   return (
     <motion.div
-      className="chat-shell card p-3 flex flex-col h-[32rem]"
-      initial={{ opacity: 0, y: 16 }}
+      className="chat-shell hs-app-card"
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ ...spring.gentle, opacity: { duration: 0.45 } }}
+      transition={{ ...spring.gentle, opacity: { duration: 0.4 } }}
     >
-      <div className="mb-4 chat-shell-header flex items-center justify-between">
+      <div className="chat-shell-header flex items-center justify-between gap-3">
         <div>
           <p className="eyebrow">Heartstrings AI</p>
           <p className="mt-1 text-sm subtle">A quiet place to say what happened.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="chat-status-dot inline-block w-2 h-2 rounded-full" aria-hidden="true" />
           <span className="chat-status-label">Here with you</span>
         </div>
       </div>
-      <div className="chat-prompts" aria-label="Quick starters">
+
+      <div className="chat-prompts mt-3" aria-label="Quick starters">
         {PROMPTS.map((p) => (
           <button
             key={p}
@@ -82,21 +83,25 @@ export default function ChatBox(){
           </button>
         ))}
       </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto mb-3 space-y-3 pr-1">
+
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto my-3 space-y-3 pr-1">
         {isEmpty ? (
-          <p className="chat-empty">Start with one sentence. I&apos;m here.</p>
+          <div className="chat-empty">
+            <p>Start with one sentence.</p>
+            <p className="mt-1 text-sm opacity-80">I&apos;m here.</p>
+          </div>
         ) : null}
         <AnimatePresence initial={false}>
           {messages.map((m,i)=> (
             <motion.div
               key={`${m.role}-${i}-${m.text.slice(0, 12)}`}
-              initial={{ opacity: 0, y: 12, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.99 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
               transition={spring.gentle}
               layout
               className={`chat-bubble ${m.role==='user' ? 'chat-bubble-user ml-auto' : 'chat-bubble-assistant'}`}
-              style={{maxWidth:'80%'}}
+              style={{ maxWidth: '82%' }}
             >
               {m.text}
             </motion.div>
@@ -104,17 +109,18 @@ export default function ChatBox(){
         </AnimatePresence>
         {loading ? (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             className="chat-bubble chat-bubble-assistant w-[72%] space-y-2 p-4"
           >
-            <SkeletonBlock className="h-3 w-full" rounded="rounded-full" />
-            <SkeletonBlock className="h-3 w-[88%]" rounded="rounded-full" />
-            <SkeletonBlock className="h-3 w-[64%]" rounded="rounded-full" />
+            <SkeletonBlock className="h-3 w-full" rounded="hs-skeleton-block--round-full" />
+            <SkeletonBlock className="h-3 w-[88%]" rounded="hs-skeleton-block--round-full" />
+            <SkeletonBlock className="h-3 w-[64%]" rounded="hs-skeleton-block--round-full" />
           </motion.div>
         ) : null}
       </div>
-      <div className="flex gap-2">
+
+      <div className="flex gap-2 shrink-0 pt-1 border-t border-[rgba(212,129,143,0.1)]">
         <input
           value={input}
           onChange={e=>setInput(e.target.value)}
@@ -130,12 +136,12 @@ export default function ChatBox(){
           }}
         />
         {loading ? (
-          <SkeletonButton className="h-12 w-24 shrink-0" />
+          <SkeletonButton className="h-11 w-24 shrink-0" />
         ) : (
           <motion.button
             type="button"
             onClick={send}
-            className="soft-button soft-button-primary border-transparent px-4"
+            className="soft-button soft-button-primary border-transparent px-4 shrink-0"
             {...hoverGlow}
           >
             Send

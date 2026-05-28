@@ -47,8 +47,8 @@ export default function QuotesBook(){
 
   if(error){
     return (
-      <div className="card diary-empty-state p-8 text-center" role="alert">
-        <p className="text-lg font-semibold">Quotes could not load</p>
+      <div className="hs-app-card p-8 text-center" role="alert">
+        <p className="font-semibold text-lg">Quotes could not load</p>
         <p className="mt-2 subtle">{error}</p>
       </div>
     )
@@ -56,21 +56,22 @@ export default function QuotesBook(){
 
   if(!Object.keys(chapters).length){
     return (
-      <div className="card diary-empty-state p-8 text-center">
-        <p className="text-lg font-semibold">No quotes yet</p>
+      <div className="hs-app-card p-8 text-center">
+        <p className="font-semibold text-lg">No quotes yet</p>
         <p className="mt-2 subtle">Check back soon for new chapters to browse.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid md:grid-cols-4 gap-6">
-      <nav className="md:col-span-1 card p-3">
+    <div className="quotes-layout">
+      <nav className="hs-app-card quotes-sidebar">
         <p className="eyebrow">Chapters</p>
-        <h3 className="mt-2 text-xl font-semibold">Browse by mood</h3>
+        <h3 className="mt-2">Browse by mood</h3>
         {Object.keys(chapters).map(c=> (
           <motion.button
             key={c}
+            type="button"
             onClick={()=>setActive(c)}
             {...hoverLift}
             className={`chapter-button ${c===active ? 'chapter-button-active' : ''}`}
@@ -79,36 +80,37 @@ export default function QuotesBook(){
           </motion.button>
         ))}
       </nav>
-      <div className="md:col-span-3">
+      <div className="quotes-main">
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
-            className="card p-4"
-            initial={{ opacity: 0, y: 18, scale: 0.99 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.995 }}
+            className="hs-app-card quotes-main-panel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={spring.gentle}
           >
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <p className="eyebrow">Current chapter</p>
-                <h3 className="mt-1 font-semibold text-2xl">{active}</h3>
+                <h3 className="mt-1 font-semibold">{active}</h3>
               </div>
               <div className="quotes-count-badge">
                 {(chapters[active] || []).length} quotes
               </div>
             </div>
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-2.5">
               {(chapters[active]||[]).map((q, index)=> (
                 <motion.div
                   key={q.id}
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.035, ...spring.gentle }}
+                  transition={{ delay: index * 0.03, ...spring.gentle }}
                   className="quote-row"
                 >
-                  <button onClick={markRead} className="quote-copy text-left">{q.text}</button>
+                  <button type="button" onClick={markRead} className="quote-copy text-left flex-1">{q.text}</button>
                   <motion.button
+                    type="button"
                     onClick={()=>toggleFav(q.id)}
                     className={`favorite-pill ${favorites.includes(q.id) ? 'favorite-pill-active' : ''}`}
                     {...hoverLift}
