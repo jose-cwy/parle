@@ -1,48 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { MessageCircle, Mail, BookOpen, Quote } from 'lucide-react'
 import HeartstringsSVG from '../components/landing/HeartstringsSVG'
 import FeatureCard from '../components/landing/FeatureCard'
 import LandingSplash from '../components/landing/LandingSplash'
+import TestimonialsMarquee from '../components/landing/TestimonialsMarquee'
 
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
-  const [hasUserScrolled, setHasUserScrolled] = useState(false)
   const signupDeclined = router.query.signup === 'declined'
   const containerRef = useRef(null)
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end'],
-  })
-
-  const gradientOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [1, 0.8, 0.6, 0.4])
-  const gradientY = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
 
   function featureHref(path) {
     return loggedIn ? path : `/login?next=${path}`
   }
-
-  useEffect(() => {
-    function onFirstScroll() {
-      setHasUserScrolled(true)
-      window.removeEventListener('scroll', onFirstScroll)
-      window.removeEventListener('touchmove', onFirstScroll)
-      window.removeEventListener('wheel', onFirstScroll)
-    }
-
-    window.addEventListener('scroll', onFirstScroll, { passive: true })
-    window.addEventListener('touchmove', onFirstScroll, { passive: true })
-    window.addEventListener('wheel', onFirstScroll, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', onFirstScroll)
-      window.removeEventListener('touchmove', onFirstScroll)
-      window.removeEventListener('wheel', onFirstScroll)
-    }
-  }, [])
 
   useEffect(() => {
     let active = true
@@ -69,12 +44,7 @@ export default function Home() {
 
   return (
     <div ref={containerRef} className="landing-hero-page">
-      <div className="landing-hero-page__backdrop" aria-hidden="true">
-        <motion.div
-          className="absolute inset-0"
-          style={{ opacity: hasUserScrolled ? gradientOpacity : 1, y: hasUserScrolled ? gradientY : 0 }}
-        />
-      </div>
+      <div className="landing-hero-page__backdrop" aria-hidden="true" />
 
       <div className="landing-hero-page__content">
         {signupDeclined ? (
@@ -94,7 +64,7 @@ export default function Home() {
             transition={{ duration: 1 }}
             className="w-full max-w-2xl mx-auto mb-12"
           >
-            <HeartstringsSVG className="w-full h-auto" />
+            <HeartstringsSVG />
           </motion.div>
 
           <motion.div
@@ -103,16 +73,16 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl mb-6 bg-gradient-to-r from-[#a86f52] via-[#c4a090] to-[#8a9a94] bg-clip-text text-transparent">
+            <h1 className="landing-hero-page__headline text-5xl md:text-6xl lg:text-7xl mb-6">
               A quiet place to let it out
             </h1>
-            <p className="text-xl md:text-2xl mb-8 leading-relaxed" style={{ color: 'rgba(58, 47, 47, 0.7)' }}>
+            <p className="landing-hero-page__lead text-xl md:text-2xl mb-8 leading-relaxed">
               When your heart needs space to heal, we're here
             </p>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href={featureHref('/register')}
-                className="inline-flex px-8 py-4 bg-[#a86f52] text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl hover:bg-[#966045] transition-all"
+                className="inline-flex px-8 py-4 bg-[var(--hs-auth-red)] text-white rounded-full text-lg font-medium shadow-lg hover:shadow-xl hover:bg-[var(--hs-auth-red-hover)] transition-all"
               >
                 Join Heartstrings Club
               </Link>
@@ -215,44 +185,7 @@ export default function Home() {
           </motion.div>
         </section>
 
-        <section className="py-20 px-6">
-          <div className="max-w-5xl mx-auto">
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-3xl md:text-4xl text-center mb-12"
-              style={{ color: '#3a2f2f' }}
-            >
-              You're not alone
-            </motion.h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { quote: "Finally, somewhere that gets it. I don't have to explain myself.", author: 'Alex, 24' },
-                { quote: "Writing letters I'll never send helped more than I thought possible.", author: 'Jordan, 27' },
-                { quote: 'The chat feels like talking to a friend who actually understands.', author: 'Sam, 22' },
-              ].map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="backdrop-blur-sm border rounded-2xl p-8"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.5)', borderColor: 'rgba(212,129,143,0.15)' }}
-                >
-                  <p className="mb-4 italic leading-relaxed" style={{ color: 'rgba(58, 47, 47, 0.8)' }}>
-                    &quot;{testimonial.quote}&quot;
-                  </p>
-                  <p className="text-sm" style={{ color: '#8a7a7a' }}>
-                    — {testimonial.author}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <TestimonialsMarquee />
 
         <section className="py-20 px-6 mb-20">
           <motion.div
@@ -271,7 +204,7 @@ export default function Home() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 href={featureHref(loggedIn ? '/chat' : '/register')}
-                className="inline-flex px-10 py-5 bg-[#a86f52] text-white rounded-full text-lg font-medium shadow-xl hover:shadow-2xl hover:bg-[#966045] transition-all"
+                className="inline-flex px-10 py-5 bg-[var(--hs-auth-red)] text-white rounded-full text-lg font-medium shadow-xl hover:shadow-2xl hover:bg-[var(--hs-auth-red-hover)] transition-all"
               >
                 Get Started
               </Link>

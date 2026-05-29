@@ -1,13 +1,35 @@
-import { useId, useMemo } from 'react'
+import { useId } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 
 const EASE_IN_OUT = [0.42, 0, 0.58, 1]
 
 const STRINGS = [
-  { d: 'M280,120 Q200,100 120,80', origin: '280px 120px', delay: 0 },
-  { d: 'M520,120 Q600,100 680,80', origin: '520px 120px', delay: 0.08 },
-  { d: 'M300,280 Q220,360 140,440', origin: '300px 280px', delay: 0.16 },
-  { d: 'M500,280 Q580,360 660,440', origin: '500px 280px', delay: 0.24 },
+  {
+    d: 'M280,120 Q200,100 120,80',
+    delay: 0,
+    heart: { x: 280, y: 120 },
+    pin: { x: 120, y: 80 },
+  },
+  {
+    d: 'M520,120 Q600,100 680,80',
+    delay: 0.08,
+    heart: { x: 520, y: 120 },
+    pin: { x: 680, y: 80 },
+  },
+  {
+    /* Anchored on left lower heart curve (260,140 → 400,300) */
+    d: 'M328,242 Q210,340 140,440',
+    delay: 0.16,
+    heart: { x: 328, y: 242 },
+    pin: { x: 140, y: 440 },
+  },
+  {
+    /* Anchored on right lower heart curve (400,300 → 540,140) */
+    d: 'M472,242 Q590,340 660,440',
+    delay: 0.24,
+    heart: { x: 472, y: 242 },
+    pin: { x: 660, y: 440 },
+  },
 ]
 
 const OUTER_HEART =
@@ -16,28 +38,53 @@ const OUTER_HEART =
 const INNER_HEART_LEFT = 'M320,140 Q360,160 380,180 T400,220'
 const INNER_HEART_RIGHT = 'M480,140 Q440,160 420,180 T400,220'
 
-/** Barely-visible stroke glow — follows the path, not a circular blob */
-const STROKE_GLOW_REST = 'drop-shadow(0 0 1px rgba(184, 135, 122, 0.08))'
-const STROKE_GLOW_PULSE = 'drop-shadow(0 0 3px rgba(247, 198, 168, 0.18))'
+const STRING_DRAW = 1.2
+const OUTER_DRAW = 1.8
+const OUTER_DELAY = 0.95
+const INNER_DRAW = 1.15
+const INNER_DELAY = 2.55
+const INNER_STAGGER = 0.14
 
-export default function HeartstringsSVG({ className }) {
+function AnchorPin({ x, y, delay, reduceMotion, uid, variant = 'pin' }) {
+  const fade = reduceMotion
+    ? { opacity: variant === 'knot' ? 0.88 : 0.82 }
+    : {
+        opacity: [0, variant === 'knot' ? 0.9 : 0.82],
+        transition: { duration: 0.45, delay: delay + 0.35, ease: EASE_IN_OUT },
+      }
+
+  const ringR = variant === 'knot' ? 5.5 : 4.5
+  const coreR = variant === 'knot' ? 3.2 : 2.4
+
+  return (
+    <motion.g initial={reduceMotion ? false : { opacity: 0 }} animate={fade}>
+      <circle
+        cx={x}
+        cy={y}
+        r={ringR}
+        fill="none"
+        stroke={`url(#${uid}-anchor-ring)`}
+        strokeWidth="1"
+        opacity="0.55"
+      />
+      <circle cx={x} cy={y} r={coreR} fill={`url(#${uid}-anchor-core)`} />
+      {variant === 'knot' ? (
+        <circle
+          cx={x}
+          cy={y}
+          r="1.15"
+          fill="rgba(255, 235, 232, 0.5)"
+          stroke="rgba(166, 63, 58, 0.35)"
+          strokeWidth="0.5"
+        />
+      ) : null}
+    </motion.g>
+  )
+}
+
+export default function HeartstringsSVG({ className = '' }) {
   const reduceMotion = useReducedMotion()
   const uid = useId().replace(/:/g, '')
-
-  const t = useMemo(
-    () => ({
-      stringDraw: 1.2,
-      outerDraw: 1.8,
-      outerDelay: 0.95,
-      innerDraw: 1.15,
-      innerDelay: 2.55,
-      innerStagger: 0.14,
-      drawComplete: 3.85,
-      pulseDuration: 3.6,
-      pullDuration: 7.5,
-    }),
-    []
-  )
 
   const pathCommon = {
     fill: 'none',
@@ -54,131 +101,139 @@ export default function HeartstringsSVG({ className }) {
           transition: { duration, delay, ease: EASE_IN_OUT },
         }
 
-  const outerHeartAnimate = reduceMotion
-    ? { pathLength: 1, opacity: 0.8, filter: STROKE_GLOW_REST }
-    : {
-        pathLength: [0, 1],
-        opacity: [0, 0.8],
-        filter: [STROKE_GLOW_REST, STROKE_GLOW_PULSE, STROKE_GLOW_REST],
-        transition: {
-          pathLength: { duration: t.outerDraw, delay: t.outerDelay, ease: EASE_IN_OUT },
-          opacity: { duration: t.outerDraw, delay: t.outerDelay, ease: EASE_IN_OUT },
-          filter: {
-            delay: t.drawComplete,
-            duration: t.pulseDuration,
-            repeat: Infinity,
-            ease: EASE_IN_OUT,
-            times: [0, 0.5, 1],
-          },
-        },
-      }
+  const drawInitial = reduceMotion ? false : { pathLength: 0, opacity: 0 }
 
-  const threadPull = (delayOffset = 0) =>
-    reduceMotion
-      ? {}
-      : {
-          rotate: [0, 1.2, -0.9, 0.4, 0],
-          x: [0, 1, -0.6, 0.3, 0],
-          y: [0, -0.6, 0.5, -0.2, 0],
-          transition: {
-            delay: t.drawComplete + delayOffset,
-            duration: t.pullDuration,
-            repeat: Infinity,
-            ease: EASE_IN_OUT,
-          },
-        }
-
-  const heartPulse = reduceMotion
-    ? {}
-    : {
-        scale: [1, 1.012, 1.025, 1.012, 1],
-        transition: {
-          delay: t.drawComplete,
-          duration: t.pulseDuration,
-          repeat: Infinity,
-          ease: EASE_IN_OUT,
-        },
-      }
+  const strokeFilter = `url(#${uid}-stroke-glow)`
 
   return (
     <svg
       viewBox="0 0 800 600"
-      className={className}
+      className={`heartstrings-mark ${className}`.trim()}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="Heartstrings threads"
     >
       <defs>
-        <linearGradient id={`${uid}-g1`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#b8877a" stopOpacity="0.8" />
-          <stop offset="50%" stopColor="#f7c6a8" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#e6b8c9" stopOpacity="0.8" />
+        <linearGradient id={`${uid}-heart-outer`} x1="32%" y1="18%" x2="68%" y2="88%">
+          <stop offset="0%" stopColor="#8f3a34" stopOpacity="0.95" />
+          <stop offset="50%" stopColor="#c54b44" stopOpacity="0.92" />
+          <stop offset="100%" stopColor="#a63f3a" stopOpacity="0.9" />
         </linearGradient>
-        <linearGradient id={`${uid}-g2`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#e6b8c9" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#b8877a" stopOpacity="0.7" />
+
+        <linearGradient id={`${uid}-heart-inner`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#a63f3a" stopOpacity="0.88" />
+          <stop offset="100%" stopColor="#d46962" stopOpacity="0.82" />
         </linearGradient>
-        <linearGradient id={`${uid}-g3`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#f7c6a8" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#e6b8c9" stopOpacity="0.7" />
+
+        <linearGradient id={`${uid}-string`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#8f3a34" stopOpacity="0.85" />
+          <stop offset="55%" stopColor="#c54b44" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#a63f3a" stopOpacity="0.82" />
         </linearGradient>
-        <linearGradient id={`${uid}-g4`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a86f52" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#b89dc7" stopOpacity="0.6" />
+
+        <linearGradient id={`${uid}-string-fiber`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#8f3a34" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#c54b44" stopOpacity="0.35" />
         </linearGradient>
+
+        <radialGradient id={`${uid}-anchor-core`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#e8a39c" />
+          <stop offset="100%" stopColor="#a63f3a" />
+        </radialGradient>
+
+        <linearGradient id={`${uid}-anchor-ring`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#c54b44" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#8f3a34" stopOpacity="0.7" />
+        </linearGradient>
+
+        <filter
+          id={`${uid}-stroke-glow`}
+          x="-8%"
+          y="-8%"
+          width="116%"
+          height="116%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feDropShadow dx="0" dy="0.6" stdDeviation="0.9" floodColor="#8f3a34" floodOpacity="0.16" />
+          <feDropShadow dx="0" dy="0" stdDeviation="1.4" floodColor="#c54b44" floodOpacity="0.12" />
+        </filter>
       </defs>
 
-      {/* Step 1a + 3: diagonal strings — clean strokes, no blob filter */}
-      {STRINGS.map((s, i) => (
-        <motion.g
-          key={s.d}
-          style={{ transformOrigin: s.origin, transformBox: 'fill-box' }}
-          animate={threadPull(i * 0.15)}
-        >
-          <motion.path
-            d={s.d}
-            {...pathCommon}
-            stroke={`url(#${uid}-g4)`}
-            strokeWidth="2"
-            strokeDasharray="5,5"
-            initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-            animate={drawPath(s.delay, t.stringDraw, 0.7)}
-          />
-        </motion.g>
-      ))}
+      <g filter={strokeFilter}>
+        {STRINGS.map((s) => (
+          <g key={s.d}>
+            <motion.path
+              d={s.d}
+              {...pathCommon}
+              stroke={`url(#${uid}-string-fiber)`}
+              strokeWidth="2.6"
+              strokeDasharray="1 0"
+              opacity="0.22"
+              initial={drawInitial}
+              animate={drawPath(s.delay, STRING_DRAW, 0.22)}
+            />
+            <motion.path
+              d={s.d}
+              {...pathCommon}
+              stroke={`url(#${uid}-string)`}
+              strokeWidth="1.65"
+              strokeDasharray="3.5 5.5"
+              initial={drawInitial}
+              animate={drawPath(s.delay, STRING_DRAW, 0.82)}
+            />
+          </g>
+        ))}
 
-      {/* Step 1b + 2: heart draws, subtle scale pulse, stroke-only glow on outer path */}
-      <motion.g
-        style={{ transformOrigin: '400px 220px', transformBox: 'fill-box' }}
-        animate={heartPulse}
-      >
         <motion.path
           d={OUTER_HEART}
           {...pathCommon}
-          stroke={`url(#${uid}-g1)`}
-          strokeWidth="2"
-          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-          animate={outerHeartAnimate}
+          stroke={`url(#${uid}-heart-outer)`}
+          strokeWidth="2.1"
+          initial={drawInitial}
+          animate={drawPath(OUTER_DELAY, OUTER_DRAW, 0.9)}
         />
 
         <motion.path
           d={INNER_HEART_LEFT}
           {...pathCommon}
-          stroke={`url(#${uid}-g2)`}
-          strokeWidth="1.5"
-          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-          animate={drawPath(t.innerDelay, t.innerDraw, 0.6)}
+          stroke={`url(#${uid}-heart-inner)`}
+          strokeWidth="1.45"
+          initial={drawInitial}
+          animate={drawPath(INNER_DELAY, INNER_DRAW, 0.72)}
         />
 
         <motion.path
           d={INNER_HEART_RIGHT}
           {...pathCommon}
-          stroke={`url(#${uid}-g3)`}
-          strokeWidth="1.5"
-          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-          animate={drawPath(t.innerDelay + t.innerStagger, t.innerDraw, 0.6)}
+          stroke={`url(#${uid}-heart-inner)`}
+          strokeWidth="1.45"
+          initial={drawInitial}
+          animate={drawPath(INNER_DELAY + INNER_STAGGER, INNER_DRAW, 0.72)}
         />
-      </motion.g>
+      </g>
+
+      <g>
+        {STRINGS.map((s) => (
+          <g key={`anchor-${s.d}`}>
+            <AnchorPin
+              x={s.heart.x}
+              y={s.heart.y}
+              delay={s.delay}
+              reduceMotion={reduceMotion}
+              uid={uid}
+              variant="knot"
+            />
+            <AnchorPin
+              x={s.pin.x}
+              y={s.pin.y}
+              delay={s.delay}
+              reduceMotion={reduceMotion}
+              uid={uid}
+              variant="pin"
+            />
+          </g>
+        ))}
+      </g>
     </svg>
   )
 }

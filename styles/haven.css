@@ -253,3 +253,300 @@ body.body--app .haven-shell__content {
   background: transparent;
   background-image: none;
 }
+
+/* Diary page — ruled lines aligned to textarea text */
+.haven-diary-lines {
+  --haven-diary-line: 28px;
+  border: 1px solid oklch(0.88 0.02 70 / 0.55);
+  border-radius: 0.75rem;
+  background: oklch(0.995 0.006 85 / 0.65);
+}
+
+.haven-diary-lines__textarea {
+  display: block;
+  width: 100%;
+  min-height: 280px;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-size: 15px;
+  line-height: var(--haven-diary-line);
+  padding: 7px 12px 12px;
+  color: var(--foreground, oklch(0.28 0.03 50));
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(var(--haven-diary-line) - 1px),
+    oklch(0.9 0.02 70 / 0.5) calc(var(--haven-diary-line) - 1px),
+    oklch(0.9 0.02 70 / 0.5) var(--haven-diary-line)
+  );
+  background-attachment: local;
+  border-radius: 0.75rem;
+}
+
+.haven-diary-lines__textarea::placeholder {
+  color: oklch(0.55 0.02 55 / 0.65);
+}
+
+.haven-diary-lines__textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px oklch(0.72 0.06 55 / 0.18);
+}
+
+.haven-diary-lines:focus-within {
+  border-color: oklch(0.72 0.06 55 / 0.35);
+  box-shadow: 0 0 0 2px oklch(0.72 0.06 55 / 0.12);
+}
+
+/* Wall calendar — physical paper, month/year navigation */
+.haven-wall-calendar {
+  position: relative;
+  padding: 1.35rem 1.25rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid oklch(0.88 0.02 70 / 0.65);
+  background: linear-gradient(168deg, oklch(0.99 0.008 85) 0%, oklch(0.97 0.014 78) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 14px 36px rgba(61, 53, 48, 0.07),
+    0 2px 0 oklch(0.92 0.02 70 / 0.35);
+}
+
+.haven-wall-calendar__pin {
+  position: absolute;
+  top: 0.65rem;
+  left: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: oklch(0.62 0.14 25);
+  box-shadow: 0 0 0 3px oklch(0.97 0.02 75);
+}
+
+.haven-wall-calendar__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.haven-wall-calendar__label {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: oklch(0.52 0.02 55);
+}
+
+.haven-wall-calendar__month {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: oklch(0.28 0.03 50);
+}
+
+.haven-wall-calendar__nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 0.65rem;
+  border: 1px solid oklch(0.88 0.02 70 / 0.55);
+  background: oklch(0.995 0.006 85 / 0.85);
+}
+
+.haven-wall-calendar__nav-btn,
+.haven-wall-calendar__nav-today {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.haven-wall-calendar__nav-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.45rem;
+  color: oklch(0.48 0.06 30);
+}
+
+.haven-wall-calendar__nav-btn--year {
+  width: 1.55rem;
+  color: oklch(0.55 0.04 35);
+}
+
+.haven-wall-calendar__nav-btn:hover {
+  background: oklch(0.96 0.02 70);
+  color: oklch(0.45 0.1 28);
+}
+
+.haven-wall-calendar__nav-btn:focus-visible,
+.haven-wall-calendar__nav-today:focus-visible {
+  outline: 2px solid oklch(0.62 0.14 25 / 0.35);
+  outline-offset: 2px;
+}
+
+.haven-wall-calendar__nav-today {
+  min-width: 3.1rem;
+  height: 1.85rem;
+  padding: 0 0.55rem;
+  border-radius: 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: oklch(0.48 0.08 28);
+}
+
+.haven-wall-calendar__nav-today:hover:not(:disabled) {
+  background: oklch(0.96 0.025 35);
+  color: oklch(0.42 0.12 25);
+}
+
+.haven-wall-calendar__nav-today:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.haven-wall-calendar__stage {
+  margin-top: 1.1rem;
+  perspective: 1100px;
+  overflow: hidden;
+}
+
+.haven-wall-calendar__page {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.haven-wall-calendar__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  gap: 0.15rem;
+}
+
+.haven-wall-calendar__weekday {
+  padding: 0.25rem 0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: oklch(0.58 0.02 55 / 0.85);
+}
+
+.haven-wall-calendar__grid {
+  margin-top: 0.35rem;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.haven-wall-calendar__cell {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.35rem;
+  border-radius: 0.5rem;
+  border: 1px solid oklch(0.88 0.02 70 / 0.55);
+  background: oklch(0.995 0.006 85 / 0.5);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: oklch(0.38 0.03 50);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.haven-wall-calendar__cell--empty {
+  border-color: transparent;
+  background: transparent;
+  pointer-events: none;
+}
+
+.haven-wall-calendar__cell--future {
+  border-color: oklch(0.9 0.015 75 / 0.45);
+  color: oklch(0.68 0.02 55 / 0.55);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.haven-wall-calendar__cell--lvl-1 {
+  background: oklch(0.97 0.02 35);
+  border-color: oklch(0.9 0.04 32 / 0.45);
+}
+
+.haven-wall-calendar__cell--lvl-2 {
+  background: oklch(0.94 0.04 32);
+  border-color: oklch(0.86 0.06 30 / 0.5);
+}
+
+.haven-wall-calendar__cell--lvl-3 {
+  background: oklch(0.9 0.07 28);
+  border-color: oklch(0.8 0.08 28 / 0.55);
+  color: oklch(0.3 0.04 28);
+}
+
+.haven-wall-calendar__cell--today {
+  border-color: oklch(0.62 0.14 25 / 0.55);
+  box-shadow:
+    0 0 0 2px oklch(0.99 0.01 85),
+    0 0 0 3.5px oklch(0.62 0.14 25 / 0.45);
+  background: oklch(0.99 0.02 35);
+}
+
+.haven-wall-calendar__cell--today .haven-wall-calendar__date {
+  color: oklch(0.48 0.12 25);
+  font-weight: 600;
+}
+
+.haven-wall-calendar__cell--clickable:hover:not(:disabled) {
+  border-color: oklch(0.72 0.08 28 / 0.55);
+  box-shadow: 0 4px 12px rgba(61, 53, 48, 0.06);
+}
+
+.haven-wall-calendar__cell:disabled:not(.haven-wall-calendar__cell--future) {
+  cursor: default;
+  opacity: 0.92;
+}
+
+.haven-wall-calendar__dot {
+  position: absolute;
+  bottom: 0.35rem;
+  left: 0.35rem;
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: oklch(0.58 0.14 25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .haven-wall-calendar__page {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .haven-wall-calendar__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .haven-wall-calendar__nav {
+    justify-content: center;
+  }
+}

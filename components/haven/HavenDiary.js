@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Lock, X, Check, ShieldCheck } from 'lucide-react'
-import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
-import {
-  todayKey,
-  dateKeyOf,
-  formatLocalDateKey,
-  wordCount,
-  intensityFor,
-} from '../../lib/haven/dates'
+import { todayKey, formatLocalDateKey, wordCount } from '../../lib/haven/dates'
+import WallCalendar from './WallCalendar'
 import { pulseWarmth } from '../../lib/warmthPulse'
 
 const PRIVACY_KEY = 'hsc.diary.privacy.v1'
@@ -44,84 +38,6 @@ function groupEntriesByDate(entries) {
     }
   })
   return map
-}
-
-function WallCalendar({ today, entryMap, onSelect }) {
-  const ref = today ? new Date(`${today}T12:00:00`) : new Date()
-  const year = ref.getFullYear()
-  const month = ref.getMonth()
-  const first = new Date(year, month, 1)
-  const startWeekday = (first.getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const cells = []
-  for (let i = 0; i < startWeekday; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d))
-  while (cells.length % 7 !== 0) cells.push(null)
-
-  const monthLabel = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-
-  return (
-    <div className="rise rise-1 paper p-5 md:p-6 relative">
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full bg-rose/60 shadow-[0_0_0_3px_oklch(0.97_0.02_75)]" />
-      <header className="flex items-end justify-between mt-2">
-        <div>
-          <p className="text-[10.5px] uppercase tracking-[0.26em] text-muted-foreground">Wall calendar</p>
-          <h2 className="font-serif text-2xl text-foreground mt-0.5">{monthLabel}</h2>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mr-1">less</span>
-          <span className="h-3 w-3 rounded-sm border border-border" />
-          <span className="h-3 w-3 rounded-sm bg-[oklch(0.95_0.025_35)] border border-border/70" />
-          <span className="h-3 w-3 rounded-sm bg-[oklch(0.9_0.045_30)] border border-border/70" />
-          <span className="h-3 w-3 rounded-sm bg-[oklch(0.83_0.07_28)] border border-border/70" />
-          <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground ml-1">more</span>
-        </div>
-      </header>
-
-      <div className="mt-5 grid grid-cols-7 text-center text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground/80">
-        {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => (
-          <div key={d} className="py-1">
-            {d}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-1 grid grid-cols-7 gap-1.5">
-        {cells.map((d, i) => {
-          if (!d) return <div key={`empty-${i}`} className="aspect-square" />
-          const k = dateKeyOf(d)
-          const isToday = k === today
-          const isFuture = today && k > today
-          const e = entryMap.get(k)
-          const wc = e ? wordCount(e.content) : 0
-          const lvl = intensityFor(wc)
-          const clickable = !isFuture && (isToday || !!e)
-          return (
-            <button
-              key={k}
-              type="button"
-              disabled={!clickable}
-              onClick={() => onSelect(k)}
-              className={cn(
-                'relative aspect-square rounded-lg border text-[13px] flex items-start justify-end p-1.5 transition-all duration-300',
-                isFuture
-                  ? 'border-border/40 text-muted-foreground/40 bg-transparent'
-                  : 'border-border/70 hover:border-clay/40',
-                lvl === 1 && 'bg-[oklch(0.95_0.025_35)]',
-                lvl === 2 && 'bg-[oklch(0.9_0.045_30)]',
-                lvl === 3 && 'bg-[oklch(0.83_0.07_28)] text-foreground',
-                isToday && 'ring-2 ring-clay ring-offset-2 ring-offset-card border-transparent',
-              )}
-              aria-label={`${k}${e ? ', entry' : ''}`}
-            >
-              <span className={cn('font-medium', isToday && 'text-clay')}>{d.getDate()}</span>
-              {e && <span className="absolute bottom-1.5 left-1.5 h-1 w-1 rounded-full bg-rose" />}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
 }
 
 export default function HavenDiary() {
@@ -288,20 +204,13 @@ export default function HavenDiary() {
             <span className="text-[11px] text-muted-foreground">{wordCount(draft)} words</span>
           </div>
 
-          <div className="mt-5 relative">
-            <div
-              aria-hidden
-              className="absolute inset-0 rounded-xl pointer-events-none opacity-60"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(to bottom, transparent 0, transparent 27px, oklch(0.9 0.02 70) 28px)',
-              }}
-            />
+          <div className="mt-5 haven-diary-lines">
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Start anywhere. A sentence is enough."
-              className="relative w-full min-h-[280px] bg-transparent outline-none p-3 leading-7 text-[15px] text-foreground placeholder:text-muted-foreground/70 rounded-xl focus:ring-2 focus:ring-clay/20 transition"
+              className="haven-diary-lines__textarea"
+              spellCheck
             />
           </div>
 

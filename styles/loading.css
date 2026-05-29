@@ -53,8 +53,8 @@
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 999px;
-  background: var(--hs-accent);
-  opacity: 0.45;
+  background: var(--hs-auth-red);
+  opacity: 0.5;
   animation: hsLoadingDot 1.6s ease-in-out infinite;
 }
 

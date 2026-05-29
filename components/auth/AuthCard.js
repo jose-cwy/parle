@@ -50,7 +50,7 @@ export default function AuthCard({
       </svg>
 
       <div className="auth-page__logoWrap">
-        <HeartLogo size={40} />
+        <HeartLogo size={32} />
       </div>
 
       <p className="auth-page__eyebrow">{eyebrow}</p>

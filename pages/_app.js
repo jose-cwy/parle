@@ -1,5 +1,6 @@
 import '../styles/tokens.css'
 import '../styles/globals.css'
+import '../styles/typography.css'
 import '../styles/loading.css'
 import '../styles/app-theme.css'
 import '../styles/haven.css'
@@ -8,11 +9,6 @@ import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Head from 'next/head'
-import '@fontsource/manrope/400.css'
-import '@fontsource/manrope/600.css'
-import '@fontsource/cormorant-garamond/500.css'
-import '@fontsource/cormorant-garamond/600.css'
-import '@fontsource/cormorant-garamond/700.css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { pageTransition } from '../lib/motion'
@@ -48,6 +44,11 @@ export default function App({ Component, pageProps }) {
     } else {
       document.body.classList.remove('body--app')
     }
+    if (isAuthPage) {
+      document.body.classList.add('body--auth')
+    } else {
+      document.body.classList.remove('body--auth')
+    }
     return () => {
       document.body.classList.remove(
         'body--landing',
@@ -55,9 +56,10 @@ export default function App({ Component, pageProps }) {
         'body--marketing',
         'body--home-hero',
         'body--app',
+        'body--auth',
       )
     }
-  }, [landingTheme, marketingCream, appLayout, isHome])
+  }, [landingTheme, marketingCream, appLayout, isHome, isAuthPage])
 
   return (
     <div

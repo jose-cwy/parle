@@ -1,0 +1,76 @@
+/* ═══════════════════════════════════════════════════════════════
+   Heartstrings Club — global typography (matches logged-in app)
+   Fraunces headings · Inter body
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --font-haven-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-haven-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-haven-sans);
+  --font-serif: var(--font-haven-serif);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-haven-sans);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--hs-text);
+  background-color: var(--hs-bg);
+  background-image: linear-gradient(
+    180deg,
+    var(--hs-ivory) 0%,
+    var(--hs-bg-warm) 45%,
+    var(--hs-bg) 100%
+  );
+  background-attachment: fixed;
+}
+
+/* Remove legacy dark theme overlays on public + app shells */
+body::after {
+  display: none !important;
+}
+
+.app-shell::before {
+  display: none !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-haven-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--hs-text);
+  line-height: 1.25;
+}
+
+p {
+  color: var(--hs-text-soft);
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+label,
+.eyebrow,
+[class*='__eyebrow'] {
+  font-family: var(--font-haven-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}

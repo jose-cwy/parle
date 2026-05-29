@@ -7,6 +7,7 @@
   /* Surfaces */
   --hs-bg: #f9f6f1;
   --hs-bg-warm: #f5f0e8;
+  --hs-bg-soft: #f3ebe6;
   --hs-surface: #fffcf8;
   --hs-surface-muted: #f3ede4;
   --hs-ivory: #faf7f2;
@@ -20,16 +21,25 @@
   --hs-text-soft: #5c544d;
   --hs-text-muted: #8a8178;
 
-  /* Accents — restrained */
-  --hs-accent: #b8877a;
-  --hs-accent-strong: #a86f52;
-  --hs-accent-strong-hover: #966045;
-  --hs-accent-soft: #e8ddd6;
-  --hs-accent-blush: #d4b8ad;
+  /* Accents — muted red / clay (marketing + app) */
+  --hs-accent: #c54b44;
+  --hs-accent-soft: #e8d4cf;
+  --hs-accent-blush: #f0e0dc;
+  --hs-accent-strong: #a63f3a;
+  --hs-accent-strong-hover: #8f3a34;
+  --hs-accent-clay: #b8877a;
   --hs-sage: #8a9a94;
 
+  /* Legacy aliases */
+  --cream: var(--hs-bg);
+  --ivory: var(--hs-ivory);
+  --bone: var(--hs-bg-warm);
+  --ink: var(--hs-text);
+  --foreground: var(--hs-text);
+  --muted-foreground: var(--hs-text-muted);
+
   /* Focus & shadow */
-  --hs-focus-ring: rgba(168, 111, 82, 0.28);
+  --hs-focus-ring: rgba(197, 75, 68, 0.28);
   --hs-shadow: 0 8px 28px rgba(61, 53, 48, 0.06);
   --hs-shadow-hover: 0 12px 32px rgba(61, 53, 48, 0.09);
 
