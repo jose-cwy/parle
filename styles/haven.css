@@ -1,0 +1,244 @@
+/* Heartstrings Haven — Lovable design tokens & utilities (logged-in app) */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap');
+
+body.body--app {
+  --font-haven-serif: 'Fraunces', Georgia, serif;
+  --font-haven-sans: 'Inter', system-ui, sans-serif;
+
+  --radius: 1rem;
+
+  --cream: oklch(0.972 0.018 80);
+  --ivory: oklch(0.985 0.012 85);
+  --bone: oklch(0.96 0.014 80);
+  --beige: oklch(0.93 0.025 75);
+  --taupe: oklch(0.78 0.025 60);
+  --rose: oklch(0.68 0.1 25);
+  --clay: oklch(0.55 0.115 32);
+  --sage: oklch(0.72 0.035 145);
+  --ink: oklch(0.26 0.018 50);
+
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: var(--ivory);
+  --card-foreground: var(--ink);
+  --popover: var(--ivory);
+  --popover-foreground: var(--ink);
+  --primary: var(--clay);
+  --primary-foreground: oklch(0.985 0.012 85);
+  --secondary: oklch(0.945 0.02 72);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.94 0.018 75);
+  --muted-foreground: oklch(0.48 0.025 55);
+  --accent: var(--rose);
+  --accent-foreground: oklch(0.985 0.012 85);
+  --destructive: oklch(0.58 0.14 28);
+  --border: oklch(0.9 0.018 72);
+  --input: oklch(0.9 0.018 72);
+  --ring: oklch(0.62 0.09 32);
+
+  --shadow-paper: 0 1px 0 oklch(0.92 0.012 70 / 0.6), 0 8px 24px -12px oklch(0.45 0.04 50 / 0.18);
+  --shadow-soft: 0 1px 2px oklch(0.55 0.04 50 / 0.06), 0 12px 32px -16px oklch(0.45 0.04 50 / 0.16);
+  --shadow-lift: 0 2px 4px oklch(0.55 0.04 50 / 0.06), 0 24px 48px -20px oklch(0.4 0.05 40 / 0.22);
+
+  font-family: var(--font-haven-sans);
+  color: var(--foreground);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(at 12% 0%, oklch(0.96 0.022 70 / 0.7) 0px, transparent 45%),
+    radial-gradient(at 92% 100%, oklch(0.94 0.028 30 / 0.35) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+body.body--app h1,
+body.body--app h2,
+body.body--app h3,
+body.body--app h4 {
+  font-family: var(--font-haven-serif);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+}
+
+/* Paper card */
+body.body--app .paper {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 8px);
+  box-shadow: var(--shadow-paper);
+  position: relative;
+}
+
+body.body--app .paper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: radial-gradient(oklch(0.86 0.02 70 / 0.06) 1px, transparent 1px);
+  background-size: 4px 4px;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+body.body--app .paper-note {
+  background: linear-gradient(180deg, oklch(0.985 0.012 85) 0%, oklch(0.965 0.02 78) 100%);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  position: relative;
+}
+
+@keyframes haven-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+body.body--app .skeleton-soft {
+  background: linear-gradient(
+    90deg,
+    oklch(0.95 0.018 75) 0%,
+    oklch(0.98 0.012 78) 50%,
+    oklch(0.95 0.018 75) 100%
+  );
+  background-size: 800px 100%;
+  animation: haven-shimmer 2.2s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+@keyframes haven-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body.body--app .rise { animation: haven-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+body.body--app .rise-1 { animation-delay: 0.06s; }
+body.body--app .rise-2 { animation-delay: 0.14s; }
+body.body--app .rise-3 { animation-delay: 0.22s; }
+body.body--app .rise-4 { animation-delay: 0.3s; }
+body.body--app .rise-5 { animation-delay: 0.38s; }
+
+@keyframes haven-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+body.body--app .lift {
+  transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 320ms ease;
+}
+
+body.body--app .lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+
+@keyframes haven-draw {
+  0% { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+body.body--app .heartstring path {
+  stroke-dasharray: 200;
+  animation: haven-draw 2.4s ease-out forwards;
+}
+
+body.body--app .hsc-bookmark {
+  animation: haven-rise 0.6s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transform-origin: top center;
+}
+
+@keyframes haven-pageFade {
+  0% { opacity: 0; transform: translateX(6px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+body.body--app .page-fade {
+  animation: haven-pageFade 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Haven shell layout */
+.haven-shell {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+.haven-shell__rail {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .haven-shell__rail {
+    display: flex;
+    position: fixed;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 40;
+    flex-direction: column;
+    border-radius: 28px;
+    border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--card) 95%, transparent);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 4px oklch(0.55 0.04 50 / 0.06), 0 24px 60px -24px oklch(0.4 0.05 40 / 0.28);
+    transition: width 300ms ease-out;
+    padding: 1rem 0.75rem;
+  }
+
+  .haven-shell__rail--expanded {
+    width: 230px;
+  }
+
+  .haven-shell__rail--collapsed {
+    width: 68px;
+  }
+}
+
+.haven-shell__mobile-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: color-mix(in oklch, var(--background) 85%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (min-width: 768px) {
+  .haven-shell__mobile-header {
+    display: none;
+  }
+}
+
+.haven-shell__main {
+  padding-left: 0;
+}
+
+@media (min-width: 768px) {
+  .haven-shell__main {
+    padding-left: 110px;
+  }
+}
+
+.haven-shell__content {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 64rem;
+  padding: 2rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .haven-shell__content {
+    padding: 3rem 2.5rem;
+  }
+}
+
+/* Override legacy app-shell backgrounds when Haven layout is active */
+body.body--app .haven-shell,
+body.body--app .haven-shell__main,
+body.body--app .haven-shell__content {
+  background: transparent;
+  background-image: none;
+}

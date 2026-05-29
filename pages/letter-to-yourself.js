@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import RequireAuth from '../components/RequireAuth'
 import AppShell from '../components/AppShell'
 import DeskScene from '../components/DeskScene'
-import AppPage from '../components/app/AppPage'
-import PageIntro from '../components/PageIntro'
 import LetterEditor from '../components/LetterEditor'
 import Notification from '../components/Notification'
 import ConfirmationModal from '../components/ConfirmationModal'
@@ -144,12 +142,15 @@ export default function LetterToYourselfPage(){
   return (
     <RequireAuth>
       <AppShell>
-      <AppPage width="letter">
-      <PageIntro
-        eyebrow="Closure letter"
-        title="Write what you never got to say"
-        description="This stays private. When you are ready, seal it away and stop carrying it in your head."
-      />
+      <header className="rise mb-8">
+        <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Closure letter</p>
+        <h1 className="mt-2 text-3xl md:text-4xl text-foreground">
+          Write what you never got to say
+        </h1>
+        <p className="mt-3 max-w-xl text-muted-foreground text-sm leading-relaxed">
+          This stays private. When you are ready, seal it away and stop carrying it in your head.
+        </p>
+      </header>
       {/* First-time welcome banner */}
       <AnimatePresence>
         {showWelcome && (
@@ -213,7 +214,7 @@ export default function LetterToYourselfPage(){
           <Notification open={showSavedToast} message="Saved!" />
         </div>
       )}
-      </AppPage>
+      </AppShell>
 
       <ConfirmationModal
         open={modalState.open}
@@ -233,7 +234,6 @@ export default function LetterToYourselfPage(){
           setModalState({ open: false, mode: 'status', title: '', description: '' })
         }}
       />
-      </AppShell>
     </RequireAuth>
   )
 }
