@@ -151,11 +151,11 @@ export default function HeartstringsMenu({ user, open, onOpenChange }) {
         href: safeHref(user, '/quotes'),
       },
       {
-        key: 'diary',
+        key: 'journal',
         icon: BookOpen,
-        title: 'Diary',
+        title: 'Journal',
         description: 'Keep what you feel private.',
-        href: safeHref(user, '/diary'),
+        href: safeHref(user, '/journal'),
       },
     ],
     [user]

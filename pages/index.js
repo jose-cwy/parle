@@ -148,9 +148,9 @@ export default function Home() {
               <FeatureCard
                 icon={BookOpen}
                 title="Keep it private"
-                description="Your personal diary to track your feelings, progress, and reflections over time."
+                description="Your personal journal to track your feelings, progress, and reflections over time."
                 delay={0.3}
-                href={featureHref('/diary')}
+                href={featureHref('/journal')}
               />
               <FeatureCard
                 icon={Quote}

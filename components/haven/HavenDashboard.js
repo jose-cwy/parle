@@ -156,9 +156,9 @@ export default function HavenDashboard({ user }) {
             delay="rise-2"
           />
           <NoteCard
-            href="/diary"
+            href="/journal"
             icon={BookHeart}
-            kicker="Diary"
+            kicker="Journal"
             title="Write today"
             sub="Put your thoughts somewhere safe."
             doodle="underline"

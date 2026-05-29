@@ -1,13 +1,11 @@
-import RequireAuth from '../components/RequireAuth'
-import AppShell from '../components/AppShell'
-import HavenDiary from '../components/haven/HavenDiary'
+import { useEffect } from 'react'
+import { useRouter } from 'next/router'
 
-export default function Diary() {
-  return (
-    <RequireAuth>
-      <AppShell>
-        <HavenDiary />
-      </AppShell>
-    </RequireAuth>
-  )
+/** Legacy route — redirects to /journal */
+export default function DiaryRedirect() {
+  const router = useRouter()
+  useEffect(() => {
+    router.replace('/journal')
+  }, [router])
+  return null
 }

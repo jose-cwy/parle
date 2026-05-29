@@ -44,10 +44,10 @@ export const safetyAgreementSections = [
     ],
   },
   {
-    id: 'diary-privacy',
-    title: 'Diary privacy',
+    id: 'journal-privacy',
+    title: 'Journal privacy',
     body: [
-      'Your diary is designed as your private writing space and is not shown in the admin interface.',
+      'Your journal is designed as your private writing space and is not shown in the admin interface.',
       'Entries are only accessible through your logged-in account and are meant for your personal reflection.',
     ],
   },

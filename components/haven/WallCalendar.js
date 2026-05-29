@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { cn } from '../../lib/cn'
-import { dateKeyOf, intensityFor, wordCount } from '../../lib/haven/dates'
+import { dateKeyOf, intensityFor, isFutureDate, isPastDate, wordCount } from '../../lib/haven/dates'
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
@@ -17,6 +17,18 @@ function buildMonthCells(year, month) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d))
   while (cells.length % 7 !== 0) cells.push(null)
   return cells
+}
+
+function entryCellClasses({ isFuture, isToday, lvl, isPastEntry }) {
+  return cn(
+    'haven-wall-calendar__cell',
+    isFuture && 'haven-wall-calendar__cell--future',
+    lvl === 1 && 'haven-wall-calendar__cell--lvl-1',
+    lvl === 2 && 'haven-wall-calendar__cell--lvl-2',
+    lvl === 3 && 'haven-wall-calendar__cell--lvl-3',
+    isToday && 'haven-wall-calendar__cell--today',
+    isPastEntry && 'haven-wall-calendar__cell--past-entry',
+  )
 }
 
 function CalendarGrid({ today, entryMap, onSelect, year, month }) {
@@ -40,27 +52,43 @@ function CalendarGrid({ today, entryMap, onSelect, year, month }) {
 
           const k = dateKeyOf(d)
           const isToday = Boolean(today && k === today)
-          const isFuture = Boolean(today && k > today)
+          const isFuture = Boolean(today && isFutureDate(k, today))
+          const isPast = Boolean(today && isPastDate(k, today))
           const entry = entryMap.get(k)
           const lvl = intensityFor(entry ? wordCount(entry.content) : 0)
-          const clickable = !isFuture && (isToday || !!entry)
+          const isPastEntry = isPast && !!entry
+          const ariaLabel = `${k}${entry ? ', entry' : ''}${isFuture ? ', unavailable' : ''}`
+
+          if (isPastEntry) {
+            return (
+              <div
+                key={k}
+                role="button"
+                tabIndex={-1}
+                onClick={() => onSelect(k)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelect(k)
+                  }
+                }}
+                className={entryCellClasses({ isFuture, isToday, lvl, isPastEntry: true })}
+                aria-label={ariaLabel}
+              >
+                <span className="haven-wall-calendar__date">{d.getDate()}</span>
+                <span className="haven-wall-calendar__dot" aria-hidden />
+              </div>
+            )
+          }
 
           return (
             <button
               key={k}
               type="button"
-              disabled={!clickable}
+              disabled={isFuture || (isPast && !entry)}
               onClick={() => onSelect(k)}
-              className={cn(
-                'haven-wall-calendar__cell',
-                isFuture && 'haven-wall-calendar__cell--future',
-                lvl === 1 && 'haven-wall-calendar__cell--lvl-1',
-                lvl === 2 && 'haven-wall-calendar__cell--lvl-2',
-                lvl === 3 && 'haven-wall-calendar__cell--lvl-3',
-                isToday && 'haven-wall-calendar__cell--today',
-                clickable && !isToday && 'haven-wall-calendar__cell--clickable',
-              )}
-              aria-label={`${k}${entry ? ', entry' : ''}${isFuture ? ', unavailable' : ''}`}
+              className={entryCellClasses({ isFuture, isToday, lvl, isPastEntry: false })}
+              aria-label={ariaLabel}
               aria-current={isToday ? 'date' : undefined}
             >
               <span className="haven-wall-calendar__date">{d.getDate()}</span>

@@ -22,7 +22,7 @@ export const TESTIMONIALS = [
     name: 'Navin',
     age: 21,
     quote:
-      'The diary made it easier to see that I was slowly getting better, even on days when it didn’t feel like it.',
+      'The journal made it easier to see that I was slowly getting better, even on days when it didn’t feel like it.',
   },
   {
     name: 'Asher',
@@ -64,7 +64,7 @@ export const TESTIMONIALS = [
     name: 'Ashley',
     age: 21,
     quote:
-      'The diary felt like mine. I liked that I could look back and see the days I showed up for myself.',
+      'The journal felt like mine. I liked that I could look back and see the days I showed up for myself.',
   },
   {
     name: 'Vera',
@@ -108,7 +108,7 @@ export const TESTIMONIALS = [
   {
     name: 'Kelly',
     age: 22,
-    quote: 'Seeing my diary calendar fill up made me realise I was actually moving forward.',
+    quote: 'Seeing my journal calendar fill up made me realise I was actually moving forward.',
   },
   {
     name: 'Zhen Lin',

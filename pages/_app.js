@@ -68,8 +68,8 @@ export default function App({ Component, pageProps }) {
     >
       <Head>
         <title>Heartstrings Club | Teen Heartbreak Support Website</title>
-        <meta name="description" content="Heartstrings Club is a teen heartbreak support website with private diary, emotional support chatbot, and healing quotes." />
-        <meta name="keywords" content="teen heartbreak support website, breakup support for teens, healing quotes, private diary" />
+        <meta name="description" content="Heartstrings Club is a teen heartbreak support website with a private journal, emotional support chatbot, and healing quotes." />
+        <meta name="keywords" content="teen heartbreak support website, breakup support for teens, healing quotes, private journal" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

@@ -15,7 +15,7 @@ import HavenMark from './haven/HavenMark'
 const NAV = [
   { href: '/dashboard', label: 'Home', icon: Home, exact: true },
   { href: '/chat', label: 'AI Chatbot', icon: MessageCircle },
-  { href: '/diary', label: 'Diary', icon: BookHeart },
+  { href: '/journal', label: 'Journal', icon: BookHeart },
   { href: '/quotes', label: 'Quotes Book', icon: BookOpen },
   { href: '/letter-to-yourself', label: 'Letter', icon: PenLine },
 ]
