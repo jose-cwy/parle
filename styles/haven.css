@@ -171,7 +171,8 @@ body.body--app .page-fade {
     display: flex;
     position: fixed;
     left: 1.25rem;
-    top: 50%;
+    top: 50vh;
+    top: 50dvh;
     transform: translateY(-50%);
     z-index: 40;
     flex-direction: column;

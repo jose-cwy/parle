@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Home,
   MessageCircle,
@@ -29,15 +30,19 @@ export default function AppShell({ children }) {
   const router = useRouter()
   const [hovered, setHovered] = useState(false)
   const [pinned, setPinned] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const expanded = hovered || pinned
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/')
   }
 
-  return (
-    <div className="haven-shell min-h-screen w-full relative">
+  const rail = (
       <aside
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -140,6 +145,11 @@ export default function AppShell({ children }) {
           )}
         </button>
       </aside>
+  )
+
+  return (
+    <div className="haven-shell min-h-screen w-full relative">
+      {mounted ? createPortal(rail, document.body) : null}
 
       <header className="haven-shell__mobile-header md:hidden">
         <HavenMark expanded />
