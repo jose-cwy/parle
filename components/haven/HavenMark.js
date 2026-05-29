@@ -2,7 +2,12 @@ import { cn } from '../../lib/cn'
 
 export default function HavenMark({ expanded }) {
   return (
-    <div className="flex items-center gap-2.5 px-1.5 h-10">
+    <div
+      className={cn(
+        'flex items-center h-10',
+        expanded ? 'gap-2.5 px-1.5' : 'justify-center w-10 mx-auto',
+      )}
+    >
       <svg viewBox="0 0 32 32" className="h-7 w-7 shrink-0 heartstring" aria-hidden>
         <path
           d="M16 25 C 7 19, 7 10, 13 10 C 16 10, 16 13, 16 13 C 16 13, 16 10, 19 10 C 25 10, 25 19, 16 25 Z"

@@ -44,11 +44,13 @@ export default function Header() {
 
   const headerClass = [
     'marketing-header',
+    'marketing-header--cream',
     'sticky',
     'top-0',
-    'z-40',
+    'z-50',
     'w-full',
     'px-4',
+    'md:px-6',
     'py-3',
     isHome ? 'marketing-header--home' : '',
     landingTheme && !isHome ? 'marketing-header--landing' : '',
@@ -64,15 +66,12 @@ export default function Header() {
       transition={spring.gentle}
     >
       <div className="container flex items-center justify-between gap-4">
-        <Link
-          href={user ? '/dashboard' : '/'}
-          className="brand-mark text-lg font-semibold"
-          style={isHome || landingTheme ? { color: 'var(--landing-text)' } : undefined}
-        >
-          <span className="inline-flex items-center justify-center mr-2 align-middle">
-            <HeartLogo size={18} />
+        <Link href={user ? '/dashboard' : '/'} className="marketing-brand">
+          <HeartLogo size={20} />
+          <span className="marketing-brand__text">
+            <span className="marketing-brand__name">Heartstrings</span>
+            <span className="marketing-brand__tag">club</span>
           </span>
-          Heartstrings Club
         </Link>
 
         {isHome ? (
@@ -105,7 +104,7 @@ export default function Header() {
             )}
             {ready && !user && (
               <>
-                <Link href="/login" className="marketing-header__link">Log in</Link>
+                <Link href="/login" className="marketing-header__link marketing-header__link--auth">Log in</Link>
                 <Link href="/register" className="marketing-header__cta">Sign up</Link>
               </>
             )}

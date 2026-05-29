@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import AppLoading from '../components/loading/AppLoading'
+import LandingSplash from '../components/landing/LandingSplash'
 
 /** Legacy route — cinematic explore journey was removed */
 export default function ExploreRedirect() {
@@ -11,8 +11,6 @@ export default function ExploreRedirect() {
   }, [router])
 
   return (
-    <div className="landing-page__loading">
-      <AppLoading message="Almost ready…" fullPage={false} className="hs-app-loading--minimal" />
-    </div>
+    <LandingSplash message="Almost ready…" statusLabel="Taking you home" />
   )
 }

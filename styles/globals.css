@@ -6250,14 +6250,7 @@ body.body--landing.body--nav-open {
   text-underline-offset: 3px;
 }
 
-.landing-page__loading {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--landing-bg);
-  color: var(--landing-text-muted);
-}
+/* .landing-page__loading — replaced by .landing-splash in styles/marketing.css */
 
 /* Tool preview cards */
 .landing-previews {
@@ -7565,14 +7558,7 @@ body.body--landing.body--nav-open {
   height: 32px;
 }
 
-/* Landing / home header — must follow base .marketing-header (cascade fix) */
-.marketing-header.marketing-header--home {
-  background: transparent !important;
-  border-bottom: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
+/* Landing / home header — cream bar in styles/marketing.css */
 
 .marketing-header.marketing-header--home .brand-mark,
 .marketing-header.marketing-header--landing .brand-mark {

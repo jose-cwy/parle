@@ -54,10 +54,20 @@
   --landing-accent-glow: rgba(168, 111, 82, 0.18);
   --landing-border: var(--hs-border);
   --landing-card-shadow: rgba(61, 53, 48, 0.08);
+
+  /* Navbar + auth pages accent */
+  --hs-navbar-height: 5rem;
+  --hs-auth-red: #c54b44;
+  --hs-auth-red-hover: #a63f3a;
+  --hs-auth-red-deep: #8f3a34;
+  --hs-auth-red-focus: rgba(197, 75, 68, 0.28);
+  --hs-auth-red-soft: rgba(197, 75, 68, 0.1);
 }
 
 /* ── Marketing navbar ── */
 .marketing-header {
+  position: relative;
+  z-index: 50;
   background: rgba(250, 247, 242, 0.97);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -73,17 +83,27 @@
   color: var(--hs-text);
 }
 
-.marketing-header__cta {
-  background: var(--hs-surface-muted);
-  border: 1px solid var(--hs-border);
-  color: var(--hs-accent-strong);
+.marketing-header__cta,
+.marketing-header__link--auth {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--hs-auth-red);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  transition: color 0.2s ease;
 }
 
-.marketing-header.marketing-header--home {
-  background: transparent !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
+.marketing-header__cta:hover,
+.marketing-header__link--auth:hover {
+  color: var(--hs-auth-red-hover);
+  background: transparent;
 }
+
+/* Home bar — see styles/marketing.css (.marketing-header--cream) */
 
 .marketing-header--landing {
   background: var(--hs-ivory) !important;
@@ -113,31 +133,22 @@
   cursor: pointer;
 }
 
-.hs-auth-btn--login {
-  padding: 0.45rem 0.85rem;
-  color: var(--hs-text-soft);
+.hs-auth-btn--login,
+.hs-auth-btn--register {
+  padding: 0.45rem 0.75rem;
+  color: var(--hs-auth-red);
+  background: transparent;
+  box-shadow: none;
+}
+
+.hs-auth-btn--login:hover,
+.hs-auth-btn--register:hover {
+  color: var(--hs-auth-red-hover);
   background: transparent;
 }
 
-.hs-auth-btn--login:hover {
-  color: var(--hs-text);
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.hs-auth-btn--register {
-  padding: 0.5rem 1.05rem;
-  color: #fff;
-  background: var(--hs-accent-strong);
-  box-shadow: var(--hs-shadow);
-}
-
-.hs-auth-btn--register:hover {
-  background: var(--hs-accent-strong-hover);
-  box-shadow: var(--hs-shadow-hover);
-}
-
 .hs-auth-btn:focus-visible {
-  outline: 2px solid var(--hs-focus-ring);
+  outline: 2px solid var(--hs-auth-red-focus);
   outline-offset: 2px;
 }
 

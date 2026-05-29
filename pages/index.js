@@ -5,13 +5,14 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { MessageCircle, Mail, BookOpen, Quote } from 'lucide-react'
 import HeartstringsSVG from '../components/landing/HeartstringsSVG'
 import FeatureCard from '../components/landing/FeatureCard'
-import AppLoading from '../components/loading/AppLoading'
+import LandingSplash from '../components/landing/LandingSplash'
 
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
   const [hasUserScrolled, setHasUserScrolled] = useState(false)
+  const signupDeclined = router.query.signup === 'declined'
   const containerRef = useRef(null)
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -63,26 +64,30 @@ export default function Home() {
   }, [router])
 
   if (checking) {
-    return (
-      <div className="landing-page__loading">
-        <AppLoading message="Preparing your quiet space…" fullPage={false} className="hs-app-loading--minimal" />
-      </div>
-    )
+    return <LandingSplash />
   }
 
   return (
-    <div ref={containerRef} className="relative min-h-screen overflow-hidden" style={{ backgroundColor: '#f9f6f1' }}>
-      <motion.div
-        className="fixed inset-0 pointer-events-none"
-        style={{ opacity: hasUserScrolled ? gradientOpacity : 1, y: hasUserScrolled ? gradientY : 0 }}
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-[#ffd4a3] via-[#f7c6a8] to-[#e6b8c9] opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#b89dc7]/30 via-transparent to-[#8b7ba8]/20" />
-      </motion.div>
+    <div ref={containerRef} className="landing-hero-page">
+      <div className="landing-hero-page__backdrop" aria-hidden="true">
+        <motion.div
+          className="absolute inset-0"
+          style={{ opacity: hasUserScrolled ? gradientOpacity : 1, y: hasUserScrolled ? gradientY : 0 }}
+        />
+      </div>
 
-      <div className="relative z-10">
-        <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
+      <div className="landing-hero-page__content">
+        {signupDeclined ? (
+          <div className="landing-hero-page__notice px-6" role="status">
+            <p>
+              You chose not to accept the Terms &amp; Safety Agreement, so account creation is not available.
+              You can review the agreement again from the{' '}
+              <Link href="/register">signup page</Link> when you are ready.
+            </p>
+          </div>
+        ) : null}
+
+        <section className="landing-hero-page__hero flex flex-col items-center justify-center px-6 py-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -135,7 +140,9 @@ export default function Home() {
             </motion.div>
           </motion.div>
         </section>
+      </div>
 
+      <div className="landing-hero-page__below">
         <section className="py-20 px-6">
           <div className="max-w-6xl mx-auto">
             <motion.div

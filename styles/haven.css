@@ -190,6 +190,17 @@ body.body--app .page-fade {
 
   .haven-shell__rail--collapsed {
     width: 68px;
+    align-items: center;
+  }
+
+  .haven-shell__rail--collapsed nav {
+    width: 100%;
+    align-items: center;
+  }
+
+  .haven-shell__rail--collapsed .haven-nav-icon-well {
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 

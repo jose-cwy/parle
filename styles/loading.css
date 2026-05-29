@@ -187,15 +187,6 @@
 
 .hs-page-skeleton { width: 100%; }
 
-.landing-page__loading {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: var(--hs-bg);
-}
-
 .hs-app-loading--minimal .hs-loading-shell--page {
   min-height: auto;
   padding: 0;

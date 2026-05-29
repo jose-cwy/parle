@@ -3,6 +3,7 @@ import '../styles/globals.css'
 import '../styles/loading.css'
 import '../styles/app-theme.css'
 import '../styles/haven.css'
+import '../styles/marketing.css'
 import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -15,13 +16,14 @@ import '@fontsource/cormorant-garamond/700.css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { pageTransition } from '../lib/motion'
-import { isAppRoute, isFullBleedRoute, isLandingThemeRoute } from '../lib/routes'
+import { isAppRoute, isFullBleedRoute, isLandingThemeRoute, isMarketingCreamRoute } from '../lib/routes'
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
   const fullBleed = isFullBleedRoute(router.pathname)
   const appLayout = isAppRoute(router.pathname)
   const landingTheme = isLandingThemeRoute(router.pathname)
+  const marketingCream = isMarketingCreamRoute(router.pathname)
   const isHome = router.pathname === '/'
   const isAuthPage = router.pathname === '/login' || router.pathname === '/register'
 
@@ -31,15 +33,31 @@ export default function App({ Component, pageProps }) {
     } else {
       document.body.classList.remove('body--landing', 'body--nav-open')
     }
+    if (marketingCream) {
+      document.body.classList.add('body--marketing')
+    } else {
+      document.body.classList.remove('body--marketing')
+    }
+    if (isHome) {
+      document.body.classList.add('body--home-hero')
+    } else {
+      document.body.classList.remove('body--home-hero')
+    }
     if (appLayout) {
       document.body.classList.add('body--app')
     } else {
       document.body.classList.remove('body--app')
     }
     return () => {
-      document.body.classList.remove('body--landing', 'body--nav-open', 'body--app')
+      document.body.classList.remove(
+        'body--landing',
+        'body--nav-open',
+        'body--marketing',
+        'body--home-hero',
+        'body--app',
+      )
     }
-  }, [landingTheme, appLayout])
+  }, [landingTheme, marketingCream, appLayout, isHome])
 
   return (
     <div

@@ -3,8 +3,8 @@ import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
-import TermsGateModal from '../components/TermsGateModal'
-import { getTermsAcceptanceFromReq } from '../lib/auth'
+import TermsAgreementModal from '../components/TermsAgreementModal'
+import { getTermsAcceptanceFromReq, TERMS_VERSION } from '../lib/auth'
 
 export default function Register({ acceptedTermsInitially }) {
   const [email, setEmail] = useState('')
@@ -12,7 +12,6 @@ export default function Register({ acceptedTermsInitially }) {
   const [loading, setLoading] = useState(false)
   const [acceptingTerms, setAcceptingTerms] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(acceptedTermsInitially)
-  const [hasReachedBottom, setHasReachedBottom] = useState(acceptedTermsInitially)
   const router = useRouter()
 
   async function handleSubmit(e) {
@@ -34,12 +33,20 @@ export default function Register({ acceptedTermsInitially }) {
   }
 
   async function handleAcceptTerms() {
-    if (!hasReachedBottom || acceptingTerms) return
+    if (acceptingTerms) return
 
     setAcceptingTerms(true)
     const res = await fetch('/api/auth/terms-accept', { method: 'POST' })
 
     if (res.ok) {
+      try {
+        localStorage.setItem(
+          'hs_safety_agreement_accepted',
+          JSON.stringify({ version: TERMS_VERSION, at: new Date().toISOString() }),
+        )
+      } catch {
+        /* cookie + DB on register are authoritative */
+      }
       setAcceptedTerms(true)
       setAcceptingTerms(false)
       return
@@ -47,13 +54,6 @@ export default function Register({ acceptedTermsInitially }) {
 
     setAcceptingTerms(false)
     alert('Unable to record your acceptance right now. Please try again.')
-  }
-
-  function handleTermsScroll(event) {
-    const node = event.currentTarget
-    const threshold = 24
-    const isAtBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - threshold
-    if (isAtBottom) setHasReachedBottom(true)
   }
 
   return (
@@ -64,7 +64,7 @@ export default function Register({ acceptedTermsInitially }) {
         description={
           acceptedTerms
             ? 'Create a quiet place for your thoughts.'
-            : 'Read and accept the terms below to unlock signup.'
+            : 'Read and accept the safety agreement to unlock signup.'
         }
         dimmed={!acceptedTerms}
         footer={
@@ -100,6 +100,11 @@ export default function Register({ acceptedTermsInitially }) {
               disabled={!acceptedTerms || loading || acceptingTerms}
             />
           </AuthField>
+          {!acceptedTerms ? (
+            <p className="auth-page__terms-hint" role="status">
+              Please read and accept the Terms &amp; Safety Agreement before continuing.
+            </p>
+          ) : null}
           <AuthSubmitButton
             loading={loading || acceptingTerms}
             disabled={!acceptedTerms}
@@ -111,11 +116,9 @@ export default function Register({ acceptedTermsInitially }) {
 
       <AnimatePresence>
         {!acceptedTerms ? (
-          <TermsGateModal
+          <TermsAgreementModal
             accepting={acceptingTerms}
-            hasReachedBottom={hasReachedBottom}
             onAccept={handleAcceptTerms}
-            onScroll={handleTermsScroll}
           />
         ) : null}
       </AnimatePresence>
