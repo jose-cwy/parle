@@ -1,18 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import LandingHero from '../components/landing/LandingHero'
+import Head from 'next/head'
 import LandingSplash from '../components/landing/LandingSplash'
-import LandingHowItWorks from '../components/landing/LandingHowItWorks'
-import LandingTestimonialCarousel from '../components/landing/LandingTestimonialCarousel'
-import LandingClosingCta from '../components/landing/LandingClosingCta'
-import LandingFooter from '../components/landing/LandingFooter'
+import ParlerLandingPage from '../components/landing/ParlerLandingPage'
 
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
   const signupDeclined = router.query.signup === 'declined'
-  const containerRef = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -29,7 +24,9 @@ export default function Home() {
       .catch(() => {
         if (active) setChecking(false)
       })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [router])
 
   if (checking) {
@@ -37,22 +34,17 @@ export default function Home() {
   }
 
   return (
-    <div ref={containerRef} className="landing-figma">
-      {signupDeclined ? (
-        <div className="landing-hero-page__notice px-6" role="status">
-          <p>
-            You chose not to accept the Terms &amp; Safety Agreement, so account creation is not available.
-            You can review the agreement again from the{' '}
-            <Link href="/register">signup page</Link> when you are ready.
-          </p>
-        </div>
-      ) : null}
-
-      <LandingHero />
-      <LandingHowItWorks />
-      <LandingTestimonialCarousel />
-      <LandingClosingCta />
-      <LandingFooter />
-    </div>
+    <>
+      <Head>
+        <title>parlé — A private space for heartbreak</title>
+        <meta
+          name="description"
+          content="A private digital space for young people to share thoughts, feelings, and heartbreak stories safely and anonymously."
+        />
+        <meta property="og:title" content="parlé — A private space for heartbreak" />
+        <meta property="og:description" content="Comfort first. Advice when you're ready." />
+      </Head>
+      <ParlerLandingPage signupDeclined={signupDeclined} />
+    </>
   )
 }

@@ -5,7 +5,7 @@ import '../styles/loading.css'
 import '../styles/app-theme.css'
 import '../styles/haven.css'
 import '../styles/marketing.css'
-import '../styles/landing-figma.css'
+import '../styles/parler-landing.css'
 import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -36,9 +36,9 @@ export default function App({ Component, pageProps }) {
       document.body.classList.remove('body--marketing')
     }
     if (isHome) {
-      document.body.classList.add('body--home-hero')
+      document.body.classList.add('body--home-hero', 'body--parler-landing')
     } else {
-      document.body.classList.remove('body--home-hero')
+      document.body.classList.remove('body--home-hero', 'body--parler-landing')
     }
     if (appLayout) {
       document.body.classList.add('body--app')
@@ -56,6 +56,7 @@ export default function App({ Component, pageProps }) {
         'body--nav-open',
         'body--marketing',
         'body--home-hero',
+        'body--parler-landing',
         'body--app',
         'body--auth',
       )
@@ -68,9 +69,9 @@ export default function App({ Component, pageProps }) {
       style={isHome ? { scrollBehavior: 'smooth' } : undefined}
     >
       <Head>
-        <title>Heartstrings Club | Teen Heartbreak Support Website</title>
-        <meta name="description" content="Heartstrings Club is a teen heartbreak support website with a private journal, emotional support chatbot, and healing quotes." />
-        <meta name="keywords" content="teen heartbreak support website, breakup support for teens, healing quotes, private journal" />
+        <title>parlé — A private space for heartbreak</title>
+        <meta name="description" content="A private digital space for young people to share thoughts, feelings, and heartbreak stories safely and anonymously." />
+        <meta name="keywords" content="heartbreak support, private journal, AI companion, safe space, teen support" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -83,7 +84,7 @@ export default function App({ Component, pageProps }) {
         </>
       )}
 
-      {!appLayout && <Header />}
+      {!appLayout && !isHome && <Header />}
 
       {fullBleed ? (
         <div className="flex-1">

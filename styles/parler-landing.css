@@ -1,0 +1,480 @@
+/* parler-safe-space landing — design tokens + animations (from Figma export) */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap');
+
+body.body--parler-landing {
+  --background: #fdfbf7;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --primary: #c1746b;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f0ea;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f3f0eb;
+  --muted-foreground: #666666;
+  --accent: #f5e8e8;
+  --accent-foreground: #c1746b;
+  --border: #e8e4de;
+  --radius: 1.5rem;
+  --font-haven-serif: 'DM Serif Display', Georgia, serif;
+  --font-haven-sans: 'Inter', system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-haven-sans);
+}
+
+body.body--parler-landing #__next,
+body.body--parler-landing .app-shell {
+  background: var(--background) !important;
+  background-image: none !important;
+}
+
+.parler-landing {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-haven-sans);
+}
+
+.parler-landing .font-serif {
+  font-family: var(--font-haven-serif);
+}
+
+@keyframes pss-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pss-fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pss-fade-in-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Hero stagger — matches reference arbitrary animation timings */
+.parler-landing .pss-a-fiu-01 { opacity: 0; animation: pss-fade-in-up 0.6s ease-out 0.1s forwards; }
+.parler-landing .pss-a-fis-25 { opacity: 0; animation: pss-fade-in-scale 0.8s ease-out 0.25s forwards; }
+.parler-landing .pss-a-fiu-45 { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 0.45s forwards; }
+.parler-landing .pss-a-fi-60 { opacity: 0; animation: pss-fade-in 0.6s ease-out 0.6s forwards; }
+.parler-landing .pss-a-fiu-75 { opacity: 0; animation: pss-fade-in-up 0.8s ease-out 0.75s forwards; }
+.parler-landing .pss-a-fiu-100 { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 1s forwards; }
+.parler-landing .pss-a-fiu-115 { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 1.15s forwards; }
+.parler-landing .pss-a-fiu-130 { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 1.3s forwards; }
+.parler-landing .pss-a-fiu-145 { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 1.45s forwards; }
+.parler-landing .pss-a-fi-160 { opacity: 0; animation: pss-fade-in 0.6s ease-out 1.6s forwards; }
+
+.parler-landing .pss-menu-enter {
+  animation: pss-fade-in 0.2s ease-out;
+}
+
+/* Hero — minimal centered dictionary entry */
+.parler-landing .pss-nav {
+  background: var(--background);
+}
+
+.parler-landing .pss-nav-logo {
+  color: var(--foreground);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.parler-landing .pss-hero-section {
+  min-height: calc(100dvh - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem 3rem;
+  background: var(--background);
+}
+
+.parler-landing .pss-hero-inner {
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.parler-landing .pss-hero-block {
+  text-align: center;
+}
+
+.parler-landing .pss-hero-title {
+  font-family: var(--font-haven-serif);
+  font-size: clamp(3.5rem, 12vw, 5rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.parler-landing .pss-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.parler-landing .pss-hero-phonetic {
+  font-family: var(--font-haven-serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  color: var(--muted-foreground);
+  letter-spacing: 0.03em;
+}
+
+.parler-landing .pss-hero-noun {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.7rem;
+  border-radius: 9999px;
+  background: #f5e8e8;
+  color: var(--primary);
+  font-family: var(--font-haven-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.parler-landing .pss-hero-rule {
+  height: 1px;
+  width: min(100%, 22rem);
+  margin: 1.5rem auto 1.35rem;
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
+  border: none;
+}
+
+.parler-landing .pss-hero-definition {
+  font-family: var(--font-haven-sans);
+  font-size: clamp(1rem, 2.2vw, 1.125rem);
+  line-height: 1.6;
+  color: var(--foreground);
+  max-width: 26rem;
+  margin: 0 auto;
+}
+
+.parler-landing .pss-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.parler-landing .pss-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.9rem 1.5rem;
+  font-family: var(--font-haven-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.parler-landing .pss-hero-btn--primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.parler-landing .pss-hero-btn--primary:hover {
+  opacity: 0.92;
+}
+
+.parler-landing .pss-hero-btn--secondary {
+  background: #ffffff;
+  color: var(--foreground);
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+
+.parler-landing .pss-hero-btn--secondary:hover {
+  background: color-mix(in srgb, var(--foreground) 3%, #ffffff);
+}
+
+.parler-landing .pss-hero-footnote {
+  margin-top: 1.25rem;
+  font-family: var(--font-haven-sans);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+/* Hero entrance animations */
+.parler-landing .pss-hero-word { opacity: 0; animation: pss-fade-in-scale 0.8s ease-out 0.15s forwards; }
+.parler-landing .pss-hero-meta { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 0.35s forwards; }
+.parler-landing .pss-hero-divider { opacity: 0; animation: pss-fade-in 0.5s ease-out 0.5s forwards; }
+.parler-landing .pss-hero-defs { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 0.65s forwards; }
+.parler-landing .pss-hero-ctas { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 0.85s forwards; }
+.parler-landing .pss-hero-footnote { opacity: 0; animation: pss-fade-in 0.6s ease-out 1.05s forwards; }
+
+@media (max-width: 480px) {
+  .parler-landing .pss-hero-btn {
+    width: 100%;
+  }
+}
+
+.parler-landing .pss-blob-primary {
+  background: color-mix(in oklch, var(--primary) 8%, transparent);
+}
+
+.parler-landing .pss-blob-accent {
+  background: color-mix(in oklch, var(--accent) 40%, transparent);
+}
+
+.parler-landing .pss-section-nights {
+  background: color-mix(in oklch, var(--accent) 20%, transparent);
+}
+
+.parler-landing .pss-section-voices {
+  background: linear-gradient(to bottom, transparent, color-mix(in oklch, var(--accent) 30%, transparent));
+}
+
+.parler-landing .pss-section-cta {
+  background: color-mix(in oklch, var(--accent) 30%, transparent);
+}
+
+.parler-landing .pss-shadow-primary {
+  box-shadow: 0 10px 15px -3px color-mix(in oklch, var(--primary) 20%, transparent);
+}
+
+.parler-landing .pss-shadow-card {
+  box-shadow: 0 25px 50px -12px color-mix(in oklch, var(--primary) 10%, transparent);
+}
+
+/* Opacity / backdrop utilities for oklch tokens (Tailwind v3 compat) */
+.parler-landing .bg-background\/70 {
+  background: color-mix(in oklch, var(--background) 70%, transparent);
+}
+
+.parler-landing .bg-background\/95 {
+  background: color-mix(in oklch, var(--background) 95%, transparent);
+}
+
+.parler-landing .bg-card\/60 {
+  background: color-mix(in oklch, var(--card) 60%, transparent);
+}
+
+.parler-landing .border-border\/40 {
+  border-color: color-mix(in oklch, var(--border) 40%, transparent);
+}
+
+.parler-landing .border-border\/50 {
+  border-color: color-mix(in oklch, var(--border) 50%, transparent);
+}
+
+.parler-landing .bg-accent\/20 {
+  background: color-mix(in oklch, var(--accent) 20%, transparent);
+}
+
+.parler-landing .bg-accent\/30 {
+  background: color-mix(in oklch, var(--accent) 30%, transparent);
+}
+
+.parler-landing .bg-accent\/40 {
+  background: color-mix(in oklch, var(--accent) 40%, transparent);
+}
+
+.parler-landing .bg-accent\/60 {
+  background: color-mix(in oklch, var(--accent) 60%, transparent);
+}
+
+.parler-landing .hover\:bg-accent\/40:hover {
+  background: color-mix(in oklch, var(--accent) 40%, transparent);
+}
+
+.parler-landing .text-foreground\/85 {
+  color: color-mix(in oklch, var(--foreground) 85%, transparent);
+}
+
+.parler-landing .text-foreground\/90 {
+  color: color-mix(in oklch, var(--foreground) 90%, transparent);
+}
+
+.parler-landing .bg-foreground\/10 {
+  background: color-mix(in oklch, var(--foreground) 10%, transparent);
+}
+
+.parler-landing .border-foreground\/20 {
+  border-color: color-mix(in oklch, var(--foreground) 20%, transparent);
+}
+
+.parler-landing .hover\:bg-foreground\/5:hover {
+  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+
+/* Testimonials horizontal scroll — hide scrollbar, keep snap */
+.parler-landing .pss-testimonials-track {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.parler-landing .pss-testimonials-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Vertical 3-layer testimonial spin — no pause on hover */
+.parler-landing .pss-vtest-section {
+  overflow: hidden;
+}
+
+.parler-landing .pss-vtest {
+  position: relative;
+  height: min(520px, 62vh);
+}
+
+.parler-landing .pss-vtest__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  height: 100%;
+}
+
+.parler-landing .pss-vtest__lane {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
+}
+
+.parler-landing .pss-vtest__track {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  will-change: transform;
+}
+
+.parler-landing .pss-vtest__track--up {
+  animation: pss-vtest-scroll-up linear infinite;
+}
+
+.parler-landing .pss-vtest__track--down {
+  animation: pss-vtest-scroll-down linear infinite;
+}
+
+@keyframes pss-vtest-scroll-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+@keyframes pss-vtest-scroll-down {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+
+.parler-landing .pss-vtest__card {
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px color-mix(in oklch, var(--foreground) 4%, transparent);
+}
+
+.parler-landing .pss-vtest__quote {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: color-mix(in oklch, var(--foreground) 85%, transparent);
+}
+
+.parler-landing .pss-vtest__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.parler-landing .pss-vtest__avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.parler-landing .pss-vtest__who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.8125rem;
+}
+
+.parler-landing .pss-vtest__name {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.parler-landing .pss-vtest__age {
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.parler-landing .pss-vtest__fade {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4.5rem;
+  z-index: 2;
+}
+
+.parler-landing .pss-vtest__fade--top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--background), transparent);
+}
+
+.parler-landing .pss-vtest__fade--bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--background), transparent);
+}
+
+.parler-landing .pss-vtest__static {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .parler-landing .pss-vtest {
+    height: min(440px, 55vh);
+  }
+
+  .parler-landing .pss-vtest__grid {
+    gap: 0.625rem;
+  }
+
+  .parler-landing .pss-vtest__card {
+    padding: 1rem;
+  }
+
+  .parler-landing .pss-vtest__quote {
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parler-landing .pss-vtest {
+    display: none;
+  }
+
+  .parler-landing .pss-vtest__static {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .parler-landing [class*='pss-a-'],
+  .parler-landing .pss-menu-enter {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}

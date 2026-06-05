@@ -36,7 +36,7 @@ export default function LandingSplash({
           </svg>
         </div>
 
-        <p className="landing-splash__eyebrow">Heartstrings Club</p>
+        <p className="landing-splash__eyebrow">parlé</p>
         <p className="landing-splash__message">
           {message.includes('quiet') ? (
             <>
