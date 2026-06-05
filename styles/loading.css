@@ -202,3 +202,13 @@
     opacity: 0;
   }
 }
+
+/* Logged-in app — match parlé landing palette for loading states */
+body.body--app .hs-loading-shell--page {
+  background-color: var(--background, #fdfbf7);
+  background-image: none;
+}
+
+body.body--app .hs-loading-dots span {
+  background: var(--primary, #c1746b);
+}

@@ -7,6 +7,7 @@ import {
   BookOpen,
   Heart,
   Layers,
+  LayoutGrid,
   LayoutDashboard,
   LogIn,
   LogOut,
@@ -130,6 +131,7 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
               {!user ? (
                 <>
                   <MenuItem href="/#what" icon={Heart} label="What is parlé" onClick={close} />
+                  <MenuItem href="/#features" icon={LayoutGrid} label="Features" onClick={close} />
                   <MenuItem href="/#how" icon={Layers} label="How it works" onClick={close} />
                   <MenuItem href="/#voices" icon={Users} label="Voices" onClick={close} />
                   <MenuItem href="/chat" icon={MessageCircle} label="Start talking" onClick={close} />
@@ -170,9 +172,16 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
 
         <div className="pss-nav__actions">
           {ready && !user && !isRegister && (
-            <Link href="/register" className="pss-nav-cta hidden sm:inline-flex">
-              Start free
-            </Link>
+            <>
+              <Link href="/register" className="pss-nav-cta hidden sm:inline-flex">
+                Start free
+              </Link>
+              {!isLogin && (
+                <Link href="/login" className="pss-nav-cta pss-nav-cta--inverse hidden sm:inline-flex">
+                  Log in
+                </Link>
+              )}
+            </>
           )}
           {ready && user && (
             <Link href="/dashboard" className="pss-nav-link hidden sm:inline-flex">

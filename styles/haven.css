@@ -8,46 +8,44 @@ body.body--app {
 
   --radius: 1rem;
 
-  --cream: oklch(0.972 0.018 80);
-  --ivory: oklch(0.985 0.012 85);
-  --bone: oklch(0.96 0.014 80);
-  --beige: oklch(0.93 0.025 75);
-  --taupe: oklch(0.78 0.025 60);
-  --rose: oklch(0.68 0.1 25);
-  --clay: oklch(0.55 0.115 32);
-  --sage: oklch(0.72 0.035 145);
-  --ink: oklch(0.26 0.018 50);
+  /* Parlé landing palette */
+  --cream: #fdfbf7;
+  --ivory: #ffffff;
+  --bone: #f5f0ea;
+  --beige: #f3f0eb;
+  --taupe: #666666;
+  --rose: #c1746b;
+  --clay: #c1746b;
+  --sage: #8a9a94;
+  --ink: #1a1a1a;
 
-  --background: var(--cream);
-  --foreground: var(--ink);
-  --card: var(--ivory);
-  --card-foreground: var(--ink);
-  --popover: var(--ivory);
-  --popover-foreground: var(--ink);
-  --primary: var(--clay);
-  --primary-foreground: oklch(0.985 0.012 85);
-  --secondary: oklch(0.945 0.02 72);
-  --secondary-foreground: var(--ink);
-  --muted: oklch(0.94 0.018 75);
-  --muted-foreground: oklch(0.48 0.025 55);
-  --accent: var(--rose);
-  --accent-foreground: oklch(0.985 0.012 85);
-  --destructive: oklch(0.58 0.14 28);
-  --border: oklch(0.9 0.018 72);
-  --input: oklch(0.9 0.018 72);
-  --ring: oklch(0.62 0.09 32);
+  --background: #fdfbf7;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #c1746b;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f0ea;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f3f0eb;
+  --muted-foreground: #666666;
+  --accent: #f5e8e8;
+  --accent-foreground: #c1746b;
+  --destructive: #b85c55;
+  --border: #e8e4de;
+  --input: #e8e4de;
+  --ring: rgba(193, 116, 107, 0.35);
 
-  --shadow-paper: 0 1px 0 oklch(0.92 0.012 70 / 0.6), 0 8px 24px -12px oklch(0.45 0.04 50 / 0.18);
-  --shadow-soft: 0 1px 2px oklch(0.55 0.04 50 / 0.06), 0 12px 32px -16px oklch(0.45 0.04 50 / 0.16);
-  --shadow-lift: 0 2px 4px oklch(0.55 0.04 50 / 0.06), 0 24px 48px -20px oklch(0.4 0.05 40 / 0.22);
+  --shadow-paper: 0 1px 0 rgba(232, 228, 222, 0.8), 0 8px 24px -12px rgba(26, 26, 26, 0.08);
+  --shadow-soft: 0 1px 2px rgba(26, 26, 26, 0.04), 0 12px 32px -16px rgba(26, 26, 26, 0.07);
+  --shadow-lift: 0 2px 4px rgba(26, 26, 26, 0.05), 0 24px 48px -20px rgba(26, 26, 26, 0.1);
 
   font-family: var(--font-haven-sans);
   color: var(--foreground);
   background-color: var(--background);
-  background-image:
-    radial-gradient(at 12% 0%, oklch(0.96 0.022 70 / 0.7) 0px, transparent 45%),
-    radial-gradient(at 92% 100%, oklch(0.94 0.028 30 / 0.35) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-image: none;
 }
 
 body.body--app h1,
@@ -81,7 +79,7 @@ body.body--app .paper::after {
 }
 
 body.body--app .paper-note {
-  background: linear-gradient(180deg, oklch(0.985 0.012 85) 0%, oklch(0.965 0.02 78) 100%);
+  background: linear-gradient(180deg, var(--card) 0%, var(--secondary) 100%);
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow-soft);
@@ -96,9 +94,9 @@ body.body--app .paper-note {
 body.body--app .skeleton-soft {
   background: linear-gradient(
     90deg,
-    oklch(0.95 0.018 75) 0%,
-    oklch(0.98 0.012 78) 50%,
-    oklch(0.95 0.018 75) 100%
+    var(--muted) 0%,
+    var(--background) 50%,
+    var(--muted) 100%
   );
   background-size: 800px 100%;
   animation: haven-shimmer 2.2s ease-in-out infinite;
@@ -588,4 +586,121 @@ body.body--app .haven-shell__content {
   .haven-wall-calendar__nav {
     justify-content: center;
   }
+}
+
+/* Parlé accent — calendar, journal, surfaces (logged-in app only) */
+body.body--app .haven-journal-lines {
+  border-color: color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+}
+
+body.body--app .haven-journal-lines__textarea {
+  color: var(--foreground);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(var(--haven-journal-line) - 1px),
+    color-mix(in srgb, var(--border) 70%, transparent) calc(var(--haven-journal-line) - 1px),
+    color-mix(in srgb, var(--border) 70%, transparent) var(--haven-journal-line)
+  );
+}
+
+body.body--app .haven-journal-lines__textarea::placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 65%, transparent);
+}
+
+body.body--app .haven-journal-lines__textarea:focus {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+body.body--app .haven-journal-lines:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+body.body--app .haven-locked-entry__surface,
+body.body--app .haven-wall-calendar {
+  border-color: var(--border);
+  background: linear-gradient(168deg, var(--card) 0%, var(--secondary) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 12px 32px rgba(26, 26, 26, 0.08);
+}
+
+body.body--app .haven-wall-calendar__pin {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--muted);
+}
+
+body.body--app .haven-wall-calendar__label {
+  color: var(--muted-foreground);
+}
+
+body.body--app .haven-wall-calendar__month {
+  color: var(--foreground);
+}
+
+body.body--app .haven-wall-calendar__nav {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+}
+
+body.body--app .haven-wall-calendar__nav-btn:focus-visible,
+body.body--app .haven-wall-calendar__nav-today:focus-visible {
+  outline-color: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+body.body--app .haven-wall-calendar__nav-btn:hover,
+body.body--app .haven-wall-calendar__nav-today:hover:not(:disabled) {
+  background: var(--secondary);
+  color: var(--primary);
+}
+
+body.body--app .haven-wall-calendar__cell {
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  background: color-mix(in srgb, var(--card) 50%, transparent);
+  color: var(--foreground);
+}
+
+body.body--app .haven-wall-calendar__cell--lvl-1 {
+  background: color-mix(in srgb, var(--accent) 35%, var(--card));
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+}
+
+body.body--app .haven-wall-calendar__cell--lvl-2 {
+  background: color-mix(in srgb, var(--accent) 55%, var(--card));
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+body.body--app .haven-wall-calendar__cell--lvl-3 {
+  background: color-mix(in srgb, var(--accent) 80%, var(--card));
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  color: var(--foreground);
+}
+
+body.body--app .haven-wall-calendar__cell--today {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 30%, var(--card));
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 3.5px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+body.body--app .haven-wall-calendar__cell--today .haven-wall-calendar__date {
+  color: var(--primary);
+}
+
+body.body--app .haven-wall-calendar__cell--today:focus,
+body.body--app .haven-wall-calendar__cell--today:active {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 3.5px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+body.body--app .haven-wall-calendar__cell--clickable:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+body.body--app .haven-wall-calendar__dot {
+  background: var(--primary);
 }

@@ -171,7 +171,7 @@ export default function HavenQuotes() {
             className="relative grid md:grid-cols-2 rounded-[26px] overflow-hidden border border-border shadow-soft"
             style={{
               background:
-                'linear-gradient(90deg, oklch(0.975 0.018 78) 0%, oklch(0.97 0.022 76) 49%, oklch(0.9 0.025 65) 50%, oklch(0.97 0.022 76) 51%, oklch(0.975 0.018 78) 100%)',
+                'linear-gradient(90deg, #fdfbf7 0%, #f5f0ea 49%, #e8e4de 50%, #f5f0ea 51%, #fdfbf7 100%)',
             }}
           >
             <div key={`L-${fadeKey}`} className="p-7 md:p-10 min-h-[420px] page-fade">

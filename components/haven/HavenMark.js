@@ -27,12 +27,11 @@ export default function HavenMark({ expanded }) {
       </svg>
       <div
         className={cn(
-          'leading-tight whitespace-nowrap overflow-hidden transition-all duration-300',
-          expanded ? 'opacity-100 max-w-[140px]' : 'opacity-0 max-w-0',
+          'overflow-hidden transition-all duration-300',
+          expanded ? 'opacity-100 max-w-[80px]' : 'opacity-0 max-w-0',
         )}
       >
-        <div className="font-serif text-[15px] text-foreground">Heartstrings</div>
-        <div className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground">club</div>
+        <div className="font-serif text-xl text-foreground leading-none">parlé</div>
       </div>
     </div>
   )

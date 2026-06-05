@@ -3,10 +3,13 @@ import {
   Heart,
   MessageCircle,
   Brain,
+  BookOpen,
+  Quote,
   Check,
   X,
   Lock,
 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import VerticalTestimonialsSpin from './VerticalTestimonialsSpin'
 import MarketingNav from './MarketingNav'
 
@@ -95,6 +98,68 @@ function Nights() {
           </p>
         </div>
         <ChatMock />
+      </div>
+    </section>
+  )
+}
+
+function Features() {
+  const features = [
+    {
+      icon: MessageCircle,
+      title: 'Talk it through',
+      description: 'Chat with an AI that listens without judgment — free to start, no account required.',
+      href: '/chat',
+      cta: 'Start talking',
+    },
+    {
+      icon: BookOpen,
+      title: 'Private journal',
+      description: 'Write what you cannot say out loud. Your entries stay yours, not on any feed.',
+      href: '/register',
+      cta: 'Start writing',
+    },
+    {
+      icon: Quote,
+      title: 'Quotes book',
+      description: 'Find words when yours feel too heavy — curated lines for late nights and hard days.',
+      href: '/register',
+      cta: 'Explore quotes',
+    },
+  ]
+
+  return (
+    <section id="features" className="pss-features-section px-6 md:px-12 py-20 md:py-28">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">Features</p>
+          <h2 className="font-serif text-4xl md:text-5xl tracking-tight">Everything in your private space</h2>
+          <p className="mt-4 text-muted-foreground text-lg">
+            Tools built for heartbreak — comfort first, pressure never.
+          </p>
+        </div>
+
+        <ul className="pss-features-grid">
+          {features.map(({ icon: Icon, title, description, href, cta }, index) => (
+            <motion.li
+              key={title}
+              className="pss-features-card"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
+            >
+              <Link href={href} className="pss-features-card__link">
+                <span className="pss-features-card__icon" aria-hidden="true">
+                  <Icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
+                </span>
+                <h3 className="pss-features-card__title font-serif">{title}</h3>
+                <p className="pss-features-card__desc">{description}</p>
+                <span className="pss-features-card__cta">{cta} →</span>
+              </Link>
+            </motion.li>
+          ))}
+        </ul>
       </div>
     </section>
   )
@@ -227,6 +292,7 @@ export default function ParlerLandingPage({ signupDeclined = false }) {
       ) : null}
       <DictionaryHero />
       <Nights />
+      <Features />
       <How />
       <VerticalTestimonialsSpin />
       <CTA />

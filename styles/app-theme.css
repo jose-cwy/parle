@@ -5,6 +5,36 @@
 
 /* ── App scope (inherits global tokens from tokens.css) ── */
 body.body--app {
+  /* Parlé landing palette — logged-in app scope */
+  --hs-bg: #fdfbf7;
+  --hs-bg-warm: #f5f0ea;
+  --hs-bg-soft: #f3f0eb;
+  --hs-surface: #ffffff;
+  --hs-surface-muted: #f5f0ea;
+  --hs-ivory: #fdfbf7;
+  --hs-border: #e8e4de;
+  --hs-border-soft: #ece8e2;
+  --hs-text: #1a1a1a;
+  --hs-text-soft: #444444;
+  --hs-text-muted: #666666;
+  --hs-accent: #c1746b;
+  --hs-accent-soft: #f5e8e8;
+  --hs-accent-blush: #f5e8e8;
+  --hs-accent-strong: #c1746b;
+  --hs-accent-strong-hover: #ab655d;
+  --hs-accent-clay: #c1746b;
+  --hs-focus-ring: rgba(193, 116, 107, 0.28);
+  --hs-shadow: 0 8px 28px rgba(26, 26, 26, 0.06);
+  --hs-shadow-hover: 0 12px 32px rgba(26, 26, 26, 0.09);
+  --hs-skeleton-base: #f3f0eb;
+  --hs-skeleton-highlight: #fdfbf7;
+  --hs-skeleton-border: #e8e4de;
+  --hs-auth-red: #c1746b;
+  --hs-auth-red-hover: #ab655d;
+  --hs-auth-red-deep: #965549;
+  --hs-auth-red-focus: rgba(193, 116, 107, 0.28);
+  --hs-auth-red-soft: rgba(193, 116, 107, 0.1);
+
   --hs-cream: var(--hs-bg);
   --hs-cream-deep: var(--hs-bg-warm);
   --hs-ink: var(--hs-text);
@@ -33,12 +63,7 @@ body.body--app .app-shell > main,
 body.body--app .app-shell-layout,
 body.body--app .app-shell-main {
   background-color: var(--hs-cream);
-  background-image: linear-gradient(
-    180deg,
-    var(--hs-ivory) 0%,
-    var(--hs-cream) 40%,
-    var(--hs-cream-deep) 100%
-  );
+  background-image: none;
   color: var(--hs-ink);
 }
 
@@ -54,7 +79,7 @@ body.body--app::after {
   opacity: calc(var(--warmth) * 0.1);
   background: radial-gradient(
     ellipse 60% 50% at 50% 55%,
-    rgba(184, 135, 122, 0.12) 0%,
+    rgba(193, 116, 107, 0.12) 0%,
     transparent 70%
   );
 }
@@ -129,7 +154,7 @@ body.body--app .app-shell-logout {
 }
 
 body.body--app .app-shell-logout:hover {
-  background: rgba(184, 135, 122, 0.08);
+  background: rgba(193, 116, 107, 0.08);
   color: var(--hs-ink-soft);
 }
 
@@ -158,7 +183,7 @@ body.body--app .app-shell-mobile-title {
 }
 
 body.body--app .app-shell-backdrop {
-  background: rgba(253, 248, 246, 0.72);
+  background: rgba(253, 251, 247, 0.72);
 }
 
 body.body--app .app-shell-content {
@@ -272,7 +297,7 @@ body.body--app .hs-app-card::after {
 body.body--app .app-shell-layout .card:hover,
 body.body--app .hs-app-card--hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(184, 135, 122, 0.28);
+  border-color: rgba(193, 116, 107, 0.28);
   box-shadow: var(--hs-shadow-hover);
   filter: none;
 }
@@ -309,7 +334,7 @@ body.body--app .app-shell-layout .soft-button-primary {
   background: linear-gradient(135deg, var(--hs-accent-strong) 0%, var(--hs-accent-strong-hover) 100%);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 8px 22px rgba(184, 135, 122, 0.22);
+  box-shadow: 0 8px 22px rgba(193, 116, 107, 0.22);
 }
 
 body.body--app .app-shell-layout .input-field {
@@ -320,8 +345,8 @@ body.body--app .app-shell-layout .input-field {
 }
 
 body.body--app .app-shell-layout .input-field:focus {
-  border-color: rgba(184, 135, 122, 0.5);
-  box-shadow: 0 0 0 3px rgba(184, 135, 122, 0.1);
+  border-color: rgba(193, 116, 107, 0.5);
+  box-shadow: 0 0 0 3px rgba(193, 116, 107, 0.1);
 }
 
 /* ── Dashboard ── */
@@ -359,8 +384,8 @@ body.body--app .dashboard-home__lead {
 body.body--app .dashboard-home__primary {
   padding: 1.15rem 1.25rem;
   border-radius: var(--hs-radius);
-  border: 1px solid rgba(184, 135, 122, 0.22);
-  background: linear-gradient(135deg, rgba(255, 248, 240, 0.95) 0%, rgba(255, 252, 247, 0.98) 100%);
+  border: 1px solid rgba(193, 116, 107, 0.22);
+  background: linear-gradient(135deg, #f5f0ea 0%, #fdfbf7 100%);
   box-shadow: var(--hs-shadow);
 }
 
@@ -372,7 +397,7 @@ body.body--app .dashboard-home__cta-primary {
   color: #fff;
   font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 8px 22px rgba(184, 135, 122, 0.25);
+  box-shadow: 0 8px 22px rgba(193, 116, 107, 0.25);
 }
 
 body.body--app .dashboard-home__cta-hint {
@@ -498,8 +523,8 @@ body.body--app .chat-shell {
 body.body--app .chat-shell-header {
   flex-shrink: 0;
   border-radius: 14px;
-  border: 1px solid rgba(184, 135, 122, 0.12);
-  background: rgba(255, 248, 242, 0.9);
+  border: 1px solid rgba(193, 116, 107, 0.12);
+  background: rgba(245, 240, 234, 0.9);
   padding: 0.85rem 1rem;
 }
 
@@ -508,12 +533,12 @@ body.body--app .chat-prompts {
 }
 
 body.body--app .chat-bubble {
-  box-shadow: 0 4px 14px rgba(120, 80, 90, 0.06);
+  box-shadow: 0 4px 14px rgba(26, 26, 26, 0.06);
 }
 
 body.body--app .chat-bubble-user {
-  background: rgba(184, 135, 122, 0.12);
-  border: 1px solid rgba(184, 135, 122, 0.2);
+  background: rgba(193, 116, 107, 0.12);
+  border: 1px solid rgba(193, 116, 107, 0.2);
   color: var(--hs-ink);
 }
 
@@ -530,7 +555,7 @@ body.body--app .chat-prompt-chip {
 }
 
 body.body--app .chat-prompt-chip:hover {
-  background: rgba(184, 135, 122, 0.08);
+  background: rgba(193, 116, 107, 0.08);
   color: var(--hs-ink);
 }
 
@@ -549,7 +574,7 @@ body.body--app .chat-empty {
 
 body.body--app .chat-status-dot {
   background: var(--hs-accent);
-  box-shadow: 0 0 6px rgba(184, 135, 122, 0.4);
+  box-shadow: 0 0 6px rgba(193, 116, 107, 0.4);
 }
 
 body.body--app .chat-status-label {
@@ -592,7 +617,7 @@ body.body--app .room-letter-sheet {
 
 body.body--app .room-letter-body {
   background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(184, 135, 122, 0.1);
+  border: 1px solid rgba(193, 116, 107, 0.1);
   border-radius: 14px;
 }
 
@@ -612,7 +637,7 @@ body.body--app .room-letter-hint {
 }
 
 body.body--app .room-letter-lines {
-  background-image: linear-gradient(rgba(184, 135, 122, 0.1) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(193, 116, 107, 0.1) 1px, transparent 1px);
 }
 
 body.body--app .room-action-chip {
@@ -634,11 +659,11 @@ body.body--app .room-action-chip-primary {
 
 body.body--app .room-letter-pin {
   background: var(--hs-accent);
-  box-shadow: 0 0 8px rgba(184, 135, 122, 0.35);
+  box-shadow: 0 0 8px rgba(193, 116, 107, 0.35);
 }
 
 body.body--app .room-typing-orb {
-  background: radial-gradient(circle, #f7c6a8 0%, var(--hs-accent) 100%);
+  background: radial-gradient(circle, #e8c4be 0%, var(--hs-accent) 100%);
 }
 
 /* ── Diary ── */
@@ -679,7 +704,7 @@ body.body--app .diary-entry-card time {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--hs-muted);
-  background: rgba(184, 135, 122, 0.08);
+  background: rgba(193, 116, 107, 0.08);
   border-radius: 999px;
   padding: 0.2rem 0.55rem;
 }
@@ -690,7 +715,7 @@ body.body--app .diary-sidebar .card {
 
 body.body--app .calendar-day {
   background: #fff;
-  border-color: rgba(184, 135, 122, 0.12);
+  border-color: rgba(193, 116, 107, 0.12);
   color: var(--hs-ink-soft);
 }
 
@@ -710,21 +735,21 @@ body.body--app .diary-action-link:hover {
 }
 
 body.body--app .diary-error-banner {
-  background: #fff5f6;
-  border: 1px solid rgba(184, 135, 122, 0.28);
+  background: #f5e8e8;
+  border: 1px solid rgba(193, 116, 107, 0.28);
   color: var(--hs-accent-deep);
   border-radius: var(--hs-radius);
   padding: 0.85rem 1rem;
 }
 
 body.body--app .diary-modal-backdrop {
-  background: rgba(253, 248, 246, 0.75);
+  background: rgba(253, 251, 247, 0.75);
 }
 
 body.body--app .diary-modal-card {
   background: var(--hs-card-bg);
   border: 1px solid var(--hs-border);
-  box-shadow: 0 20px 50px rgba(120, 80, 90, 0.12);
+  box-shadow: 0 20px 50px rgba(26, 26, 26, 0.1);
 }
 
 /* ── Quotes ── */
@@ -759,8 +784,8 @@ body.body--app .chapter-button {
 }
 
 body.body--app .chapter-button-active {
-  background: rgba(184, 135, 122, 0.14);
-  border-color: rgba(184, 135, 122, 0.22);
+  background: rgba(193, 116, 107, 0.14);
+  border-color: rgba(193, 116, 107, 0.22);
   color: var(--hs-ink);
 }
 
@@ -773,7 +798,7 @@ body.body--app .quote-row {
 
 body.body--app .quote-row:hover {
   transform: translateY(-1px);
-  border-color: rgba(184, 135, 122, 0.28);
+  border-color: rgba(193, 116, 107, 0.28);
 }
 
 body.body--app .quote-copy {
@@ -782,20 +807,20 @@ body.body--app .quote-copy {
 }
 
 body.body--app .favorite-pill {
-  background: rgba(255, 252, 247, 0.95);
+  background: rgba(253, 251, 247, 0.95);
   border-color: var(--hs-border);
   color: var(--hs-muted);
 }
 
 body.body--app .favorite-pill-active {
-  background: rgba(184, 135, 122, 0.12);
-  border-color: rgba(184, 135, 122, 0.28);
+  background: rgba(193, 116, 107, 0.12);
+  border-color: rgba(193, 116, 107, 0.28);
   color: var(--hs-accent-deep);
 }
 
 body.body--app .quotes-count-badge {
   border: 1px solid var(--hs-border);
-  background: rgba(255, 248, 242, 0.95);
+  background: rgba(245, 240, 234, 0.95);
   color: var(--hs-muted);
   border-radius: 999px;
   padding: 0.3rem 0.7rem;
@@ -824,6 +849,6 @@ body.body--app .app-welcome-banner {
 @media (max-width: 768px) {
   body.body--app .app-shell-sidebar {
     background: #fffcf7;
-    box-shadow: 4px 0 24px rgba(120, 80, 90, 0.08);
+    box-shadow: 4px 0 24px rgba(26, 26, 26, 0.08);
   }
 }

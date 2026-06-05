@@ -147,7 +147,7 @@ function Bubble({ msg }) {
           'max-w-[78%] py-3 leading-relaxed text-[15px]',
           isYou
             ? 'bg-secondary text-foreground rounded-[18px] rounded-br-md px-5'
-            : 'text-foreground rounded-[18px] rounded-bl-md px-5 bg-[oklch(0.98_0.012_82)] border border-border/70',
+            : 'text-foreground rounded-[18px] rounded-bl-md px-5 bg-card border border-border/70',
         )}
       >
         {msg.text}

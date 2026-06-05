@@ -1,65 +1,26 @@
-import { useCallback, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
-import {
-  SAFETY_AGREEMENT_INTRO,
-  safetyAgreementSections,
-} from '../data/safetyAgreementContent'
-import { SkeletonButton } from '../components/loading'
-
-function SectionArrow() {
-  return (
-    <span className="pss-terms-page__arrow" aria-hidden="true">
-      <svg viewBox="0 0 16 16" width="13" height="13" fill="none">
-        <path
-          d="M2.5 8h9M8.5 5l3 3-3 3"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  )
-}
+import { safetyAgreementSections } from '../data/safetyAgreementContent'
 
 export default function TermsPage() {
-  const [hasReachedBottom, setHasReachedBottom] = useState(false)
-  const [agreed, setAgreed] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [accepting, setAccepting] = useState(false)
-  const scrollRef = useRef(null)
-  const router = useRouter()
 
-  const canAccept = hasReachedBottom && agreed && !accepting
+  useEffect(() => {
+    function updateScrollState() {
+      const doc = document.documentElement
+      const maxScroll = doc.scrollHeight - window.innerHeight
+      setScrollProgress(maxScroll <= 0 ? 1 : Math.min(1, window.scrollY / maxScroll))
+    }
 
-  const handleScroll = useCallback(() => {
-    const node = scrollRef.current
-    if (!node) return
-
-    const { scrollTop, scrollHeight, clientHeight } = node
-    const maxScroll = scrollHeight - clientHeight
-    setScrollProgress(maxScroll <= 0 ? 1 : Math.min(1, scrollTop / maxScroll))
-
-    if (scrollTop + clientHeight >= scrollHeight - 24) {
-      setHasReachedBottom(true)
+    updateScrollState()
+    window.addEventListener('scroll', updateScrollState, { passive: true })
+    window.addEventListener('resize', updateScrollState)
+    return () => {
+      window.removeEventListener('scroll', updateScrollState)
+      window.removeEventListener('resize', updateScrollState)
     }
   }, [])
-
-  async function handleAccept() {
-    if (!canAccept) return
-
-    setAccepting(true)
-    const res = await fetch('/api/auth/terms-accept', { method: 'POST' })
-    if (res.ok) {
-      router.push('/register')
-      return
-    }
-
-    setAccepting(false)
-    alert('Unable to record your acceptance right now. Please try again.')
-  }
 
   return (
     <>
@@ -67,93 +28,70 @@ export default function TermsPage() {
         <title>Terms &amp; Safety — parlé</title>
         <meta
           name="description"
-          content="Read the parlé Terms & Safety Agreement before creating your account."
+          content="Read the parlé Terms & Safety Agreement."
         />
       </Head>
+
       <main className="pss-terms-page">
-      <div className="pss-terms-page__wrap">
-        <article className="pss-terms-page__card">
-          <header className="pss-terms-page__header">
-            <p className="pss-terms-page__eyebrow">Terms &amp; Safety Agreement</p>
-            <h1 className="pss-terms-page__title">{SAFETY_AGREEMENT_INTRO.title}</h1>
-            <p className="pss-terms-page__subtitle">{SAFETY_AGREEMENT_INTRO.subtitle}</p>
-            <div className="pss-terms-page__progress" aria-hidden="true">
-              <div
-                className="pss-terms-page__progress-bar"
-                style={{ width: `${Math.round(scrollProgress * 100)}%` }}
-              />
-            </div>
-          </header>
-
+        <div
+          className="pss-terms-page__progress-rail"
+          role="progressbar"
+          aria-valuenow={Math.round(scrollProgress * 100)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Reading progress"
+        >
           <div
-            ref={scrollRef}
-            className="pss-terms-page__body"
-            tabIndex={0}
-            onScroll={handleScroll}
-            aria-label="Terms and safety agreement text"
-          >
-            <div className="pss-terms-page__sections">
-              {safetyAgreementSections.map((section) => (
-                <section key={section.id} className="pss-terms-page__section">
-                  <div className="pss-terms-page__section-head">
-                    <SectionArrow />
-                    <h2>{section.title}</h2>
-                  </div>
-                  <div className="pss-terms-page__prose">
-                    {section.body.map((paragraph, index) => (
-                      <p key={index}>{paragraph}</p>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </div>
+            className="pss-terms-page__progress-bar"
+            style={{ width: `${Math.round(scrollProgress * 100)}%` }}
+          />
+        </div>
 
-          <footer className="pss-terms-page__footer">
-            <label
-              className={`pss-terms-page__checkbox${hasReachedBottom ? '' : ' pss-terms-page__checkbox--locked'}`}
-            >
-              <input
-                type="checkbox"
-                checked={agreed}
-                disabled={!hasReachedBottom || accepting}
-                onChange={(event) => setAgreed(event.target.checked)}
-              />
-              <span>{SAFETY_AGREEMENT_INTRO.checkboxLabel}</span>
-            </label>
-
-            <div className="pss-terms-page__actions">
-              {accepting ? (
-                <SkeletonButton className="h-11 w-full" rounded="rounded-full" />
-              ) : (
-                <button
-                  type="button"
-                  className="pss-terms-page__accept"
-                  onClick={handleAccept}
-                  disabled={!canAccept}
-                >
-                  {SAFETY_AGREEMENT_INTRO.acceptLabel}
-                </button>
-              )}
-            </div>
-
-            <p className="pss-terms-page__links">
-              <Link href="/register">Back to signup</Link>
-              <span aria-hidden="true">·</span>
-              <Link href="/">Home</Link>
-              <span aria-hidden="true">·</span>
-              <Link href="/contact">Contact</Link>
+        <header className="pss-terms-page__hero">
+          <div className="pss-terms-page__inner">
+            <p className="pss-terms-page__eyebrow">Terms &amp; Safety</p>
+            <h1 className="pss-terms-page__title">Terms &amp; Safety Agreement</h1>
+            <p className="pss-terms-page__subtitle">
+              Everything you need to know about using parlé safely, privately, and respectfully.
             </p>
-          </footer>
-        </article>
-      </div>
+            <p className="pss-terms-page__meta">
+              {safetyAgreementSections.length} sections
+            </p>
+          </div>
+        </header>
 
-      <footer className="pss-terms-page__site-footer">
-        <span className="pss-terms-page__site-mark">parlé</span>
-        <span aria-hidden="true">·</span>
-        <span>A quiet space, always open.</span>
-      </footer>
-    </main>
+        <div className="pss-terms-page__document">
+          <div className="pss-terms-page__inner">
+            <ol className="pss-terms-page__sections">
+              {safetyAgreementSections.map((section, index) => (
+                <li key={section.id} id={section.id} className="pss-terms-page__section">
+                  <div className="pss-terms-page__section-index">
+                    {String(index + 1).padStart(2, '0')}
+                  </div>
+                  <div className="pss-terms-page__section-content">
+                    <h2>{section.title}</h2>
+                    <div className="pss-terms-page__prose">
+                      {section.body.map((paragraph, paragraphIndex) => (
+                        <p key={paragraphIndex}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        <footer className="pss-terms-page__site-footer">
+          <span className="pss-terms-page__site-mark">parlé</span>
+          <span aria-hidden="true">·</span>
+          <span>A quiet space, always open.</span>
+          <span aria-hidden="true">·</span>
+          <Link href="/">Home</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/contact">Contact</Link>
+        </footer>
+      </main>
     </>
   )
 }

@@ -31,13 +31,40 @@ export default function AppShell({ children }) {
   const [hovered, setHovered] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
   const expanded = hovered || pinned
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    let active = true
+    fetch('/api/auth/me')
+      .then(async (res) => {
+        if (!active) return
+        if (res.ok) {
+          const payload = await res.json()
+          setUser(payload.user || null)
+        } else {
+          setUser(null)
+        }
+        setAuthReady(true)
+      })
+      .catch(() => {
+        if (active) {
+          setUser(null)
+          setAuthReady(true)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [router.asPath])
+
   async function handleLogout() {
+    if (!user) return
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/')
   }
@@ -121,29 +148,33 @@ export default function AppShell({ children }) {
           })}
         </nav>
 
-        <div className="h-px bg-border/70 my-2" />
+        {authReady && user ? (
+          <>
+            <div className="h-px bg-border/70 my-2" />
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className={cn(
-            'flex items-center h-11 text-muted-foreground hover:text-foreground transition-colors',
-            expanded ? 'rounded-2xl px-2.5 hover:bg-secondary/60' : 'justify-center w-full',
-          )}
-          title="Log out"
-        >
-          <span
-            className={cn(
-              'haven-nav-icon-well shrink-0 grid place-items-center transition-colors duration-200',
-              expanded ? 'h-9 w-9' : 'h-10 w-10 rounded-full hover:bg-secondary/60',
-            )}
-          >
-            <LogOut size={17} strokeWidth={1.6} />
-          </span>
-          {expanded && (
-            <span className="ml-1 text-[13.5px] font-medium whitespace-nowrap">Log out</span>
-          )}
-        </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={cn(
+                'flex items-center h-11 text-muted-foreground hover:text-foreground transition-colors',
+                expanded ? 'rounded-2xl px-2.5 hover:bg-secondary/60' : 'justify-center w-full',
+              )}
+              title="Log out"
+            >
+              <span
+                className={cn(
+                  'haven-nav-icon-well shrink-0 grid place-items-center transition-colors duration-200',
+                  expanded ? 'h-9 w-9' : 'h-10 w-10 rounded-full hover:bg-secondary/60',
+                )}
+              >
+                <LogOut size={17} strokeWidth={1.6} />
+              </span>
+              {expanded && (
+                <span className="ml-1 text-[13.5px] font-medium whitespace-nowrap">Log out</span>
+              )}
+            </button>
+          </>
+        ) : null}
       </aside>
   )
 
