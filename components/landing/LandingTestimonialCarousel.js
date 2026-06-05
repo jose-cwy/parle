@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import { TESTIMONIALS } from '../../data/testimonials'
 
 function TestimonialCard({ quote, name, age }) {
+  const reduceMotion = useReducedMotion()
+
   return (
     <motion.div
-      className="rounded-xl p-6 min-w-[350px] max-w-[350px] flex-shrink-0"
+      className="lf-carousel-card rounded-xl p-6 min-w-[350px] max-w-[350px] flex-shrink-0"
       style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
         boxShadow: '0 1px 3px rgba(45, 37, 32, 0.06)',
       }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={reduceMotion ? undefined : { y: -4, transition: { duration: 0.2 } }}
     >
       <p className="mb-3 italic" style={{ color: 'var(--foreground)' }}>
         &ldquo;{quote}&rdquo;
@@ -38,27 +39,26 @@ function TestimonialCard({ quote, name, age }) {
 }
 
 export default function LandingTestimonialCarousel() {
-  const [position, setPosition] = useState(0)
-  const items = [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS]
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setPosition((prev) => prev - 1)
-    }, 50)
-    return () => clearInterval(timer)
-  }, [])
+  const reduceMotion = useReducedMotion()
+  const loop = [...TESTIMONIALS, ...TESTIMONIALS]
 
   return (
     <motion.section
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8 }}
+      initial={reduceMotion ? false : { opacity: 0 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       className="py-24 px-6 overflow-hidden"
       style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent 55%)' }}
       aria-labelledby="landing-testimonials-heading"
     >
-      <div className="lf-container mb-12">
+      <motion.div
+        className="lf-container mb-12"
+        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.6 }}
+      >
         <h2
           id="landing-testimonials-heading"
           className="lf-serif text-4xl md:text-5xl text-center mb-4"
@@ -69,15 +69,11 @@ export default function LandingTestimonialCarousel() {
         <p className="text-center text-lg" style={{ color: 'var(--muted-foreground)' }}>
           Others have been where you are now
         </p>
-      </div>
+      </motion.div>
 
       <div className="relative overflow-hidden">
-        <motion.div
-          animate={{ x: position }}
-          className="flex gap-6 py-4 px-6"
-          style={{ width: 'max-content' }}
-        >
-          {items.map((item, idx) => (
+        <div className={`lf-carousel-track${reduceMotion ? ' lf-carousel-track--paused' : ''}`}>
+          {loop.map((item, idx) => (
             <TestimonialCard
               key={`${item.name}-${idx}`}
               quote={item.quote}
@@ -85,7 +81,7 @@ export default function LandingTestimonialCarousel() {
               age={item.age}
             />
           ))}
-        </motion.div>
+        </div>
       </div>
     </motion.section>
   )

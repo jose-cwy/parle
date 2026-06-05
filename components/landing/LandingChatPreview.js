@@ -1,12 +1,25 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Heart, MessageCircle } from 'lucide-react'
 
+const EASE = [0.22, 1, 0.36, 1]
+
 export default function LandingChatPreview() {
+  const reduceMotion = useReducedMotion()
+
+  const bubble = (delay) =>
+    reduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 12 },
+          animate: { opacity: 1, y: 0 },
+          transition: { delay, duration: 0.5, ease: EASE },
+        }
+
   return (
     <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.5, duration: 0.8 }}
+      initial={reduceMotion ? false : { opacity: 0, x: 48 }}
+      animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
+      transition={{ delay: 0.35, duration: 0.85, ease: EASE }}
       className="hidden lg:block"
       aria-hidden="true"
     >
@@ -38,12 +51,7 @@ export default function LandingChatPreview() {
         </div>
 
         <div className="space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
-            className="flex gap-2"
-          >
+          <motion.div {...bubble(0.85)} className="flex gap-2">
             <div
               className="rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%] text-sm"
               style={{ background: 'var(--muted)', color: 'var(--foreground)' }}
@@ -52,12 +60,7 @@ export default function LandingChatPreview() {
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3 }}
-            className="flex gap-2 justify-end"
-          >
+          <motion.div {...bubble(1.15)} className="flex gap-2 justify-end">
             <div
               className="rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%] text-sm text-white"
               style={{ background: 'var(--primary)' }}
@@ -66,12 +69,7 @@ export default function LandingChatPreview() {
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.6 }}
-            className="flex gap-2"
-          >
+          <motion.div {...bubble(1.45)} className="flex gap-2">
             <div
               className="rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%] text-sm"
               style={{ background: 'var(--muted)', color: 'var(--foreground)' }}
@@ -82,9 +80,9 @@ export default function LandingChatPreview() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.9 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={reduceMotion ? undefined : { opacity: 1 }}
+          transition={{ delay: 1.75, duration: 0.5 }}
           className="mt-6 pt-4"
           style={{ borderTop: '1px solid var(--border)' }}
         >

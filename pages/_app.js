@@ -86,18 +86,9 @@ export default function App({ Component, pageProps }) {
       {!appLayout && <Header />}
 
       {fullBleed ? (
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={router.asPath}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="flex-1"
-          >
-            <Component {...pageProps} />
-          </motion.div>
-        </AnimatePresence>
+        <div className="flex-1">
+          <Component {...pageProps} />
+        </div>
       ) : appLayout ? (
         <main className="flex-1 relative z-10">
           <AnimatePresence mode="wait" initial={false}>

@@ -69,6 +69,12 @@ body.body--marketing {
 
 .landing-figma .lf-btn-primary:hover {
   opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.landing-figma .lf-btn-outline:hover {
+  transform: translateY(-1px);
+  background: var(--accent);
 }
 
 .landing-figma .lf-btn-primary--lg {
@@ -133,24 +139,6 @@ body.body--marketing {
   place-items: center;
   flex-shrink: 0;
   margin-top: 0.125rem;
-}
-
-@keyframes lfBlobFloatA {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(5deg); }
-}
-
-@keyframes lfBlobFloatB {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(20px) rotate(-5deg); }
-}
-
-.landing-figma .lf-blob-a {
-  animation: lfBlobFloatA 6s ease-in-out infinite;
-}
-
-.landing-figma .lf-blob-b {
-  animation: lfBlobFloatB 8s ease-in-out infinite;
 }
 
 .landing-figma .lf-pulse-dot {
@@ -364,4 +352,42 @@ body.body--marketing {
 
 body.body--nav-open {
   overflow: hidden;
+}
+
+/* Testimonial carousel — continuous scroll like Figma */
+.lf-carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  width: max-content;
+  padding: 0.5rem 1.5rem 1rem;
+  animation: lfCarouselScroll 28s linear infinite;
+  will-change: transform;
+}
+
+.lf-carousel-track--paused {
+  animation: none;
+}
+
+@keyframes lfCarouselScroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lf-carousel-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+
+  .lf-carousel-card {
+    min-width: min(100%, 350px);
+  }
 }

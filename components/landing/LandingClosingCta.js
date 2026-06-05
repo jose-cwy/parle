@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 function BadgeIcon() {
   return (
@@ -14,11 +14,23 @@ function BadgeIcon() {
 }
 
 export default function LandingClosingCta() {
+  const reduceMotion = useReducedMotion()
+
+  const reveal = (delay = 0) =>
+    reduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 20 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, margin: '-80px' },
+          transition: { delay, duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+        }
+
   return (
     <motion.section
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
+      initial={reduceMotion ? false : { opacity: 0 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1 }}
+      viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.8 }}
       className="py-32 px-6 relative overflow-hidden"
       style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05) 50%, transparent)' }}
@@ -36,19 +48,14 @@ export default function LandingClosingCta() {
 
       <div className="lf-container max-w-4xl text-center relative z-10">
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...reveal(0)}
           className="lf-serif text-5xl md:text-6xl mb-6 leading-tight"
           style={{ color: 'var(--foreground)' }}
         >
           Need someone right now?
         </motion.h2>
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
+          {...reveal(0.2)}
           className="text-xl mb-12"
           style={{ color: 'var(--muted-foreground)' }}
         >
@@ -56,18 +63,15 @@ export default function LandingClosingCta() {
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
+          {...reveal(0.3)}
           className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
         >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={reduceMotion ? undefined : { scale: 1.05 }} whileTap={reduceMotion ? undefined : { scale: 0.95 }}>
             <Link href="/chat" className="lf-btn-primary lf-btn-primary--xl">
               Talk now (no account needed)
             </Link>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={reduceMotion ? undefined : { scale: 1.05 }} whileTap={reduceMotion ? undefined : { scale: 0.95 }}>
             <Link href="/register" className="lf-btn-outline lf-btn-outline--xl">
               Create an account
             </Link>
@@ -75,10 +79,7 @@ export default function LandingClosingCta() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
+          {...reveal(0.5)}
           className="flex flex-wrap justify-center gap-6 text-sm"
           style={{ color: 'var(--muted-foreground)' }}
         >

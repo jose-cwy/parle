@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const STEPS = [
   {
@@ -49,14 +49,23 @@ function XIcon() {
 }
 
 export default function LandingHowItWorks() {
+  const reduceMotion = useReducedMotion()
+
+  const reveal = (delay = 0) =>
+    reduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 30 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, margin: '-80px' },
+          transition: { delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+        }
+
   return (
     <section id="how-it-works" className="py-24 px-6">
       <div className="lf-container">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          {...reveal(0)}
           className="text-center mb-16"
         >
           <h2 className="lf-serif text-4xl md:text-5xl mb-4" style={{ color: 'var(--foreground)' }}>
@@ -71,14 +80,11 @@ export default function LandingHowItWorks() {
           {STEPS.map((item, idx) => (
             <motion.div
               key={item.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.15, duration: 0.6 }}
+              {...reveal(idx * 0.15)}
               className="text-center"
             >
               <motion.div
-                whileHover={{ scale: 1.1, rotate: 10 }}
+                whileHover={reduceMotion ? undefined : { scale: 1.1, rotate: 10 }}
                 transition={{ duration: 0.3 }}
                 className="text-6xl mb-4"
               >
@@ -93,10 +99,7 @@ export default function LandingHowItWorks() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          {...reveal(0.1)}
           className="rounded-2xl overflow-hidden"
           style={{
             background: 'var(--card)',
