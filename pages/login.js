@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
 import { safeNextPath } from '../lib/routes'
+import { getSessionPayload } from '../lib/auth'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -20,7 +21,10 @@ export default function Login() {
     })
 
     if (res.ok) {
-      router.push(router.query.next ? safeNextPath(router.query.next) : '/dashboard')
+      const destination = router.query.next
+        ? safeNextPath(router.query.next)
+        : '/dashboard'
+      router.push(destination)
     } else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Login failed')
@@ -66,4 +70,17 @@ export default function Login() {
       </AuthCard>
     </AuthPageShell>
   )
+}
+
+export async function getServerSideProps({ req, query }) {
+  if (getSessionPayload(req)) {
+    return {
+      redirect: {
+        destination: safeNextPath(query.next),
+        permanent: false,
+      },
+    }
+  }
+
+  return { props: {} }
 }

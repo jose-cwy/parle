@@ -4,11 +4,11 @@ import { motion } from 'framer-motion'
 export default function FeatureCard({ icon: Icon, title, description, delay = 0, href }) {
   const inner = (
     <>
-      <div className="mb-4 w-12 h-12 rounded-full bg-[#a86f52]/10 flex items-center justify-center">
-        <Icon className="w-6 h-6 text-[#b8877a]" />
+      <div className="landing-v2-feature-card__icon">
+        <Icon className="w-6 h-6" strokeWidth={1.6} />
       </div>
-      <h3 className="mb-2 text-[#3a2f2f] text-lg font-semibold">{title}</h3>
-      <p className="text-[#8a7a7a] leading-relaxed">{description}</p>
+      <h3 className="landing-v2-feature-card__title">{title}</h3>
+      <p className="landing-v2-feature-card__desc">{description}</p>
     </>
   )
 
@@ -18,7 +18,7 @@ export default function FeatureCard({ icon: Icon, title, description, delay = 0,
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.6, delay }}
-      className="backdrop-blur-sm bg-white/60 border border-black/5 rounded-2xl p-8 hover:bg-white/80 transition-all duration-300"
+      className="landing-v2-feature-card"
     >
       {href ? (
         <Link

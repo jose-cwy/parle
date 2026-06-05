@@ -30,6 +30,12 @@ CREATE TABLE IF NOT EXISTS chat_memory (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS user_memory (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  memory JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS gamification (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   streaks INTEGER DEFAULT 0,
@@ -59,5 +65,6 @@ CREATE TABLE IF NOT EXISTS letters_to_self (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_diary_user ON diary(user_id);
 CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_memory(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_memory_updated ON user_memory(updated_at);
 CREATE INDEX IF NOT EXISTS idx_quote_favorites_user ON quote_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_letters_to_self_user_completed ON letters_to_self(user_id, is_completed);

@@ -2,3 +2,8 @@ node_modules
 .next
 .cache
 node_modules/.cache
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local

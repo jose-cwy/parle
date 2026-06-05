@@ -5,6 +5,7 @@ import '../styles/loading.css'
 import '../styles/app-theme.css'
 import '../styles/haven.css'
 import '../styles/marketing.css'
+import '../styles/landing-figma.css'
 import { useEffect } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -82,11 +83,7 @@ export default function App({ Component, pageProps }) {
         </>
       )}
 
-      {!appLayout && (
-        <div className={fullBleed ? 'absolute top-0 left-0 right-0 z-40' : 'relative z-30'}>
-          <Header />
-        </div>
-      )}
+      {!appLayout && <Header />}
 
       {fullBleed ? (
         <AnimatePresence mode="wait" initial={false}>

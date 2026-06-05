@@ -48,20 +48,24 @@ function SavedQuoteCard({ saved, loading }) {
                 <span className="font-serif text-clay/40 text-4xl align-[-0.4em] ml-1">&rdquo;</span>
               </blockquote>
               <div className="mt-6 flex items-center gap-3">
-                <div className="h-px w-10 bg-clay/60" />
-                <p className="text-xs tracking-wide text-muted-foreground">
-                  — {saved.author} · <span className="italic">{saved.chapter}</span>
-                </p>
+                <div className="h-px w-10 bg-clay/60 shrink-0" />
+                <p className="text-xs tracking-wide text-muted-foreground">— {saved.author}</p>
               </div>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                {saved.chapter}
+              </p>
             </>
           ) : (
             <div className="mt-6">
-              <p className="font-serif text-2xl text-muted-foreground italic">No quote saved yet.</p>
+              <p className="font-serif text-2xl text-muted-foreground italic">No line kept yet.</p>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-md">
+                Open the Quotes Book and choose one line to carry with you.
+              </p>
               <Link
                 href="/quotes"
                 className="inline-block mt-4 text-sm text-clay underline underline-offset-4"
               >
-                Open the quote book →
+                Browse the Quotes Book →
               </Link>
             </div>
           )}
@@ -168,8 +172,8 @@ export default function HavenDashboard({ user }) {
             href="/quotes"
             icon={BookOpen}
             kicker="Quotes Book"
-            title="Open your quote book"
-            sub="Find words to hold onto."
+            title="A line to hold on to"
+            sub="Oscar Wilde lines for when yours won't come."
             doodle="dots"
             delay="rise-4"
           />

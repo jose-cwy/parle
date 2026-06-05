@@ -5,22 +5,23 @@ import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 
 const CHAPTER_INTROS = {
   Heartbreak:
-    "For the first nights. When the room is too quiet and the phone is too loud. You don't have to make sense of it yet.",
-  Healing:
-    "For the slow days. The ones that don't show progress until you look back and notice you can breathe a little deeper.",
-  'Moving On':
-    "Not forgetting. Just walking forward with the parts of yourself you found along the way.",
-  'Self-Love':
-    "A reminder of the person you were before — and the one you're becoming, kinder this time.",
-  'Self-Worth':
-    "A reminder of the person you were before — and the one you're becoming, kinder this time.",
-  Reflection: 'For the days when looking back helps you understand where you are now.',
-  Inspiration: 'Small sparks for when the path ahead feels dim.',
-  'Letting Go': 'Releasing isn\'t losing. Some things become beautiful only after we set them down.',
+    'For the first nights, when the room is too quiet and the phone is too loud.',
+  Healing: 'For the days you are learning to breathe again.',
+  'Self-Worth': 'For remembering that being left does not make you less.',
+  'Letting Go': 'For loosening your grip without denying what mattered.',
+  'Moving On': 'For the small steps forward, even when they feel quiet.',
 }
 
 function defaultIntro(chapter) {
   return CHAPTER_INTROS[chapter] || 'Words for where you are right now.'
+}
+
+function QuoteAttribution({ quote }) {
+  return (
+    <p className="text-[12px] text-muted-foreground leading-snug">
+      — {quote.author || 'Unknown'}
+    </p>
+  )
 }
 
 function QuoteBlock({ quote, chapter, saved, onSave, large }) {
@@ -34,8 +35,8 @@ function QuoteBlock({ quote, chapter, saved, onSave, large }) {
       >
         {quote.text}
       </blockquote>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-[12px] text-muted-foreground italic">— {quote.author || 'Unknown'}</p>
+      <div className="mt-3 flex items-start justify-between gap-3">
+        <QuoteAttribution quote={quote} />
         <button
           type="button"
           onClick={() => onSave(quote, chapter)}
@@ -45,9 +46,10 @@ function QuoteBlock({ quote, chapter, saved, onSave, large }) {
               ? 'bg-rose/15 text-clay border border-rose/40'
               : 'text-muted-foreground hover:text-clay border border-transparent hover:bg-secondary',
           )}
+          aria-pressed={saved}
         >
           {saved ? <BookmarkCheck size={13} strokeWidth={2} /> : <Bookmark size={13} strokeWidth={1.7} />}
-          {saved ? 'Kept' : 'Keep this'}
+          {saved ? 'Kept' : 'Keep this line'}
         </button>
       </div>
     </div>
@@ -128,9 +130,12 @@ export default function HavenQuotes() {
     <div className="space-y-7">
       <header className="rise">
         <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Quotes Book</p>
-        <h1 className="mt-2 text-3xl md:text-4xl text-foreground">
-          Borrow a line. <span className="italic text-clay">Keep one close.</span>
+        <h1 className="mt-2 text-3xl md:text-4xl text-foreground leading-snug">
+          A line <span className="italic text-clay">to hold on to.</span>
         </h1>
+        <p className="mt-3 max-w-xl text-base text-muted-foreground leading-relaxed">
+          A quiet book of lines for the moments you cannot find your own.
+        </p>
       </header>
 
       <div className="rise rise-1 grid md:grid-cols-[160px_minmax(0,1fr)] gap-5 items-start">
@@ -178,10 +183,12 @@ export default function HavenQuotes() {
               </p>
 
               <div className="mt-8 pt-6 border-t border-dashed border-border">
-                <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">Featured</p>
+                <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
+                  Opening line
+                </p>
                 {featured && (
                   <QuoteBlock
-                    quote={{ ...featured, author: featured.author || 'Unknown' }}
+                    quote={featured}
                     chapter={active}
                     saved={saved?.id === featured.id}
                     onSave={toggleQuote}
@@ -199,7 +206,7 @@ export default function HavenQuotes() {
                 {rest.map((q) => (
                   <li key={q.id}>
                     <QuoteBlock
-                      quote={{ ...q, author: q.author || 'Unknown' }}
+                      quote={q}
                       chapter={active}
                       saved={saved?.id === q.id}
                       onSave={toggleQuote}
@@ -215,20 +222,53 @@ export default function HavenQuotes() {
         </div>
       </div>
 
-      <div className="rise rise-2 paper-note p-5 flex items-start gap-4">
-        <Bookmark size={16} strokeWidth={1.8} className="text-rose mt-0.5 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
-            Currently kept on your home page
-          </p>
-          {saved ? (
-            <p className="font-serif text-[17px] mt-1.5 text-foreground">
-              &ldquo;{saved.text}&rdquo;{' '}
-              <span className="text-muted-foreground text-sm">— {saved.author}</span>
+      <div
+        className={cn(
+          'rise rise-2 relative overflow-hidden rounded-[22px] border p-6 md:p-7',
+          saved
+            ? 'border-rose/30 bg-gradient-to-br from-secondary/90 via-card to-secondary/50'
+            : 'border-border bg-secondary/40',
+        )}
+      >
+        <div
+          className="absolute -top-px right-10 h-8 w-5 rounded-b-sm bg-rose/80 shadow-sm"
+          aria-hidden
+        />
+        <div className="flex items-start gap-4">
+          <Bookmark
+            size={16}
+            strokeWidth={1.8}
+            className={cn('mt-0.5 shrink-0', saved ? 'text-rose' : 'text-muted-foreground')}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
+              {saved ? 'The line you are carrying' : 'Your carried line'}
             </p>
-          ) : (
-            <p className="font-serif text-[17px] mt-1.5 text-muted-foreground italic">Nothing kept yet.</p>
-          )}
+            {saved ? (
+              <>
+                <p className="font-serif text-[18px] md:text-[19px] mt-2 text-foreground leading-snug">
+                  &ldquo;{saved.text}&rdquo;
+                </p>
+                <p className="mt-2 text-[12px] text-muted-foreground">— {saved.author}</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {saved.chapter} · on your home page
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+                  Saving another line replaces this one. Only one stays close at a time.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-serif text-[17px] mt-2 text-muted-foreground italic">
+                  No line kept yet.
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  When a line feels right, keep it — it will appear on your home page as the one
+                  you carry.
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

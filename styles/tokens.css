@@ -65,6 +65,17 @@
   --landing-border: var(--hs-border);
   --landing-card-shadow: rgba(61, 53, 48, 0.08);
 
+  /* Figma landing reference (aliases — does not override --hs-* brand tokens) */
+  --parle-landing-bg: #fef9f5;
+  --parle-landing-foreground: #2d2520;
+  --parle-landing-muted-fg: #6b5d54;
+  --parle-landing-card: #ffffff;
+  --parle-landing-border: rgba(197, 75, 68, 0.12);
+  --parle-landing-radius: 0.625rem;
+  --parle-landing-radius-xl: 1rem;
+  --parle-landing-glow: rgba(197, 75, 68, 0.08);
+  /* Figma primary #ef4444 conflicts with --hs-auth-red #c54b44 — CTAs stay on --hs-auth-red */
+
   /* Navbar + auth pages accent */
   --hs-navbar-height: 5rem;
   --hs-auth-red: #c54b44;

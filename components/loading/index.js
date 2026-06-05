@@ -10,4 +10,3 @@ export {
   CardSkeleton,
   PageSkeleton,
 } from './SkeletonPrimitives'
-export { LetterSkeleton } from './FeatureSkeletons'

@@ -2,11 +2,9 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
-import { spring } from '../lib/motion'
-import { isAppRoute, isLandingThemeRoute } from '../lib/routes'
-import HeartstringsMenu from './landing/HeartstringsMenu'
-import AuthButtons from './landing/AuthButtons'
-import HeartLogo from './landing/HeartLogo'
+import { isAppRoute, isMarketingCreamRoute } from '../lib/routes'
+import AnimatedHamburger from './landing/AnimatedHamburger'
+import LandingMenuSheet from './landing/LandingMenuSheet'
 
 export default function Header() {
   const router = useRouter()
@@ -14,7 +12,7 @@ export default function Header() {
   const [ready, setReady] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const isHome = router.pathname === '/'
-  const landingTheme = isLandingThemeRoute(router.pathname)
+  const useFigmaNav = isMarketingCreamRoute(router.pathname) || isHome
 
   useEffect(() => {
     let active = true
@@ -28,89 +26,135 @@ export default function Header() {
         }
         setReady(true)
       })
-      .catch(() => { if (active) setReady(true) })
-    return () => { active = false }
+      .catch(() => {
+        if (active) setReady(true)
+      })
+    return () => {
+      active = false
+    }
   }, [router.asPath])
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [router.asPath])
+
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.classList.add('body--nav-open')
+    } else {
+      document.body.classList.remove('body--nav-open')
+    }
+    return () => document.body.classList.remove('body--nav-open')
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [menuOpen])
 
   if (isAppRoute(router.pathname)) return null
 
   async function handleLogout() {
+    setMenuOpen(false)
     await fetch('/api/auth/logout', { method: 'POST' })
     setUser(null)
     router.push('/')
   }
 
-  const chatHref = user ? '/chat' : '/login?next=/chat'
+  const homeHref = user ? '/dashboard' : '/'
 
-  const headerClass = [
-    'marketing-header',
-    'marketing-header--cream',
-    'sticky',
-    'top-0',
-    'z-50',
-    'w-full',
-    'px-4',
-    'md:px-6',
-    'py-3',
-    isHome ? 'marketing-header--home' : '',
-    landingTheme && !isHome ? 'marketing-header--landing' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  return (
-    <motion.header
-      className={headerClass}
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={spring.gentle}
-    >
-      <div className="container flex items-center justify-between gap-4">
-        <Link href={user ? '/dashboard' : '/'} className="marketing-brand">
-          <HeartLogo size={20} />
-          <span className="marketing-brand__text">
-            <span className="marketing-brand__name">Heartstrings</span>
-            <span className="marketing-brand__tag">club</span>
-          </span>
-        </Link>
-
-        {isHome ? (
-          <nav className="marketing-header__nav marketing-header__nav--landing" aria-label="Site">
-            {!ready && <span className="marketing-header__placeholder" aria-hidden="true" />}
-            {ready && user && (
-              <Link href="/dashboard" className="marketing-header__link marketing-header__link--landing">
-                Dashboard
-              </Link>
+  if (!useFigmaNav) {
+    return (
+      <header className="marketing-header marketing-header--cream sticky top-0 z-50 w-full px-4 md:px-6 py-3">
+        <div className="container flex items-center justify-between gap-4">
+          <Link href={homeHref} className="lf-navbar__wordmark lf-serif italic text-2xl">
+            parlé
+          </Link>
+          <nav className="flex items-center gap-4" aria-label="Site">
+            {ready && !user && (
+              <>
+                <Link href="/login" className="text-sm hover:opacity-80">Log in</Link>
+                <Link href="/register" className="lf-btn-primary text-sm px-4 py-2">Sign up</Link>
+              </>
             )}
-            {ready && !user && <AuthButtons variant="header" />}
-            {ready && (
-              <HeartstringsMenu
-                user={user}
-                open={menuOpen}
-                onOpenChange={setMenuOpen}
-              />
-            )}
-          </nav>
-        ) : (
-          <nav className="marketing-header__nav" aria-label="Site">
-            {!ready && <span className="marketing-header__placeholder" aria-hidden="true" />}
             {ready && user && (
               <>
-                <Link href="/dashboard" className="marketing-header__link">Dashboard</Link>
-                <button type="button" className="marketing-header__link marketing-header__btn" onClick={handleLogout}>
+                <Link href="/dashboard" className="text-sm hover:opacity-80">Dashboard</Link>
+                <button type="button" className="text-sm hover:opacity-80" onClick={handleLogout}>
                   Log out
                 </button>
               </>
             )}
-            {ready && !user && (
-              <>
-                <Link href="/login" className="marketing-header__link marketing-header__link--auth">Log in</Link>
-                <Link href="/register" className="marketing-header__cta">Sign up</Link>
-              </>
-            )}
           </nav>
-        )}
-      </div>
-    </motion.header>
+        </div>
+      </header>
+    )
+  }
+
+  return (
+    <>
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="lf-navbar"
+      >
+        <div className="lf-container flex items-center justify-between py-5">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-center gap-8"
+          >
+            <Link href={homeHref} className="lf-navbar__wordmark lf-serif italic">
+              parlé
+            </Link>
+            {ready && !user && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Link href="/login" className="lf-navbar__login hidden md:inline">
+                  Log in
+                </Link>
+              </motion.div>
+            )}
+          </motion.div>
+
+          <div className="flex items-center gap-4">
+            {ready && !user && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+                className="hidden md:block"
+              >
+                <Link href="/register" className="lf-navbar__cta">
+                  Start free
+                </Link>
+              </motion.div>
+            )}
+            <AnimatedHamburger
+              isOpen={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            />
+          </div>
+        </div>
+      </motion.header>
+
+      {ready && (
+        <LandingMenuSheet
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          user={user}
+          onLogout={handleLogout}
+        />
+      )}
+    </>
   )
 }

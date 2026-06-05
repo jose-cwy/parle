@@ -1,20 +1,102 @@
 {
   "Heartbreak": [
-    {"id":1, "text":"The pain you feel today is the strength you feel tomorrow."},
-    {"id":2, "text":"Grief is the price we pay for loving."}
+    {
+      "id": 1,
+      "chapter": "Heartbreak",
+      "text": "The heart was made to be broken.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 2,
+      "chapter": "Heartbreak",
+      "text": "Each man kills the thing he loves.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 3,
+      "chapter": "Heartbreak",
+      "text": "Never love anyone who treats you like you're ordinary.",
+      "author": "Oscar Wilde"
+    }
   ],
   "Healing": [
-    {"id":3, "text":"Healing is not linear; be gentle with yourself."},
-    {"id":4, "text":"Small steps forward are still progress."}
+    {
+      "id": 4,
+      "chapter": "Healing",
+      "text": "Where there is sorrow there is holy ground.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 5,
+      "chapter": "Healing",
+      "text": "With freedom, books, flowers, and the moon, who could not be happy?",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 6,
+      "chapter": "Healing",
+      "text": "A flower blossoms for its own joy.",
+      "author": "Oscar Wilde"
+    }
   ],
-  "Self-Love": [
-    {"id":5, "text":"You are worthy of care and tenderness."},
-    {"id":6, "text":"Talk to yourself like you would to someone you love."}
+  "Self-Worth": [
+    {
+      "id": 7,
+      "chapter": "Self-Worth",
+      "text": "To love oneself is the beginning of a lifelong romance.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 8,
+      "chapter": "Self-Worth",
+      "text": "The aim of life is self-development.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 9,
+      "chapter": "Self-Worth",
+      "text": "Be yourself; everyone else is already taken.",
+      "author": "Oscar Wilde"
+    }
   ],
-  "Reflection": [
-    {"id":7, "text":"Look back only to learn, not to linger."}
+  "Letting Go": [
+    {
+      "id": 10,
+      "chapter": "Letting Go",
+      "text": "No man is rich enough to buy back his past.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 11,
+      "chapter": "Letting Go",
+      "text": "The past is of no importance. It is with the future that we have to deal.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 12,
+      "chapter": "Letting Go",
+      "text": "Every saint has a past, and every sinner has a future.",
+      "author": "Oscar Wilde"
+    }
   ],
-  "Inspiration": [
-    {"id":8, "text":"There are brighter chapters ahead."}
+  "Moving On": [
+    {
+      "id": 13,
+      "chapter": "Moving On",
+      "text": "Experience is simply the name we give our mistakes.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 14,
+      "chapter": "Moving On",
+      "text": "We are all in the gutter, but some of us are looking at the stars.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 15,
+      "chapter": "Moving On",
+      "text": "To live is the rarest thing in the world. Most people exist, that is all.",
+      "author": "Oscar Wilde"
+    }
   ]
 }
