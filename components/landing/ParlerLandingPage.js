@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   Heart,
@@ -9,72 +8,7 @@ import {
   Lock,
 } from 'lucide-react'
 import VerticalTestimonialsSpin from './VerticalTestimonialsSpin'
-
-function HamburgerIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
-      <line x1="3" y1="6" x2="19" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="3" y1="11" x2="19" y2="11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="3" y1="16" x2="19" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function Nav() {
-  const [open, setOpen] = useState(false)
-  const close = () => setOpen(false)
-
-  return (
-    <nav className="pss-nav sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 py-5">
-        <Link href="/" className="pss-nav-logo font-serif text-2xl">
-          parlé
-        </Link>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/register"
-            className="hidden sm:inline-flex bg-primary text-primary-foreground rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 transition"
-          >
-            Start free
-          </Link>
-          <button
-            type="button"
-            onClick={() => setOpen(!open)}
-            className="p-2 text-foreground rounded-full transition hover:opacity-70"
-            aria-label="Menu"
-            aria-expanded={open}
-          >
-            <HamburgerIcon />
-          </button>
-        </div>
-      </div>
-      {open ? (
-        <div className="border-t border-border/40 bg-background/95 pss-menu-enter">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 py-4 flex flex-col gap-3 text-sm">
-            <a href="#what" className="py-1 hover:text-primary" onClick={close}>
-              What is parlé
-            </a>
-            <a href="#how" className="py-1 hover:text-primary" onClick={close}>
-              How it works
-            </a>
-            <a href="#voices" className="py-1 hover:text-primary" onClick={close}>
-              Voices
-            </a>
-            <Link href="/chat" className="py-1 hover:text-primary" onClick={close}>
-              Talk now
-            </Link>
-            <Link href="/login" className="py-1 hover:text-primary" onClick={close}>
-              Login
-            </Link>
-            <Link href="/register" className="py-1 hover:text-primary" onClick={close}>
-              Sign up
-            </Link>
-          </div>
-        </div>
-      ) : null}
-    </nav>
-  )
-}
+import MarketingNav from './MarketingNav'
 
 function DictionaryHero() {
   return (
@@ -93,12 +27,12 @@ function DictionaryHero() {
           <div className="pss-hero-divider pss-hero-rule" aria-hidden />
 
           <p className="pss-hero-defs pss-hero-definition">
-            A private AI listener for your thoughts, feelings, and heartbreak stories.
+            A private space to say the things you can&apos;t say out loud.
           </p>
 
           <div className="pss-hero-ctas">
             <Link href="/chat" className="pss-hero-btn pss-hero-btn--primary">
-              Talk now (no account needed)
+              Start talking
             </Link>
             <a href="#how" className="pss-hero-btn pss-hero-btn--secondary">
               See how it works
@@ -181,29 +115,29 @@ function Compare() {
   ]
 
   return (
-    <div className="mt-20 bg-card rounded-3xl p-8 md:p-12 text-left border border-border/50 shadow-sm">
-      <h3 className="font-serif text-2xl md:text-3xl text-center mb-10">parlé vs other support</h3>
-      <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
-        <div className="space-y-6">
+    <div className="pss-compare">
+      <h3 className="pss-compare__title font-serif text-2xl md:text-3xl">parlé vs other support</h3>
+      <div className="pss-compare__grid">
+        <div className="pss-compare__col">
           {yes.map(([t, d]) => (
-            <div key={t} className="flex gap-3">
-              <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
+            <div key={t} className="pss-compare__item">
+              <span className="pss-compare__icon pss-compare__icon--yes">
                 <Check className="w-4 h-4 text-primary-foreground" />
               </span>
-              <div>
+              <div className="pss-compare__copy">
                 <div className="font-semibold">{t}</div>
                 <div className="text-sm text-muted-foreground">{d}</div>
               </div>
             </div>
           ))}
         </div>
-        <div className="space-y-6">
+        <div className="pss-compare__col">
           {no.map(([t, d]) => (
-            <div key={t} className="flex gap-3 opacity-60">
-              <span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <div key={t} className="pss-compare__item pss-compare__item--muted">
+              <span className="pss-compare__icon pss-compare__icon--no">
                 <X className="w-4 h-4 text-muted-foreground" />
               </span>
-              <div>
+              <div className="pss-compare__copy">
                 <div className="font-semibold">{t}</div>
                 <div className="text-sm text-muted-foreground">{d}</div>
               </div>
@@ -254,7 +188,7 @@ function CTA() {
           href="/chat"
           className="bg-primary text-primary-foreground rounded-full px-8 py-4 font-medium hover:opacity-90 transition"
         >
-          Talk now (no account needed)
+          Start talking
         </Link>
         <Link
           href="/register"
@@ -281,7 +215,7 @@ function CTA() {
 export default function ParlerLandingPage({ signupDeclined = false }) {
   return (
     <main className="parler-landing min-h-screen bg-background text-foreground">
-      <Nav />
+      <MarketingNav />
       {signupDeclined ? (
         <div className="px-6 md:px-10 py-3 bg-accent/40 border-b border-border/40 text-sm text-center" role="status">
           You chose not to accept the Terms &amp; Safety Agreement, so account creation is not available.{' '}

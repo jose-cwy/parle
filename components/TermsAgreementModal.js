@@ -140,7 +140,8 @@ export default function TermsAgreementModal({
     if (!open) return undefined
 
     function syncNavbarHeight() {
-      const header = document.querySelector('.marketing-header')
+      const header =
+        document.querySelector('.pss-nav') || document.querySelector('.marketing-header')
       const height = header?.getBoundingClientRect().height
       if (height && height > 0) {
         document.documentElement.style.setProperty(

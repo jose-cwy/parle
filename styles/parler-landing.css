@@ -71,7 +71,302 @@ body.body--parler-landing .app-shell {
   animation: pss-fade-in 0.2s ease-out;
 }
 
-/* Hero — minimal centered dictionary entry */
+/* Shared marketing navbar — landing + auth pages */
+body.body--parler-landing {
+  --pss-nav-height: 4.5rem;
+  --hs-navbar-height: 4.5rem;
+}
+
+body.body--parler-landing .pss-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--background);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+body.body--parler-landing .pss-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 1.15rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  body.body--parler-landing .pss-nav__inner {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+body.body--parler-landing .pss-nav-logo {
+  flex-shrink: 0;
+  color: var(--foreground);
+  font-family: var(--font-haven-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  line-height: 1;
+}
+
+body.body--parler-landing .pss-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+body.body--parler-landing .pss-nav-cta {
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  transition: opacity 0.2s ease;
+}
+
+body.body--parler-landing .pss-nav-cta:hover {
+  opacity: 0.92;
+}
+
+body.body--parler-landing .pss-nav-link {
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+body.body--parler-landing .pss-nav-link:hover {
+  color: var(--primary);
+}
+
+body.body--parler-landing .pss-nav__menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+body.body--parler-landing .pss-nav__menu-btn:hover {
+  opacity: 0.7;
+}
+
+body.body--parler-landing .pss-nav-menu {
+  border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+body.body--parler-landing .pss-nav-menu__links {
+  flex-direction: column;
+  align-items: stretch;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+body.body--parler-landing .pss-nav-menu__link {
+  display: block;
+  padding: 0.45rem 0;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  text-decoration: none;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s ease;
+}
+
+body.body--parler-landing .pss-nav-menu__link:hover {
+  color: var(--primary);
+}
+
+body.body--parler-landing .pss-nav-menu__link--btn {
+  width: 100%;
+}
+
+body.body--parler-landing .pss-menu-enter {
+  animation: pss-fade-in 0.2s ease-out;
+}
+
+/* Override legacy marketing cream when parlé theme is active */
+body.body--parler-landing.body--marketing,
+body.body--parler-landing.body--marketing #__next,
+body.body--parler-landing.body--marketing .app-shell {
+  background: var(--background) !important;
+  background-image: none !important;
+  color: var(--foreground);
+}
+
+/* Auth pages — match landing aesthetic */
+body.body--parler-landing.body--auth .auth-page {
+  background: var(--background);
+}
+
+body.body--parler-landing.body--auth .auth-page__bgGradient {
+  background: var(--background);
+}
+
+body.body--parler-landing.body--auth .auth-page__bgGlow {
+  display: none;
+}
+
+body.body--parler-landing.body--auth .auth-page__paperEdge,
+body.body--parler-landing.body--auth .auth-page__threadDetail,
+body.body--parler-landing.body--auth .auth-page__logoWrap {
+  display: none;
+}
+
+body.body--parler-landing.body--auth .auth-page__card {
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+body.body--parler-landing.body--auth .auth-page__eyebrow {
+  color: var(--primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.body--parler-landing.body--auth .auth-page__title {
+  font-family: var(--font-haven-serif);
+  font-weight: 400;
+  color: var(--foreground);
+}
+
+body.body--parler-landing.body--auth .auth-page__description {
+  color: var(--muted-foreground);
+}
+
+body.body--parler-landing.body--auth .auth-page__input {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body.body--parler-landing.body--auth .auth-page__input:focus {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+body.body--parler-landing.body--auth .auth-page__submit {
+  background: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 85%, #000);
+  border-radius: 9999px;
+}
+
+body.body--parler-landing.body--auth .auth-page__submit:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 92%, #000);
+}
+
+body.body--parler-landing.body--auth .auth-page__switchLink {
+  color: var(--primary);
+}
+
+body.body--parler-landing.body--auth .auth-page__switchLink:hover {
+  color: color-mix(in srgb, var(--primary) 80%, #000);
+}
+
+body.body--parler-landing.body--auth .auth-page__privacy,
+body.body--parler-landing.body--auth .auth-page__footer {
+  color: var(--muted-foreground);
+}
+
+body.body--parler-landing.body--auth .auth-page__terms-hint {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+/* Terms modal — parlé palette */
+body.body--parler-landing .terms-agreement-overlay {
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+body.body--parler-landing .terms-agreement-modal__ornaments {
+  display: none;
+}
+
+body.body--parler-landing .terms-agreement-modal__shell::before {
+  border-color: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+body.body--parler-landing .terms-agreement-modal {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: 0 20px 48px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+body.body--parler-landing .terms-agreement-modal__eyebrow {
+  color: var(--primary);
+}
+
+body.body--parler-landing .terms-agreement-modal__title {
+  font-family: var(--font-haven-serif);
+  font-weight: 400;
+  color: var(--foreground);
+}
+
+body.body--parler-landing .terms-agreement-modal__subtitle {
+  color: var(--muted-foreground);
+}
+
+body.body--parler-landing .terms-agreement-modal__progress-bar {
+  background: var(--primary);
+}
+
+body.body--parler-landing .terms-agreement-modal__section {
+  border-color: color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+body.body--parler-landing .terms-agreement-modal__section h3 {
+  font-family: var(--font-haven-serif);
+  font-weight: 400;
+}
+
+body.body--parler-landing .terms-agreement-modal__arrow {
+  color: var(--primary);
+}
+
+body.body--parler-landing .terms-agreement-modal__checkbox input:focus-visible {
+  outline-color: var(--primary);
+}
+
+body.body--parler-landing .terms-agreement-modal__btn--accept {
+  border-radius: 9999px;
+  border-color: color-mix(in srgb, var(--primary) 85%, #000);
+  background: var(--primary);
+}
+
+body.body--parler-landing .terms-agreement-modal__btn--accept:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 92%, #000);
+}
+
 .parler-landing .pss-nav {
   background: var(--background);
 }
@@ -217,6 +512,80 @@ body.body--parler-landing .app-shell {
   .parler-landing .pss-hero-btn {
     width: 100%;
   }
+}
+
+/* parlé vs other support — centered comparison layout */
+.parler-landing .pss-compare {
+  margin-top: 5rem;
+  padding: 2rem 1.5rem;
+  background: var(--card);
+  border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground) 4%, transparent);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .parler-landing .pss-compare {
+    padding: 3rem;
+  }
+}
+
+.parler-landing .pss-compare__title {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.parler-landing .pss-compare__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem 3.5rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.parler-landing .pss-compare__col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: min(100%, 16.5rem);
+  flex: 0 1 16.5rem;
+}
+
+.parler-landing .pss-compare__item {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: start;
+  width: 100%;
+}
+
+.parler-landing .pss-compare__item--muted {
+  opacity: 0.6;
+}
+
+.parler-landing .pss-compare__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.parler-landing .pss-compare__icon--yes {
+  background: var(--primary);
+}
+
+.parler-landing .pss-compare__icon--no {
+  background: var(--muted);
+}
+
+.parler-landing .pss-compare__copy {
+  text-align: left;
 }
 
 .parler-landing .pss-blob-primary {

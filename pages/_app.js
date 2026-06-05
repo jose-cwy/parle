@@ -35,7 +35,7 @@ export default function App({ Component, pageProps }) {
     } else {
       document.body.classList.remove('body--marketing')
     }
-    if (isHome) {
+    if (isHome || isAuthPage) {
       document.body.classList.add('body--home-hero', 'body--parler-landing')
     } else {
       document.body.classList.remove('body--home-hero', 'body--parler-landing')
