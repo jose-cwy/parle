@@ -13,7 +13,7 @@ import Head from 'next/head'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { pageTransition } from '../lib/motion'
-import { isAppRoute, isFullBleedRoute, isLandingThemeRoute, isMarketingCreamRoute } from '../lib/routes'
+import { isAppRoute, isFullBleedRoute, isLandingThemeRoute, isMarketingCreamRoute, isParlerMarketingPage } from '../lib/routes'
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -23,6 +23,8 @@ export default function App({ Component, pageProps }) {
   const marketingCream = isMarketingCreamRoute(router.pathname)
   const isHome = router.pathname === '/'
   const isAuthPage = router.pathname === '/login' || router.pathname === '/register'
+  const isParlerMarketing = isParlerMarketingPage(router.pathname)
+  const isParlerShell = isHome || isAuthPage || isParlerMarketing
 
   useEffect(() => {
     if (landingTheme) {
@@ -35,7 +37,7 @@ export default function App({ Component, pageProps }) {
     } else {
       document.body.classList.remove('body--marketing')
     }
-    if (isHome || isAuthPage) {
+    if (isParlerShell) {
       document.body.classList.add('body--home-hero', 'body--parler-landing')
     } else {
       document.body.classList.remove('body--home-hero', 'body--parler-landing')
@@ -61,7 +63,7 @@ export default function App({ Component, pageProps }) {
         'body--auth',
       )
     }
-  }, [landingTheme, marketingCream, appLayout, isHome, isAuthPage])
+  }, [landingTheme, marketingCream, appLayout, isParlerShell, isAuthPage])
 
   return (
     <div
@@ -75,7 +77,7 @@ export default function App({ Component, pageProps }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      {!fullBleed && !appLayout && !isHome && !isAuthPage && (
+      {!fullBleed && !appLayout && !isHome && !isAuthPage && !isParlerMarketing && (
         <>
           <div className="page-noise" />
           <div className="page-glow page-glow-one" />
@@ -106,6 +108,14 @@ export default function App({ Component, pageProps }) {
             </motion.div>
           </AnimatePresence>
         </main>
+      ) : isParlerMarketing ? (
+        <div className="flex-1 relative z-10">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={router.asPath} {...pageTransition}>
+              <Component {...pageProps} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       ) : (
         <main className="flex-1 container py-8 relative z-10">
           <AnimatePresence mode="wait" initial={false}>
@@ -116,7 +126,7 @@ export default function App({ Component, pageProps }) {
         </main>
       )}
 
-      {!fullBleed && !appLayout && !isAuthPage && <Footer />}
+      {!fullBleed && !appLayout && !isAuthPage && !isParlerMarketing && <Footer />}
     </div>
   )
 }

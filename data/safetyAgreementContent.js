@@ -13,9 +13,9 @@ export const SAFETY_AGREEMENT_INTRO = {
 export const safetyAgreementSections = [
   {
     id: 'not-therapy',
-    title: 'Heartstrings Club is not therapy',
+    title: 'parlé is not therapy',
     body: [
-      'Heartstrings Club is not a therapist, counsellor, mental health clinic, emergency service, or substitute for professional help.',
+      'parlé is not a therapist, counsellor, mental health clinic, emergency service, or substitute for professional help.',
       'It is a supportive tool to help you process heartbreak, write your thoughts, reflect, and feel less alone — not a medical or clinical service.',
     ],
   },
@@ -70,7 +70,7 @@ export const safetyAgreementSections = [
     id: 'responsibility',
     title: 'Your responsibility',
     body: [
-      'You are responsible for how you use Heartstrings Club and for seeking professional help when you need it.',
+      'You are responsible for how you use parlé and for seeking professional help when you need it.',
       'By creating an account, you confirm you understand these boundaries and agree to use the platform safely and respectfully.',
     ],
   },

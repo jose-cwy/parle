@@ -235,6 +235,10 @@ export default function ParlerLandingPage({ signupDeclined = false }) {
         <Link href="/terms" className="text-primary hover:underline">
           Terms &amp; Safety
         </Link>
+        {' · '}
+        <Link href="/contact" className="text-primary hover:underline">
+          Contact
+        </Link>
       </footer>
     </main>
   )
