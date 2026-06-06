@@ -1,13 +1,7 @@
-import LoadingShell from './LoadingShell'
+import { useTopProgress } from '../../lib/hooks/useTopProgress'
 
-export default function AppLoading({ message, messageSeed, className = '', fullPage = true }) {
-  return (
-    <LoadingShell message={message} messageSeed={messageSeed} fullPage={fullPage} className={className}>
-      <div className="hs-loading-dots" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-    </LoadingShell>
-  )
+/** @deprecated Visual replaced by global top progress bar — keeps API for callers. */
+export default function AppLoading({ fullPage = true }) {
+  useTopProgress(fullPage)
+  return null
 }

@@ -29,7 +29,7 @@ export default async function handler(req,res){
     const result = await db.query(
       `INSERT INTO users (email,password,accepted_terms_at,accepted_terms_version,created_at,updated_at)
        VALUES ($1,$2,$3,$4,$5,$6)
-       RETURNING id,email,accepted_terms_at,accepted_terms_version`,
+       RETURNING id,email,preferred_name,accepted_terms_at,accepted_terms_version`,
       [email,hash,now,TERMS_VERSION,now,now]
     )
     const token = signToken({ id: result.rows[0].id, email: result.rows[0].email })

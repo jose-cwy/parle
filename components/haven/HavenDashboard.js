@@ -2,19 +2,10 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { MessageCircle, BookHeart, BookOpen, Bookmark } from 'lucide-react'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
+import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { displayName, timeGreeting } from '../../lib/haven/dates'
 
-function SavedQuoteCard({ saved, loading }) {
-  if (loading) {
-    return (
-      <div className="paper p-8 md:p-12">
-        <div className="skeleton-soft h-4 w-32 mb-6" />
-        <div className="skeleton-soft h-10 w-full max-w-lg mb-4" />
-        <div className="skeleton-soft h-10 w-2/3 max-w-md" />
-      </div>
-    )
-  }
-
+function SavedQuoteCard({ saved }) {
   return (
     <div className="relative">
       <div className="absolute -top-1 right-10 z-10 hsc-bookmark group">
@@ -117,6 +108,8 @@ export default function HavenDashboard({ user }) {
   const { saved, loading } = useSavedQuote()
   const [today, setToday] = useState('')
 
+  useTopProgress(loading)
+
   useEffect(() => {
     setToday(
       new Date().toLocaleDateString(undefined, {
@@ -144,7 +137,7 @@ export default function HavenDashboard({ user }) {
       </section>
 
       <section className="rise rise-1">
-        <SavedQuoteCard saved={saved} loading={loading} />
+        <SavedQuoteCard saved={saved} />
       </section>
 
       <section>

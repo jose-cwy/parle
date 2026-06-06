@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
 import TermsAgreementModal from '../components/TermsAgreementModal'
+import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { getTermsAcceptanceFromReq, TERMS_VERSION } from '../lib/auth'
 
 export default function Register({ acceptedTermsInitially }) {
@@ -13,6 +14,8 @@ export default function Register({ acceptedTermsInitially }) {
   const [acceptingTerms, setAcceptingTerms] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(acceptedTermsInitially)
   const router = useRouter()
+
+  useTopProgress(loading || acceptingTerms)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -24,7 +27,7 @@ export default function Register({ acceptedTermsInitially }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
-    if (res.ok) router.push('/dashboard')
+    if (res.ok) router.push('/welcome')
     else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Registration failed')

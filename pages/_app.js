@@ -7,6 +7,7 @@ import '../styles/haven.css'
 import '../styles/marketing.css'
 import '../styles/parler-landing.css'
 import { useEffect } from 'react'
+import TopProgressProvider from '../components/TopProgressProvider'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Head from 'next/head'
@@ -22,7 +23,7 @@ export default function App({ Component, pageProps }) {
   const landingTheme = isLandingThemeRoute(router.pathname)
   const marketingCream = isMarketingCreamRoute(router.pathname)
   const isHome = router.pathname === '/'
-  const isAuthPage = router.pathname === '/login' || router.pathname === '/register'
+  const isAuthPage = router.pathname === '/login' || router.pathname === '/register' || router.pathname === '/welcome'
   const isParlerMarketing = isParlerMarketingPage(router.pathname)
   const isParlerShell = isHome || isAuthPage || isParlerMarketing
 
@@ -66,6 +67,7 @@ export default function App({ Component, pageProps }) {
   }, [landingTheme, marketingCream, appLayout, isParlerShell, isAuthPage])
 
   return (
+    <TopProgressProvider>
     <div
       className={`min-h-screen flex flex-col app-shell${landingTheme ? ' app-shell--landing-theme' : ''}`}
       style={isHome ? { scrollBehavior: 'smooth' } : undefined}
@@ -128,5 +130,6 @@ export default function App({ Component, pageProps }) {
 
       {!fullBleed && !appLayout && !isAuthPage && !isParlerMarketing && <Footer />}
     </div>
+    </TopProgressProvider>
   )
 }

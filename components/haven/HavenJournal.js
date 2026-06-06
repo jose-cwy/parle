@@ -7,6 +7,7 @@ import { calendarDateKeyFromEntry } from '../../lib/journal'
 import { journalClientHeaders } from '../../lib/journalClientDate'
 import WallCalendar from './WallCalendar'
 import { pulseWarmth } from '../../lib/warmthPulse'
+import { useTopProgress } from '../../lib/hooks/useTopProgress'
 
 const PRIVACY_KEY = 'hsc.journal.privacy.v1'
 const PRIVACY_KEY_LEGACY = 'hsc.diary.privacy.v1'
@@ -89,6 +90,8 @@ export default function HavenJournal() {
   }, [])
 
   const entryMap = useMemo(() => groupEntriesByDate(entries), [entries])
+
+  useTopProgress(loading)
 
   useEffect(() => {
     if (!today) return
@@ -205,15 +208,7 @@ export default function HavenJournal() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-7">
-        <div className="skeleton-soft h-10 w-64" />
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="skeleton-soft h-80" />
-          <div className="skeleton-soft h-80" />
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (

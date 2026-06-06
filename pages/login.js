@@ -2,14 +2,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
+import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { safeNextPath } from '../lib/routes'
 import { getSessionPayload } from '../lib/auth'
+import { hasPreferredName } from '../lib/user'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  useTopProgress(loading)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -21,9 +25,13 @@ export default function Login() {
     })
 
     if (res.ok) {
-      const destination = router.query.next
-        ? safeNextPath(router.query.next)
-        : '/dashboard'
+      const meRes = await fetch('/api/auth/me')
+      const mePayload = meRes.ok ? await meRes.json().catch(() => null) : null
+      const destination = !hasPreferredName(mePayload?.user)
+        ? '/welcome'
+        : router.query.next
+          ? safeNextPath(router.query.next)
+          : '/dashboard'
       router.push(destination)
     } else {
       const payload = await res.json().catch(() => null)

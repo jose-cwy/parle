@@ -8,7 +8,6 @@ import {
   BookHeart,
   BookOpen,
   LogOut,
-  PenLine,
 } from 'lucide-react'
 import { cn } from '../lib/cn'
 import HavenMark from './haven/HavenMark'
@@ -18,7 +17,6 @@ const NAV = [
   { href: '/chat', label: 'AI Chatbot', icon: MessageCircle },
   { href: '/journal', label: 'Journal', icon: BookHeart },
   { href: '/quotes', label: 'Quotes Book', icon: BookOpen },
-  { href: '/letter-to-yourself', label: 'Letter', icon: PenLine },
 ]
 
 function isActive(pathname, item) {

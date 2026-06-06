@@ -9,7 +9,7 @@ export default async function handler(req,res){
 
   try{
     const user = await db.query(
-      'SELECT id,email,accepted_terms_at,accepted_terms_version,created_at FROM users WHERE id=$1',
+      'SELECT id,email,preferred_name,accepted_terms_at,accepted_terms_version,created_at FROM users WHERE id=$1',
       [payload.id]
     )
 
@@ -28,6 +28,7 @@ export default async function handler(req,res){
       return res.status(200).json({
         user: {
           ...legacyUser.rows[0],
+          preferred_name: null,
           accepted_terms_at: null,
           accepted_terms_version: null
         }

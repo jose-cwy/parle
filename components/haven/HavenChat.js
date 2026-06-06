@@ -6,6 +6,7 @@ import HavenModal from './HavenModal'
 import { journalClientHeaders } from '../../lib/journalClientDate'
 import { todayKey } from '../../lib/haven/dates'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
+import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
 
 const MOODS = [
@@ -173,6 +174,8 @@ export default function HavenChat() {
   const [reflectBusy, setReflectBusy] = useState(false)
   const [quoteRec, setQuoteRec] = useState(null)
   const { saved: savedQuote, toggleQuote } = useSavedQuote()
+
+  useTopProgress(messages === null)
 
   const storageKey = useMemo(() => 'hsc.chat.guest.v1', [])
 
@@ -520,13 +523,7 @@ export default function HavenChat() {
   }
 
   if (messages === null) {
-    return (
-      <div className="rounded-[22px] border border-border bg-card/60 p-6 space-y-4">
-        <div className="skeleton-soft h-6 w-48" />
-        <div className="skeleton-soft h-64 w-full" />
-        <div className="skeleton-soft h-12 w-full" />
-      </div>
-    )
+    return null
   }
 
   const title =

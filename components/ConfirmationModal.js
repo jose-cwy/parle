@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { SkeletonButton } from './loading'
+import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { spring } from '../lib/motion'
 
 export default function ConfirmationModal({
@@ -13,6 +13,8 @@ export default function ConfirmationModal({
   confirmVariant = 'primary',
   busy = false
 }){
+  useTopProgress(busy)
+
   return (
     <AnimatePresence>
       {open ? (
@@ -40,7 +42,9 @@ export default function ConfirmationModal({
                 </button>
               ) : null}
               {busy ? (
-                <SkeletonButton className="h-11 w-28" />
+                <button type="button" className="soft-button border-transparent bg-[#b88957] text-white opacity-70" disabled>
+                  Please wait…
+                </button>
               ) : (
                 <button
                   type="button"

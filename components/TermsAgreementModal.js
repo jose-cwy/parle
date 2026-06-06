@@ -5,7 +5,7 @@ import {
   SAFETY_AGREEMENT_INTRO,
   safetyAgreementSections,
 } from '../data/safetyAgreementContent'
-import { SkeletonButton } from './loading'
+import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { spring } from '../lib/motion'
 
 const SCROLL_THRESHOLD = 12
@@ -64,6 +64,8 @@ export default function TermsAgreementModal({
   accepting = false,
   onAccept,
 }) {
+  useTopProgress(accepting)
+
   const titleId = useId()
   const descId = useId()
   const dialogRef = useRef(null)
@@ -318,7 +320,13 @@ export default function TermsAgreementModal({
 
             <div className="terms-agreement-modal__actions">
               {accepting ? (
-                <SkeletonButton className="h-11 w-full" rounded="rounded-xl" />
+                <button
+                  type="button"
+                  className="terms-agreement-modal__btn terms-agreement-modal__btn--accept opacity-70"
+                  disabled
+                >
+                  Please wait…
+                </button>
               ) : (
                 <button
                   type="button"

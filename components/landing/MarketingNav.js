@@ -3,20 +3,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import {
-  BookOpen,
-  Heart,
-  Layers,
-  LayoutGrid,
-  LayoutDashboard,
-  LogIn,
-  LogOut,
-  Mail,
-  MessageCircle,
-  UserPlus,
-  Users,
-  X,
-} from 'lucide-react'
+import { BookHeart, BookOpen, LogOut, MessageCircle, X } from 'lucide-react'
 import { ease, spring } from '../../lib/motion'
 
 function HamburgerIcon() {
@@ -29,27 +16,30 @@ function HamburgerIcon() {
   )
 }
 
-function MenuItem({ href, icon: Icon, label, onClick, asButton = false, buttonType = 'button' }) {
-  const content = (
-    <>
+function userInitial(user) {
+  const email = user?.email || ''
+  return email.charAt(0).toUpperCase() || '?'
+}
+
+function DrawerDivider() {
+  return <div className="pss-nav-drawer__divider" role="separator" aria-hidden="true" />
+}
+
+function PrimaryMenuItem({ href, icon: Icon, label, onClick }) {
+  return (
+    <Link href={href} className="pss-nav-drawer__link pss-nav-drawer__link--primary" onClick={onClick}>
       <span className="pss-nav-drawer__icon" aria-hidden="true">
         <Icon size={18} strokeWidth={1.75} />
       </span>
       <span className="pss-nav-drawer__label">{label}</span>
-    </>
+    </Link>
   )
+}
 
-  if (asButton) {
-    return (
-      <button type={buttonType} className="pss-nav-drawer__link" onClick={onClick}>
-        {content}
-      </button>
-    )
-  }
-
+function SecondaryMenuItem({ href, label, onClick }) {
   return (
-    <Link href={href} className="pss-nav-drawer__link" onClick={onClick}>
-      {content}
+    <Link href={href} className="pss-nav-drawer__link pss-nav-drawer__link--secondary" onClick={onClick}>
+      {label}
     </Link>
   )
 }
@@ -121,41 +111,62 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
             transition={reduceMotion ? { duration: 0 } : { ...spring.modal, opacity: { duration: 0.18 } }}
           >
             <div className="pss-nav-drawer__header">
-              <p className="pss-nav-drawer__eyebrow">Menu</p>
               <button type="button" className="pss-nav-drawer__close" onClick={close} aria-label="Close menu">
                 <X size={20} strokeWidth={1.75} />
               </button>
             </div>
 
             <nav className="pss-nav-drawer__links" aria-label="Site">
-              {!user ? (
-                <>
-                  <MenuItem href="/#what" icon={Heart} label="What is parlé" onClick={close} />
-                  <MenuItem href="/#features" icon={LayoutGrid} label="Features" onClick={close} />
-                  <MenuItem href="/#how" icon={Layers} label="How it works" onClick={close} />
-                  <MenuItem href="/#voices" icon={Users} label="Voices" onClick={close} />
-                  <MenuItem href="/chat" icon={MessageCircle} label="Start talking" onClick={close} />
-                  <MenuItem href="/contact" icon={Mail} label="Contact" onClick={close} />
+              <PrimaryMenuItem href="/chat" icon={MessageCircle} label="Start talking" onClick={close} />
+              <PrimaryMenuItem href="/quotes" icon={BookOpen} label="Quotes" onClick={close} />
+              <PrimaryMenuItem href="/journal" icon={BookHeart} label="Journal" onClick={close} />
+
+              {user ? (
+                <div className="pss-nav-drawer__auth-user">
+                  <span className="pss-nav-drawer__avatar" aria-hidden="true">
+                    {userInitial(user)}
+                  </span>
+                  <button
+                    type="button"
+                    className="pss-nav-drawer__link pss-nav-drawer__link--auth pss-nav-drawer__link--signout"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={15} strokeWidth={1.75} aria-hidden="true" />
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div className="pss-nav-drawer__auth-inline">
                   {!isLogin ? (
-                    <MenuItem href="/login" icon={LogIn} label="Log in" onClick={close} />
+                    <Link
+                      href="/login"
+                      className="pss-nav-drawer__link pss-nav-drawer__link--secondary"
+                      onClick={close}
+                    >
+                      Log in
+                    </Link>
+                  ) : null}
+                  {!isLogin && !isRegister ? (
+                    <span className="pss-nav-drawer__auth-sep" aria-hidden="true">
+                      ·
+                    </span>
                   ) : null}
                   {!isRegister ? (
-                    <MenuItem href="/register" icon={UserPlus} label="Sign up" onClick={close} />
+                    <Link
+                      href="/register"
+                      className="pss-nav-drawer__link pss-nav-drawer__link--secondary"
+                      onClick={close}
+                    >
+                      Sign up
+                    </Link>
                   ) : null}
-                </>
-              ) : (
-                <>
-                  <MenuItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={close} />
-                  <MenuItem href="/chat" icon={MessageCircle} label="Chat" onClick={close} />
-                  <MenuItem href="/journal" icon={BookOpen} label="Journal" onClick={close} />
-                  <MenuItem
-                    asButton
-                    icon={LogOut}
-                    label="Log out"
-                    onClick={handleLogout}
-                  />
-                </>
+                </div>
               )}
+
+              <DrawerDivider />
+
+              <SecondaryMenuItem href="/terms" label="Terms & Conditions" onClick={close} />
+              <SecondaryMenuItem href="/contact" label="Contact" onClick={close} />
             </nav>
           </motion.aside>
         </>

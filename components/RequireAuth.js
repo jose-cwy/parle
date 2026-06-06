@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import AuthLoading from './loading/AuthLoading'
+import { useTopProgress } from '../lib/hooks/useTopProgress'
+import { hasPreferredName } from '../lib/user'
 
 export default function RequireAuth({ children }){
   const [ready, setReady] = useState(false)
@@ -13,12 +14,21 @@ export default function RequireAuth({ children }){
         return
       }
       r.json().then(payload => {
-        if(!payload?.user) router.push(`/login?next=${encodeURIComponent(router.asPath)}`)
-        else setReady(true)
+        if(!payload?.user) {
+          router.push(`/login?next=${encodeURIComponent(router.asPath)}`)
+          return
+        }
+        if (!hasPreferredName(payload.user)) {
+          router.push('/welcome')
+          return
+        }
+        setReady(true)
       })
     })
   },[router])
 
-  if(!ready) return <AuthLoading />
+  useTopProgress(!ready)
+
+  if(!ready) return null
   return children
 }

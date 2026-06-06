@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Bookmark, BookmarkCheck } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
+import { useTopProgress } from '../../lib/hooks/useTopProgress'
 
 const CHAPTER_INTROS = {
   Heartbreak:
@@ -64,6 +65,8 @@ export default function HavenQuotes() {
   const [error, setError] = useState('')
   const { saved, toggleQuote } = useSavedQuote()
 
+  useTopProgress(loading)
+
   useEffect(() => {
     setLoading(true)
     setError('')
@@ -95,12 +98,7 @@ export default function HavenQuotes() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-7">
-        <div className="skeleton-soft h-10 w-72" />
-        <div className="skeleton-soft h-[420px]" />
-      </div>
-    )
+    return null
   }
 
   if (error) {
