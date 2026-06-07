@@ -24,7 +24,7 @@ function isActive(pathname, item) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
-export default function AppShell({ children }) {
+export default function AppShell({ children, hideRail = false }) {
   const router = useRouter()
   const [hovered, setHovered] = useState(false)
   const [pinned, setPinned] = useState(false)
@@ -177,9 +177,15 @@ export default function AppShell({ children }) {
   )
 
   return (
-    <div className="haven-shell min-h-screen w-full relative">
-      {mounted ? createPortal(rail, document.body) : null}
+    <div
+      className={cn(
+        'haven-shell min-h-screen w-full relative',
+        hideRail && 'haven-shell--no-rail',
+      )}
+    >
+      {mounted && !hideRail ? createPortal(rail, document.body) : null}
 
+      {!hideRail && (
       <header className="haven-shell__mobile-header md:hidden">
         <HavenMark expanded />
         <nav className="flex items-center gap-1" aria-label="Mobile">
@@ -202,6 +208,7 @@ export default function AppShell({ children }) {
           })}
         </nav>
       </header>
+      )}
 
       <main className="haven-shell__main">
         <div className="haven-shell__content">{children}</div>

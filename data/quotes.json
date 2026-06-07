@@ -13,89 +13,149 @@
       "author": "Oscar Wilde"
     },
     {
-      "id": 3,
+      "id": 7,
       "chapter": "Heartbreak",
-      "text": "Never love anyone who treats you like you're ordinary.",
+      "text": "When you are in love you cannot fall asleep because reality is better than your dreams.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 8,
+      "chapter": "Heartbreak",
+      "text": "Some cause happiness wherever they go; others whenever they go.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 9,
+      "chapter": "Heartbreak",
+      "text": "Some love too much, others not enough.",
       "author": "Oscar Wilde"
     }
   ],
   "Healing": [
     {
-      "id": 4,
+      "id": 3,
       "chapter": "Healing",
       "text": "Where there is sorrow there is holy ground.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 5,
+      "id": 10,
       "chapter": "Healing",
-      "text": "With freedom, books, flowers, and the moon, who could not be happy?",
+      "text": "To love oneself is the beginning of a lifelong romance.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 6,
+      "id": 11,
       "chapter": "Healing",
-      "text": "A flower blossoms for its own joy.",
+      "text": "A man cannot be too careful in the choice of his enemies.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 19,
+      "chapter": "Healing",
+      "text": "We are all in the gutter, but some of us are looking at the stars.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 20,
+      "chapter": "Healing",
+      "text": "Keep love in your heart. A life without it is like a sunless garden when the flowers are dead.",
       "author": "Oscar Wilde"
     }
   ],
   "Self-Worth": [
     {
-      "id": 7,
+      "id": 4,
       "chapter": "Self-Worth",
-      "text": "To love oneself is the beginning of a lifelong romance.",
+      "text": "To live is the rarest thing in the world. Most people exist, that is all.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 8,
-      "chapter": "Self-Worth",
-      "text": "The aim of life is self-development.",
-      "author": "Oscar Wilde"
-    },
-    {
-      "id": 9,
+      "id": 12,
       "chapter": "Self-Worth",
       "text": "Be yourself; everyone else is already taken.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 13,
+      "chapter": "Self-Worth",
+      "text": "To define is to limit.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 14,
+      "chapter": "Self-Worth",
+      "text": "I have the simplest tastes. I am always satisfied with the best.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 21,
+      "chapter": "Self-Worth",
+      "text": "Selfishness is not living as one wishes to live, it is asking others to live as one wishes to live.",
       "author": "Oscar Wilde"
     }
   ],
   "Letting Go": [
     {
-      "id": 10,
+      "id": 5,
       "chapter": "Letting Go",
       "text": "No man is rich enough to buy back his past.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 11,
+      "id": 15,
       "chapter": "Letting Go",
-      "text": "The past is of no importance. It is with the future that we have to deal.",
+      "text": "Some cause happiness wherever they go; others whenever they go.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 12,
+      "id": 16,
       "chapter": "Letting Go",
-      "text": "Every saint has a past, and every sinner has a future.",
+      "text": "Experience is merely the name men give to their mistakes.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 22,
+      "chapter": "Letting Go",
+      "text": "The truth is rarely pure and never simple.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 23,
+      "chapter": "Letting Go",
+      "text": "Nothing that one ignores is ever wholly lost to one.",
       "author": "Oscar Wilde"
     }
   ],
   "Moving On": [
     {
-      "id": 13,
+      "id": 6,
       "chapter": "Moving On",
-      "text": "Experience is simply the name we give our mistakes.",
+      "text": "Every saint has a past, and every sinner has a future.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 14,
+      "id": 17,
       "chapter": "Moving On",
-      "text": "We are all in the gutter, but some of us are looking at the stars.",
+      "text": "The world is a stage, but the play is badly cast.",
       "author": "Oscar Wilde"
     },
     {
-      "id": 15,
+      "id": 18,
       "chapter": "Moving On",
-      "text": "To live is the rarest thing in the world. Most people exist, that is all.",
+      "text": "The only way to get rid of temptation is to yield to it… I can resist everything except temptation.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 24,
+      "chapter": "Moving On",
+      "text": "There is only one thing in the world worse than being talked about, and that is not being talked about.",
+      "author": "Oscar Wilde"
+    },
+    {
+      "id": 25,
+      "chapter": "Moving On",
+      "text": "We live in an age when unnecessary things are our only necessities.",
       "author": "Oscar Wilde"
     }
   ]

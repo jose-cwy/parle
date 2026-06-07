@@ -209,13 +209,19 @@ body.body--parler-landing .pss-nav-drawer {
 body.body--parler-landing .pss-nav-drawer__header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1.25rem 1.25rem 0.85rem;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 body.body--parler-landing .pss-nav-drawer__eyebrow {
-  display: none;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
 body.body--parler-landing .pss-nav-drawer__close {
@@ -283,96 +289,6 @@ body.body--parler-landing .pss-nav-drawer__icon {
 
 body.body--parler-landing .pss-nav-drawer__label {
   flex: 1;
-}
-
-body.body--parler-landing .pss-nav-drawer__divider {
-  height: 1px;
-  margin: 0.55rem 0.85rem;
-  background: color-mix(in srgb, var(--border) 70%, transparent);
-  flex-shrink: 0;
-}
-
-body.body--parler-landing .pss-nav-drawer__link--primary {
-  font-family: var(--font-haven-serif);
-  font-size: 1.125rem;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-}
-
-body.body--parler-landing .pss-nav-drawer__link--auth {
-  gap: 0;
-  padding: 0.55rem 0.65rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--muted-foreground);
-}
-
-body.body--parler-landing .pss-nav-drawer__link--auth:hover {
-  color: var(--foreground);
-  background: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
-body.body--parler-landing .pss-nav-drawer__link--signout {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: auto;
-}
-
-body.body--parler-landing .pss-nav-drawer__link--secondary {
-  gap: 0;
-  padding: 0.45rem 0.65rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: color-mix(in srgb, var(--foreground) 45%, transparent);
-}
-
-body.body--parler-landing .pss-nav-drawer__link--secondary:hover {
-  color: color-mix(in srgb, var(--foreground) 65%, transparent);
-  background: transparent;
-}
-
-body.body--parler-landing .pss-nav-drawer__auth-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.1rem 0.65rem 0.2rem;
-}
-
-body.body--parler-landing .pss-nav-drawer__auth-inline .pss-nav-drawer__link--secondary {
-  width: auto;
-  padding: 0.35rem 0;
-  display: inline-flex;
-}
-
-body.body--parler-landing .pss-nav-drawer__auth-sep {
-  color: color-mix(in srgb, var(--foreground) 45%, transparent);
-  font-size: 0.8125rem;
-  line-height: 1;
-  user-select: none;
-}
-
-body.body--parler-landing .pss-nav-drawer__auth-user {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.35rem 0.65rem;
-}
-
-body.body--parler-landing .pss-nav-drawer__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
-  background: var(--accent);
-  color: var(--primary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1;
-  text-transform: uppercase;
 }
 
 body.body--parler-landing .pss-menu-enter {

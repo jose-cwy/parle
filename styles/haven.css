@@ -230,6 +230,10 @@ body.body--app .page-fade {
   .haven-shell__main {
     padding-left: 110px;
   }
+
+  .haven-shell--no-rail .haven-shell__main {
+    padding-left: 0;
+  }
 }
 
 .haven-shell__content {

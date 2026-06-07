@@ -1,58 +1,205 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Bookmark, BookmarkCheck } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { buildFallbackSpreads, buildSpreads, getPanelDimensions } from '../../lib/haven/bookLayout'
+import { defaultIntro, QuoteTextContent, quoteSizeClass } from '../../lib/haven/bookQuotesUi'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
+import BookMeasureLayer from './BookMeasureLayer'
 
-const CHAPTER_INTROS = {
-  Heartbreak:
-    'For the first nights, when the room is too quiet and the phone is too loud.',
-  Healing: 'For the days you are learning to breathe again.',
-  'Self-Worth': 'For remembering that being left does not make you less.',
-  'Letting Go': 'For loosening your grip without denying what mattered.',
-  'Moving On': 'For the small steps forward, even when they feel quiet.',
+const PAGE_SLIDE = {
+  duration: 0.3,
+  ease: 'easeInOut',
 }
 
-function defaultIntro(chapter) {
-  return CHAPTER_INTROS[chapter] || 'Words for where you are right now.'
+const spreadVariants = {
+  enter: (d) => ({
+    opacity: 0,
+    x: d > 0 ? 40 : -40,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+  },
+  exit: (d) => ({
+    opacity: 0,
+    x: d > 0 ? -40 : 40,
+  }),
+}
+
+function CornerFlourish({ className }) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 20 L4 4 L20 4"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 8 Q8 4 14 4"
+        stroke="currentColor"
+        strokeWidth="0.75"
+        strokeLinecap="round"
+        opacity="0.7"
+      />
+    </svg>
+  )
 }
 
 function QuoteAttribution({ quote }) {
   return (
-    <p className="text-[12px] text-muted-foreground leading-snug">
+    <p className="haven-quotes-book__quote-author">
       — {quote.author || 'Unknown'}
     </p>
   )
 }
 
-function QuoteBlock({ quote, chapter, saved, onSave, large }) {
+function QuoteBlock({ quote, chapter, saved, onSave }) {
+  const isSaved = saved?.id === quote.id
+
   return (
-    <div className="group">
+    <div className="haven-quotes-book__quote">
       <blockquote
         className={cn(
-          'font-serif text-foreground leading-snug',
-          large ? 'text-2xl md:text-[26px] mt-3' : 'text-[18px] md:text-[19px]',
+          'haven-quotes-book__quote-text font-serif text-foreground',
+          quoteSizeClass(quote.text),
         )}
       >
-        {quote.text}
+        <QuoteTextContent text={quote.text} />
       </blockquote>
-      <div className="mt-3 flex items-start justify-between gap-3">
+      <div className="haven-quotes-book__quote-meta">
         <QuoteAttribution quote={quote} />
         <button
           type="button"
           onClick={() => onSave(quote, chapter)}
           className={cn(
-            'inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[12px] transition-all shrink-0',
-            saved
+            'haven-quotes-book__quote-bookmark inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[12px] transition-all shrink-0',
+            isSaved
               ? 'bg-rose/15 text-clay border border-rose/40'
               : 'text-muted-foreground hover:text-clay border border-transparent hover:bg-secondary',
           )}
-          aria-pressed={saved}
+          aria-pressed={isSaved}
         >
-          {saved ? <BookmarkCheck size={13} strokeWidth={2} /> : <Bookmark size={13} strokeWidth={1.7} />}
-          {saved ? 'Kept' : 'Keep this line'}
+          {isSaved ? <BookmarkCheck size={13} strokeWidth={2} /> : <Bookmark size={13} strokeWidth={1.7} />}
+          {isSaved ? 'Kept' : 'Keep this line'}
         </button>
       </div>
+    </div>
+  )
+}
+
+function PanelQuoteList({ quotes, chapter, saved, onSave, showMoreComing }) {
+  return (
+    <div className="haven-quotes-book__panel-quotes">
+      {quotes.map((quote) => (
+        <QuoteBlock
+          key={quote.id}
+          quote={quote}
+          chapter={chapter}
+          saved={saved}
+          onSave={onSave}
+        />
+      ))}
+      {showMoreComing ? (
+        <p className="haven-quotes-book__more-quotes">More quotes coming...</p>
+      ) : null}
+    </div>
+  )
+}
+
+function Spread1LeftPanel({ chapter, quotes, saved, onSave, showMoreComing }) {
+  return (
+    <div className="haven-quotes-book__page haven-quotes-book__page--left">
+      <div className="haven-quotes-book__page-inner haven-quotes-book__page-inner--spread1">
+        <div className="haven-quotes-book__spread1-header">
+          <p className="haven-quotes-book__chapter-label">Chapter</p>
+          <h2 className="haven-quotes-book__chapter-title font-serif">{chapter}</h2>
+          <p className="haven-quotes-book__chapter-desc">{defaultIntro(chapter)}</p>
+          <hr className="haven-quotes-book__chapter-divider" aria-hidden="true" />
+        </div>
+        <PanelQuoteList
+          quotes={quotes}
+          chapter={chapter}
+          saved={saved}
+          onSave={onSave}
+          showMoreComing={showMoreComing}
+        />
+      </div>
+    </div>
+  )
+}
+
+function QuotePanel({ side, quotes, chapter, saved, onSave, showMoreComing }) {
+  return (
+    <div
+      className={cn(
+        'haven-quotes-book__page',
+        side === 'left' ? 'haven-quotes-book__page--left' : 'haven-quotes-book__page--right',
+      )}
+    >
+      <div className="haven-quotes-book__page-inner haven-quotes-book__page-inner--quotes">
+        <PanelQuoteList
+          quotes={quotes}
+          chapter={chapter}
+          saved={saved}
+          onSave={onSave}
+          showMoreComing={showMoreComing}
+        />
+      </div>
+    </div>
+  )
+}
+
+function BookSpread({ spread, chapter, saved, onSave }) {
+  if (spread.leftIsChapter) {
+    return (
+      <div className="haven-quotes-book__spread">
+        <Spread1LeftPanel
+          chapter={chapter}
+          quotes={spread.left}
+          saved={saved}
+          onSave={onSave}
+          showMoreComing={spread.leftShowMore}
+        />
+        <QuotePanel
+          side="right"
+          quotes={spread.right}
+          chapter={chapter}
+          saved={saved}
+          onSave={onSave}
+          showMoreComing={spread.rightShowMore}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="haven-quotes-book__spread">
+      <QuotePanel
+        side="left"
+        quotes={spread.left}
+        chapter={chapter}
+        saved={saved}
+        onSave={onSave}
+        showMoreComing={spread.leftShowMore}
+      />
+      <QuotePanel
+        side="right"
+        quotes={spread.right}
+        chapter={chapter}
+        saved={saved}
+        onSave={onSave}
+        showMoreComing={spread.rightShowMore}
+      />
     </div>
   )
 }
@@ -60,10 +207,15 @@ function QuoteBlock({ quote, chapter, saved, onSave, large }) {
 export default function HavenQuotes() {
   const [chapters, setChapters] = useState(null)
   const [active, setActive] = useState('')
-  const [fadeKey, setFadeKey] = useState(0)
+  const [spread, setSpread] = useState(0)
+  const [direction, setDirection] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [panelDims, setPanelDims] = useState({ panelHeight: 0, panelWidth: 0 })
+  const [measures, setMeasures] = useState(null)
   const { saved, toggleQuote } = useSavedQuote()
+  const reduceMotion = useReducedMotion()
+  const bookRef = useRef(null)
 
   useTopProgress(loading)
 
@@ -86,6 +238,29 @@ export default function HavenQuotes() {
       .finally(() => setLoading(false))
   }, [])
 
+  const updatePanelDims = useCallback(() => {
+    if (!bookRef.current) return
+    setPanelDims(getPanelDimensions(bookRef.current))
+  }, [])
+
+  useEffect(() => {
+    updatePanelDims()
+    if (!bookRef.current) return undefined
+
+    const observer = new ResizeObserver(updatePanelDims)
+    observer.observe(bookRef.current)
+    window.addEventListener('resize', updatePanelDims)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updatePanelDims)
+    }
+  }, [updatePanelDims, loading])
+
+  const handleMeasured = useCallback((next) => {
+    setMeasures(next)
+  }, [])
+
   async function markRead() {
     await fetch('/api/quotes/read', { method: 'POST' }).catch(() => null)
   }
@@ -93,8 +268,50 @@ export default function HavenQuotes() {
   function pickChapter(c) {
     if (c === active) return
     setActive(c)
-    setFadeKey((k) => k + 1)
+    setSpread(0)
+    setDirection(1)
+    setMeasures(null)
     markRead()
+  }
+
+  const quotes = chapters?.[active] || []
+
+  const spreads = useMemo(() => {
+    if (!quotes.length) {
+      return [{ left: [], right: [], leftIsChapter: true, leftShowMore: false, rightShowMore: false }]
+    }
+
+    if (!measures || !panelDims.panelHeight) {
+      return buildFallbackSpreads(quotes)
+    }
+
+    return buildSpreads(quotes, {
+      panelHeight: panelDims.panelHeight,
+      quoteHeights: measures.quoteHeights,
+      spread1HeaderHeight: measures.spread1HeaderHeight,
+    })
+  }, [quotes, measures, panelDims.panelHeight])
+
+  const totalSpreads = spreads.length
+  const safeSpread = Math.min(spread, Math.max(totalSpreads - 1, 0))
+  const currentSpread = spreads[safeSpread]
+
+  useEffect(() => {
+    if (spread > totalSpreads - 1) {
+      setSpread(Math.max(0, totalSpreads - 1))
+    }
+  }, [spread, totalSpreads])
+
+  function goPrev() {
+    if (safeSpread <= 0) return
+    setDirection(-1)
+    setSpread((s) => Math.max(0, s - 1))
+  }
+
+  function goNext() {
+    if (safeSpread >= totalSpreads - 1) return
+    setDirection(1)
+    setSpread((s) => Math.min(totalSpreads - 1, s + 1))
   }
 
   if (loading) {
@@ -120,9 +337,8 @@ export default function HavenQuotes() {
     )
   }
 
-  const quotes = chapters[active] || []
-  const featured = quotes[0]
-  const rest = quotes.slice(1)
+  const showPager = totalSpreads > 1
+  const spreadKey = `${active}-${safeSpread}-${totalSpreads}`
 
   return (
     <div className="space-y-7">
@@ -137,7 +353,7 @@ export default function HavenQuotes() {
       </header>
 
       <div className="rise rise-1 grid md:grid-cols-[160px_minmax(0,1fr)] gap-5 items-start">
-        <nav className="md:sticky md:top-8 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible">
+        <nav className="md:sticky md:top-8 flex md:flex-col gap-0 overflow-x-auto md:overflow-visible haven-quotes-book__chapter-nav">
           <p className="hidden md:block text-[10px] uppercase tracking-[0.24em] text-muted-foreground mb-2 px-2">
             Chapters
           </p>
@@ -149,7 +365,7 @@ export default function HavenQuotes() {
                 type="button"
                 onClick={() => pickChapter(c)}
                 className={cn(
-                  'relative text-left whitespace-nowrap px-3.5 py-2.5 rounded-xl text-[13.5px] transition-colors',
+                  'haven-quotes-book__chapter-btn relative text-left whitespace-nowrap px-3.5 py-2.5 rounded-xl text-[13.5px] transition-colors',
                   isActive
                     ? 'bg-secondary text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50',
@@ -165,58 +381,70 @@ export default function HavenQuotes() {
         </nav>
 
         <div className="relative">
-          <div
-            className="relative grid md:grid-cols-2 rounded-[26px] overflow-hidden border border-border shadow-soft"
-            style={{
-              background:
-                'linear-gradient(90deg, #fdfbf7 0%, #f5f0ea 49%, #e8e4de 50%, #f5f0ea 51%, #fdfbf7 100%)',
-            }}
-          >
-            <div key={`L-${fadeKey}`} className="p-7 md:p-10 min-h-[420px] page-fade">
-              <p className="text-[11px] uppercase tracking-[0.26em] text-clay">Chapter</p>
-              <h2 className="font-serif text-3xl md:text-4xl mt-2 text-foreground">{active}</h2>
-              <div className="mt-4 h-px w-12 bg-clay/60" />
-              <p className="mt-6 font-serif text-[17px] leading-8 text-foreground/85 italic">
-                {defaultIntro(active)}
-              </p>
+          <div ref={bookRef} className="haven-quotes-book">
+            <CornerFlourish className="haven-quotes-book__corner haven-quotes-book__corner--tl" />
+            <CornerFlourish className="haven-quotes-book__corner haven-quotes-book__corner--tr" />
+            <CornerFlourish className="haven-quotes-book__corner haven-quotes-book__corner--bl" />
+            <CornerFlourish className="haven-quotes-book__corner haven-quotes-book__corner--br" />
 
-              <div className="mt-8 pt-6 border-t border-dashed border-border">
-                <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
-                  Opening line
-                </p>
-                {featured && (
-                  <QuoteBlock
-                    quote={featured}
-                    chapter={active}
-                    saved={saved?.id === featured.id}
-                    onSave={toggleQuote}
-                    large
-                  />
-                )}
-              </div>
-            </div>
+            <BookMeasureLayer
+              key={active}
+              quotes={quotes}
+              chapter={active}
+              panelWidth={panelDims.panelWidth}
+              onMeasured={handleMeasured}
+            />
 
-            <div key={`R-${fadeKey}`} className="p-7 md:p-10 min-h-[420px] page-fade">
-              <p className="text-[11px] uppercase tracking-[0.26em] text-muted-foreground">
-                More from this chapter
-              </p>
-              <ul className="mt-5 space-y-7">
-                {rest.map((q) => (
-                  <li key={q.id}>
-                    <QuoteBlock
-                      quote={q}
+            <div className="haven-quotes-book__spread-stage">
+              {currentSpread ? (
+                <AnimatePresence mode="wait" custom={direction}>
+                  <motion.div
+                    key={spreadKey}
+                    custom={direction}
+                    variants={reduceMotion ? undefined : spreadVariants}
+                    initial={reduceMotion ? false : 'enter'}
+                    animate="center"
+                    exit="exit"
+                    transition={PAGE_SLIDE}
+                    className="haven-quotes-book__spread-motion"
+                  >
+                    <BookSpread
+                      spread={currentSpread}
                       chapter={active}
-                      saved={saved?.id === q.id}
+                      saved={saved}
                       onSave={toggleQuote}
                     />
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-10 text-center text-[10.5px] text-muted-foreground/80 tracking-widest">
-                · · ·
-              </p>
+                  </motion.div>
+                </AnimatePresence>
+              ) : null}
             </div>
           </div>
+
+          {showPager ? (
+            <nav className="haven-quotes-book__pager" aria-label="Quote pages">
+              <button
+                type="button"
+                className="haven-quotes-book__pager-btn"
+                onClick={goPrev}
+                disabled={safeSpread <= 0}
+                aria-label="Previous page"
+              >
+                ←
+              </button>
+              <span className="haven-quotes-book__pager-count" aria-live="polite">
+                {safeSpread + 1} / {totalSpreads}
+              </span>
+              <button
+                type="button"
+                className="haven-quotes-book__pager-btn"
+                onClick={goNext}
+                disabled={safeSpread >= totalSpreads - 1}
+                aria-label="Next page"
+              >
+                →
+              </button>
+            </nav>
+          ) : null}
         </div>
       </div>
 

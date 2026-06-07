@@ -1,0 +1,329 @@
+/* Quotes Book — open spread, paper texture, spine shadow */
+
+.haven-quotes-book {
+  position: relative;
+  width: 100%;
+  height: 72vh;
+  min-height: 520px;
+  max-height: 680px;
+  border-radius: 26px;
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    90deg,
+    #fdfbf7 0%,
+    #f5f0ea 49%,
+    #e8e4de 50%,
+    #f5f0ea 51%,
+    #fdfbf7 100%
+  );
+  box-shadow:
+    0 4px 6px rgba(26, 26, 26, 0.03),
+    0 18px 44px rgba(26, 26, 26, 0.08);
+  overflow: hidden;
+}
+
+.haven-quotes-book__measure {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.haven-quotes-book__spread-stage {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.haven-quotes-book__spread-motion {
+  height: 100%;
+}
+
+.haven-quotes-book__spread {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+}
+
+@media (min-width: 768px) {
+  .haven-quotes-book__spread {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+}
+
+.haven-quotes-book__page {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.haven-quotes-book__page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: multiply;
+}
+
+.haven-quotes-book__page--left {
+  z-index: 1;
+  box-shadow: inset -14px 0 22px -12px rgba(26, 26, 26, 0.14);
+}
+
+.haven-quotes-book__page--right {
+  z-index: 0;
+  box-shadow: inset 14px 0 22px -12px rgba(26, 26, 26, 0.14);
+}
+
+.haven-quotes-book__page-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.haven-quotes-book__page-inner--spread1 {
+  gap: 0;
+}
+
+.haven-quotes-book__spread1-header {
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.haven-quotes-book__chapter-label {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+.haven-quotes-book__chapter-title {
+  margin: 8px 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+
+.haven-quotes-book__chapter-desc {
+  margin: 12px 0 0;
+  font-family: var(--font-haven-serif), Georgia, serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: color-mix(in srgb, var(--foreground) 85%, transparent);
+}
+
+.haven-quotes-book__chapter-divider {
+  display: block;
+  margin: 20px 0 0;
+  width: 100%;
+  height: 0;
+  border: none;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, var(--foreground));
+  opacity: 0.35;
+}
+
+.haven-quotes-book__panel-quotes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-evenly;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.haven-quotes-book__page-inner--quotes .haven-quotes-book__panel-quotes {
+  flex: 1;
+  min-height: 0;
+}
+
+.haven-quotes-book__page-inner--spread1 .haven-quotes-book__panel-quotes {
+  flex: 1;
+  min-height: 0;
+}
+
+.haven-quotes-book__quote {
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.haven-quotes-book__quote:last-of-type {
+  margin-bottom: 0;
+}
+
+.haven-quotes-book__quote-text {
+  margin: 0;
+  padding: 0;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+.haven-quotes-book__quote-tail {
+  white-space: nowrap;
+}
+
+.haven-quotes-book__quote-text--short {
+  font-size: 1.05rem;
+}
+
+.haven-quotes-book__quote-text--medium {
+  font-size: 0.95rem;
+}
+
+.haven-quotes-book__quote-text--long {
+  font-size: 0.875rem;
+}
+
+.haven-quotes-book__quote-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 10px;
+  flex-wrap: nowrap;
+}
+
+.haven-quotes-book__quote-author {
+  margin: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+
+.haven-quotes-book__quote-bookmark {
+  flex-shrink: 0;
+}
+
+.haven-quotes-book__quote-bookmark--measure {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+.haven-quotes-book__more-quotes {
+  margin: 28px 0 0;
+  font-family: var(--font-haven-serif), Georgia, serif;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--muted-foreground);
+  opacity: 0.4;
+}
+
+.haven-quotes-book__corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  color: var(--clay);
+  opacity: 0.3;
+  z-index: 2;
+}
+
+.haven-quotes-book__corner--tl {
+  top: 12px;
+  left: 12px;
+}
+
+.haven-quotes-book__corner--tr {
+  top: 12px;
+  right: 12px;
+  transform: scaleX(-1);
+}
+
+.haven-quotes-book__corner--bl {
+  bottom: 12px;
+  left: 12px;
+  transform: scaleY(-1);
+}
+
+.haven-quotes-book__corner--br {
+  bottom: 12px;
+  right: 12px;
+  transform: scale(-1, -1);
+}
+
+.haven-quotes-book__chapter-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.haven-quotes-book__chapter-btn {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.haven-quotes-book__chapter-btn:last-child {
+  border-bottom: none;
+}
+
+.haven-quotes-book__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.haven-quotes-book__pager-btn {
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.9375rem;
+  line-height: 1;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.18s ease, opacity 0.18s ease;
+}
+
+.haven-quotes-book__pager-btn:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.haven-quotes-book__pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.haven-quotes-book__pager-count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .haven-quotes-book__spread-stage * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

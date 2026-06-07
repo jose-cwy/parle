@@ -4,6 +4,7 @@ import { MessageCircle, BookHeart, BookOpen, Bookmark } from 'lucide-react'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { displayName, timeGreeting } from '../../lib/haven/dates'
+import ParleSettings from './ParleSettings'
 
 function SavedQuoteCard({ saved }) {
   return (
@@ -172,6 +173,8 @@ export default function HavenDashboard({ user }) {
           />
         </div>
       </section>
+
+      <ParleSettings />
     </div>
   )
 }

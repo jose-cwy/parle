@@ -69,3 +69,8 @@ CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_memory(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_memory_updated ON user_memory(updated_at);
 CREATE INDEX IF NOT EXISTS idx_quote_favorites_user ON quote_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_letters_to_self_user_completed ON letters_to_self(user_id, is_completed);
+
+-- parlé chatbot (see database/parle_chat.sql for full migration)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_session_summary TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
