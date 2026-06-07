@@ -1,6 +1,18 @@
 import Link from 'next/link'
-import { Lock, Menu, Settings, SquarePen, Trash2, X } from 'lucide-react'
+import { useRouter } from 'next/router'
+import { useState } from 'react'
+import {
+  ChevronLeft,
+  Lock,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  SquarePen,
+  Trash2,
+} from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { ParleSettingsPopup } from './ParleSettings'
 
 function userDisplayName(user) {
   if (!user) return 'Guest'
@@ -20,10 +32,22 @@ export default function ParleChatSidebar({
   activeSessionId,
   mobileOpen,
   onCloseMobile,
+  onToggleCollapse,
   onNewChat,
   onSelectSession,
   onDeleteSession,
 }) {
+  const router = useRouter()
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  function handleBack() {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+      return
+    }
+    router.push(isAuthed ? '/dashboard' : '/')
+  }
+
   return (
     <>
       {mobileOpen && (
@@ -44,25 +68,40 @@ export default function ParleChatSidebar({
       >
         <div className="parle-chat-sidebar__header">
           <div className="parle-chat-sidebar__brand-row">
-            <Link href="/" className="parle-chat-sidebar__back">
-              ← back
-            </Link>
-            <span className="parle-chat-sidebar__wordmark font-serif text-[1.35rem] leading-none text-foreground tracking-tight">
-              parlé
-            </span>
             <button
               type="button"
-              className="md:hidden ml-auto h-8 w-8 shrink-0 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-black/[0.04] transition"
-              aria-label="Close menu"
-              onClick={onCloseMobile}
+              onClick={handleBack}
+              className="parle-chat-sidebar__back-btn"
+              aria-label="Go back"
+              title="Go back"
             >
-              <X size={18} strokeWidth={1.75} />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
+            <Link
+              href="/dashboard"
+              className="parle-chat-sidebar__wordmark parle-chat-sidebar__wordmark-link font-serif text-[1.35rem] leading-none text-foreground tracking-tight"
+            >
+              parlé
+            </Link>
+            <div className="parle-chat-sidebar__brand-actions">
+              <button
+                type="button"
+                className="parle-chat-sidebar__collapse-btn hidden md:grid"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+                onClick={onToggleCollapse}
+              >
+                <PanelLeftClose size={17} strokeWidth={1.75} />
+              </button>
+            </div>
           </div>
 
           <button
             type="button"
-            onClick={onNewChat}
+            onClick={() => {
+              onNewChat()
+              onCloseMobile?.()
+            }}
             className="mt-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/80 text-[13px] text-foreground/90 hover:bg-black/[0.03] transition"
           >
             <SquarePen size={15} strokeWidth={1.75} className="shrink-0 opacity-70" />
@@ -83,7 +122,12 @@ export default function ParleChatSidebar({
                       <button
                         type="button"
                         disabled={disabled}
-                        onClick={() => !disabled && onSelectSession(session)}
+                        onClick={() => {
+                          if (!disabled) {
+                            onSelectSession(session)
+                            onCloseMobile?.()
+                          }
+                        }}
                         className={cn(
                           'w-full text-left px-3 py-2.5 rounded-lg text-[13px] leading-snug transition',
                           showDelete ? 'pr-9' : '',
@@ -145,20 +189,21 @@ export default function ParleChatSidebar({
 
           {isAuthed && user ? (
             <div className="flex items-center gap-2 px-2 py-2 rounded-xl mx-1 hover:bg-black/[0.03] transition">
-              <span className="h-8 w-8 shrink-0 rounded-full bg-primary/15 text-primary text-[13px] font-medium grid place-items-center">
+              <span className="parle-chat-sidebar__avatar" aria-hidden="true">
                 {userInitial(user)}
               </span>
               <span className="flex-1 min-w-0 text-[13px] text-foreground truncate">
                 {userDisplayName(user)}
               </span>
-              <Link
-                href="/dashboard"
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(true)}
                 className="h-8 w-8 shrink-0 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground transition"
                 aria-label="Settings"
                 title="Settings"
               >
                 <Settings size={16} strokeWidth={1.75} />
-              </Link>
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-4 px-3 py-2 text-[13px]">
@@ -172,6 +217,12 @@ export default function ParleChatSidebar({
           )}
         </div>
       </aside>
+
+      <ParleSettingsPopup
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        isAuthed={isAuthed}
+      />
     </>
   )
 }
@@ -181,10 +232,24 @@ export function ParleChatMobileMenuButton({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="parle-chat-main__menu-btn md:hidden"
+      className="parle-chat-sidebar-toggle parle-chat-sidebar-toggle--mobile md:hidden"
       aria-label="Open chat menu"
     >
       <Menu size={20} strokeWidth={1.75} />
+    </button>
+  )
+}
+
+export function ParleChatSidebarExpandButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="parle-chat-sidebar-toggle parle-chat-sidebar-toggle--desktop hidden md:grid"
+      aria-label="Expand sidebar"
+      title="Expand sidebar"
+    >
+      <PanelLeftOpen size={20} strokeWidth={1.75} />
     </button>
   )
 }

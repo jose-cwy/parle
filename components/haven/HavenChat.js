@@ -7,7 +7,10 @@ import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
 import ChatInputBar from './ChatInputBar'
-import ParleChatSidebar from './ParleChatSidebar'
+import ParleChatSidebar, {
+  ParleChatMobileMenuButton,
+  ParleChatSidebarExpandButton,
+} from './ParleChatSidebar'
 import {
   DEFAULT_MODE,
   MODE_SWITCH_ACK,
@@ -27,6 +30,7 @@ import {
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
 
 const CURRENT_SESSION_ID = 'current-live'
+const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
 
 function buildConversationTitle(msgs) {
   const first = (msgs || []).find((m) => m.role === 'user')
@@ -43,13 +47,35 @@ function formatSessionDate() {
   return `${month.toUpperCase()} ${day}`
 }
 
-function formatMessageTime(ts) {
-  if (!ts) return null
-  const date = new Date(ts)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+function Bubble({ msg }) {
+  const isYou = msg.role === 'user'
+
+  if (!isYou) {
+    return (
+      <article className="parle-chat-msg parle-chat-msg--assistant">
+        <p className="parle-chat-msg__body">{msg.text}</p>
+      </article>
+    )
+  }
+
+  return (
+    <article className="parle-chat-msg parle-chat-msg--user">
+      <div className="parle-chat-msg__bubble">{msg.text}</div>
+    </article>
+  )
 }
 
+function TypingIndicator() {
+  return (
+    <div className="parle-chat-msg parle-chat-msg--assistant parle-chat-msg--typing" aria-live="polite">
+      <div className="parle-chat-msg__typing-dots">
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse" />
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:150ms]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:300ms]" />
+      </div>
+    </div>
+  )
+}
 
 function SessionHeader() {
   return (
@@ -112,41 +138,6 @@ function EntryScreen({ returningOpening, onSelectMode }) {
   )
 }
 
-function Bubble({ msg }) {
-  const isYou = msg.role === 'user'
-  const time = formatMessageTime(msg.at)
-
-  if (!isYou) {
-    return (
-      <article className="parle-chat-msg parle-chat-msg--assistant">
-        <span className="parle-chat-msg__label">parlé</span>
-        <p className="parle-chat-msg__body">{msg.text}</p>
-        {time ? <time className="parle-chat-msg__time">{time}</time> : null}
-      </article>
-    )
-  }
-
-  return (
-    <article className="parle-chat-msg parle-chat-msg--user">
-      <div className="parle-chat-msg__bubble">{msg.text}</div>
-      {time ? <time className="parle-chat-msg__time">{time}</time> : null}
-    </article>
-  )
-}
-
-function TypingIndicator() {
-  return (
-    <div className="parle-chat-msg parle-chat-msg--assistant parle-chat-msg--typing" aria-live="polite">
-      <span className="parle-chat-msg__label">parlé</span>
-      <div className="parle-chat-msg__typing-dots">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse" />
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:150ms]" />
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:300ms]" />
-      </div>
-    </div>
-  )
-}
-
 function createSessionState() {
   return {
     sessionId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -182,6 +173,8 @@ export default function HavenChat() {
   const [sidebarSessions, setSidebarSessions] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
   const [archivesRevision, setArchivesRevision] = useState(0)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const sessionRef = useRef(createSessionState())
   const lastRecapAt = useRef(0)
   const messagesRef = useRef(messages)
@@ -189,6 +182,37 @@ export default function HavenChat() {
   const { saved: savedQuote, toggleQuote } = useSavedQuote()
 
   useTopProgress(messages === null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
+      if (saved === 'true') setSidebarCollapsed(true)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }, [])
+
+  const expandSidebar = useCallback(() => {
+    setSidebarCollapsed(false)
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, 'false')
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   const visibleMessages = (messages || []).filter(
     (m) => m.role === 'user' || m.role === 'assistant',
@@ -740,20 +764,31 @@ export default function HavenChat() {
     (isAuthed && (visibleMessages.length > 0 || chatMode) ? CURRENT_SESSION_ID : null)
 
   return (
-    <div className="parle-chat-layout">
+    <div
+      className={cn(
+        'parle-chat-layout',
+        sidebarCollapsed && 'parle-chat-layout--sidebar-collapsed',
+      )}
+    >
       <ParleChatSidebar
         isAuthed={isAuthed}
         user={user}
         sessions={sidebarSessions}
         activeSessionId={resolvedActiveSessionId}
-        mobileOpen={false}
-        onCloseMobile={() => {}}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        onToggleCollapse={toggleSidebarCollapsed}
         onNewChat={clearChat}
         onSelectSession={handleSelectSession}
         onDeleteSession={handleDeleteSession}
       />
 
       <div className="parle-chat-main">
+        <ParleChatMobileMenuButton onClick={() => setMobileSidebarOpen(true)} />
+        {sidebarCollapsed ? (
+          <ParleChatSidebarExpandButton onClick={expandSidebar} />
+        ) : null}
+
         <div ref={scrollRef} className="parle-chat-main__scroll">
           <div className="parle-chat-main__scroll-inner">
           <SessionHeader />
