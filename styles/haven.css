@@ -243,9 +243,71 @@ body.body--app .page-fade {
   padding: 2rem 1.25rem;
 }
 
+.haven-shell__content:has(> .haven-chat-center--pre) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--haven-chat-nav-height));
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.haven-shell__content:has(> .haven-chat-center--active) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: calc(100vh - var(--haven-chat-nav-height));
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.haven-chat-center {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.haven-chat-center--pre {
+  align-items: center;
+  justify-content: center;
+}
+
+.haven-chat-center--active {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--haven-chat-nav-height) - 32px);
+  height: calc(100vh - var(--haven-chat-nav-height) - 32px);
+}
+
+.haven-chat-card--active {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+:root {
+  --haven-chat-nav-height: 0px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --haven-chat-nav-height: 3.5rem;
+  }
+}
+
 @media (min-width: 768px) {
   .haven-shell__content {
     padding: 3rem 2.5rem;
+  }
+
+  .haven-shell__content:has(> .haven-chat-center--pre),
+  .haven-shell__content:has(> .haven-chat-center--active) {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 }
 

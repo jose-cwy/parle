@@ -21,14 +21,19 @@ export default async function handler(req, res) {
     crossSessionSummary,
     hiddenInjections,
     isNewSession,
+    images,
   } = req.body || {}
 
-  if (!text) return res.status(400).json({ error: 'Missing text' })
+  if (!text && !(Array.isArray(images) && images.length)) {
+    return res.status(400).json({ error: 'Missing text' })
+  }
 
-  if (containsCrisisLanguage(text)) {
+  const userText = String(text || '').trim() || '(See attached image)'
+
+  if (containsCrisisLanguage(userText)) {
     await db.query(
       'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
-      [payload.id, 'user', text, new Date()],
+      [payload.id, 'user', userText, new Date()],
     )
     await db.query(
       'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
@@ -39,7 +44,7 @@ export default async function handler(req, res) {
 
   await db.query(
     'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
-    [payload.id, 'user', text, new Date()],
+    [payload.id, 'user', userText, new Date()],
   )
 
   const settings = await getUserChatSettings(payload.id)
@@ -69,14 +74,15 @@ export default async function handler(req, res) {
     crossSessionSummary: crossSummary,
     hiddenInjections,
     conversationHistory: recent,
-    userText: text,
+    userText,
+    images,
   })
 
   let reply = ''
   try {
     reply = await openaiChatComplete({ messages, temperature: 0.65 })
   } catch (error) {
-    reply = `Yeah, that's a lot. ${String(text).slice(0, 120)}. What's sitting heaviest right now?`
+    reply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
     console.error('chat_model_error', error)
   }
 

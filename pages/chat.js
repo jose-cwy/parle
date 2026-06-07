@@ -3,7 +3,7 @@ import HavenChat from '../components/haven/HavenChat'
 
 export default function Chat() {
   return (
-    <AppShell>
+    <AppShell hideRail>
       <HavenChat />
     </AppShell>
   )

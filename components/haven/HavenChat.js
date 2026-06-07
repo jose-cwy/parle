@@ -1,19 +1,71 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Bookmark, BookmarkCheck, Send, X } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Lock, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
+import ChatInputBar from './ChatInputBar'
+import ParleChatSidebar from './ParleChatSidebar'
 import {
-  MODES,
   DEFAULT_MODE,
   MODE_SWITCH_ACK,
   DONT_TEXT_OPENING,
   getModeLabel,
+  getModeById,
+  getEntryChipLabel,
+  getEntryModes,
 } from '../../lib/parle/modes'
+import {
+  getChatArchives,
+  getChatArchiveById,
+  saveChatArchive,
+  removeChatArchive,
+  formatSessionListDate,
+} from '../../lib/parle/chatArchives'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
+
+const CURRENT_SESSION_ID = 'current-live'
+
+function buildConversationTitle(msgs) {
+  const first = (msgs || []).find((m) => m.role === 'user')
+  if (first?.text) {
+    const trimmed = String(first.text).trim()
+    return trimmed.length > 48 ? `${trimmed.slice(0, 48)}…` : trimmed
+  }
+  return 'New conversation'
+}
+
+function formatSessionDate() {
+  const raw = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+  const [month, day] = raw.split(' ')
+  return `${month.toUpperCase()} ${day}`
+}
+
+function formatMessageTime(ts) {
+  if (!ts) return null
+  const date = new Date(ts)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
+
+function SessionHeader() {
+  return (
+    <header className="text-center px-2 pt-2 pb-8 md:pb-10">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+        SESSION · {formatSessionDate()}
+      </p>
+      <h1 className="mt-4 font-serif text-[clamp(2rem,5vw,3rem)] leading-[1.15] text-foreground">
+        A quiet place to talk.
+      </h1>
+      <p className="mt-3 text-[0.95rem] text-muted-foreground max-w-md mx-auto leading-relaxed">
+        Whatever comes out is okay. No tracking, no transcripts shared.
+      </p>
+    </header>
+  )
+}
 
 function EntryChip({ children, onClick }) {
   return (
@@ -22,7 +74,8 @@ function EntryChip({ children, onClick }) {
       onClick={onClick}
       className={cn(
         'px-3.5 py-2 rounded-full border text-[13px] transition whitespace-nowrap',
-        'border-border bg-card hover:bg-secondary hover:border-clay/35 text-foreground/90',
+        'border-border bg-card text-foreground/90',
+        'hover:bg-rose/[0.08] hover:border-clay/35',
       )}
     >
       {children}
@@ -31,27 +84,27 @@ function EntryChip({ children, onClick }) {
 }
 
 function EntryScreen({ returningOpening, onSelectMode }) {
+  const entryModes = getEntryModes()
+
   return (
-    <div className="flex flex-col px-4 md:px-8 py-6 rise">
+    <div className="pb-6">
       {returningOpening ? (
-        <div className="mb-8 flex justify-start">
-          <div className="max-w-[78%] py-3 px-5 leading-relaxed text-[15px] text-foreground rounded-[18px] rounded-bl-md bg-card border border-border/70">
-            {returningOpening}
-          </div>
+        <div className="mb-8">
+          <Bubble msg={{ role: 'assistant', text: returningOpening, at: Date.now() }} />
         </div>
       ) : null}
 
-      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground text-center">
         What do you need right now?
       </p>
-      <p className="mt-2 text-sm text-muted-foreground max-w-2xl leading-relaxed">
+      <p className="mt-2 text-sm text-muted-foreground max-w-lg mx-auto text-center leading-relaxed">
         Comfort first. Advice when you&apos;re ready. You can change this anytime.
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        {MODES.map((mode) => (
+      <div className="mt-5 flex flex-wrap gap-2 justify-center">
+        {entryModes.map((mode) => (
           <EntryChip key={mode.id} onClick={() => onSelectMode(mode)}>
-            {mode.label}
+            {getEntryChipLabel(mode.id)}
           </EntryChip>
         ))}
       </div>
@@ -61,56 +114,34 @@ function EntryScreen({ returningOpening, onSelectMode }) {
 
 function Bubble({ msg }) {
   const isYou = msg.role === 'user'
+  const time = formatMessageTime(msg.at)
+
+  if (!isYou) {
+    return (
+      <article className="parle-chat-msg parle-chat-msg--assistant">
+        <span className="parle-chat-msg__label">parlé</span>
+        <p className="parle-chat-msg__body">{msg.text}</p>
+        {time ? <time className="parle-chat-msg__time">{time}</time> : null}
+      </article>
+    )
+  }
+
   return (
-    <div className={`rise flex ${isYou ? 'justify-end' : 'justify-start'}`}>
-      <div
-        className={cn(
-          'max-w-[78%] py-3 leading-relaxed text-[15px]',
-          isYou
-            ? 'bg-secondary text-foreground rounded-[18px] rounded-br-md px-5'
-            : 'text-foreground rounded-[18px] rounded-bl-md px-5 bg-card border border-border/70',
-        )}
-      >
-        {msg.text}
-      </div>
-    </div>
+    <article className="parle-chat-msg parle-chat-msg--user">
+      <div className="parle-chat-msg__bubble">{msg.text}</div>
+      {time ? <time className="parle-chat-msg__time">{time}</time> : null}
+    </article>
   )
 }
 
 function TypingIndicator() {
   return (
-    <div className="rise flex justify-start">
-      <div className="py-3 px-5 rounded-[18px] rounded-bl-md bg-card border border-border/70 flex items-center gap-1.5">
-        <span className="h-1.5 w-1.5 rounded-full bg-clay/70 animate-pulse" />
-        <span className="h-1.5 w-1.5 rounded-full bg-clay/70 animate-pulse [animation-delay:150ms]" />
-        <span className="h-1.5 w-1.5 rounded-full bg-clay/70 animate-pulse [animation-delay:300ms]" />
-      </div>
-    </div>
-  )
-}
-
-function ModePicker({ onSelect, onClose }) {
-  return (
-    <div className="mx-4 md:mx-6 mb-2 rounded-xl border border-border bg-card/95 p-4 rise shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-          Switch mode
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground p-0.5"
-          aria-label="Close"
-        >
-          <X size={16} />
-        </button>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {MODES.map((mode) => (
-          <EntryChip key={mode.id} onClick={() => onSelect(mode)}>
-            {mode.label}
-          </EntryChip>
-        ))}
+    <div className="parle-chat-msg parle-chat-msg--assistant parle-chat-msg--typing" aria-live="polite">
+      <span className="parle-chat-msg__label">parlé</span>
+      <div className="parle-chat-msg__typing-dots">
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse" />
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:150ms]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:300ms]" />
       </div>
     </div>
   )
@@ -142,10 +173,15 @@ export default function HavenChat() {
   const [returningOpening, setReturningOpening] = useState(null)
   const [quoteRec, setQuoteRec] = useState(null)
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false)
-  const [modePickerOpen, setModePickerOpen] = useState(false)
+  const [imageAttachConsent, setImageAttachConsent] = useState(false)
   const [dontTextPhase, setDontTextPhase] = useState(null)
   const [hiddenInjections, setHiddenInjections] = useState([])
   const [isNewSession, setIsNewSession] = useState(true)
+  const [user, setUser] = useState(null)
+  const [serverSessions, setServerSessions] = useState([])
+  const [sidebarSessions, setSidebarSessions] = useState([])
+  const [activeSessionId, setActiveSessionId] = useState(null)
+  const [archivesRevision, setArchivesRevision] = useState(0)
   const sessionRef = useRef(createSessionState())
   const lastRecapAt = useRef(0)
   const messagesRef = useRef(messages)
@@ -209,29 +245,37 @@ export default function HavenChat() {
 
         const authed = Boolean(authPayload?.user)
         setIsAuthed(authed)
+        setUser(authPayload?.user || null)
 
         if (authed) {
           track('chat_loaded', { authed: true })
-          const [historyRes, contextRes] = await Promise.all([
+          const [historyRes, contextRes, sessionsRes] = await Promise.all([
             fetch('/api/chat/history'),
             fetch('/api/chat/context'),
+            fetch('/api/chat/sessions'),
           ])
           const rows = historyRes.ok ? await historyRes.json() : []
           const context = contextRes.ok ? await contextRes.json() : {}
+          const sessionsPayload = sessionsRes.ok ? await sessionsRes.json() : []
 
           if (!active) return
 
+          setServerSessions(Array.isArray(sessionsPayload) ? sessionsPayload : [])
+
           setMemoryEnabled(Boolean(context?.memory_enabled))
+          setImageAttachConsent(Boolean(context?.image_attach_consent))
 
           const history = (rows || []).map((m) => ({
             role: m.role === 'user' ? 'user' : 'assistant',
             text: m.text,
+            at: m.created_at ? new Date(m.created_at).getTime() : undefined,
           }))
 
           if (history.length > 0) {
             setMessages(history)
             setChatMode({ id: DEFAULT_MODE.id, ...DEFAULT_MODE })
             setIsNewSession(false)
+            setActiveSessionId(CURRENT_SESSION_ID)
             sessionRef.current.startingMode = getModeLabel(DEFAULT_MODE.id)
             return
           }
@@ -250,6 +294,7 @@ export default function HavenChat() {
         }
 
         track('chat_loaded', { authed: false })
+        setUser(null)
         setMessages([])
       } catch {
         if (active) {
@@ -279,6 +324,63 @@ export default function HavenChat() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, thinking])
+
+  useEffect(() => {
+    if (messages === null) return
+
+    const archives = getChatArchives()
+    const archiveIds = new Set(archives.map((item) => item.id))
+    const items = []
+    const hasLiveConversation = visibleMessages.length > 0 || chatMode
+
+    if (isAuthed && hasLiveConversation) {
+      items.push({
+        id: CURRENT_SESSION_ID,
+        title: buildConversationTitle(visibleMessages),
+        loadable: true,
+        deletable: visibleMessages.length > 0,
+      })
+    }
+
+    archives.forEach((archive) => {
+      if (archive.id === sessionRef.current.sessionId && activeSessionId === CURRENT_SESSION_ID) {
+        return
+      }
+      items.push({
+        id: archive.id,
+        title: archive.title,
+        loadable: true,
+        deletable: true,
+      })
+    })
+
+    if (isAuthed) {
+      serverSessions.forEach((session) => {
+        if (archiveIds.has(session.session_id)) return
+        if (
+          session.session_id === sessionRef.current.sessionId &&
+          activeSessionId === CURRENT_SESSION_ID
+        ) {
+          return
+        }
+        const archived = getChatArchiveById(session.session_id)
+        items.push({
+          id: session.session_id,
+          title: archived?.title || formatSessionListDate(session.created_at),
+          loadable: Boolean(archived),
+        })
+      })
+    }
+
+    setSidebarSessions(
+      items.map(({ id, title, loadable, deletable }) => ({
+        id,
+        title,
+        loadable,
+        deletable: Boolean(deletable),
+      })),
+    )
+  }, [messages, chatMode, visibleMessages, isAuthed, serverSessions, activeSessionId, archivesRevision])
 
   async function maybeGenerateRecap(currentMessages, modeId) {
     const count = currentMessages.filter((m) => m.role === 'user' || m.role === 'assistant').length
@@ -321,7 +423,7 @@ export default function HavenChat() {
   function startWithMode(mode, { isSwitch = false } = {}) {
     setChatMode({ id: mode.id, style: mode.style, mood: mode.mood })
     setIsNewSession(false)
-    setModePickerOpen(false)
+    setActiveSessionId(CURRENT_SESSION_ID)
 
     if (!sessionRef.current.startingMode) {
       sessionRef.current.startingMode = mode.label
@@ -334,13 +436,13 @@ export default function HavenChat() {
         sessionRef.current.dontTextMessageCount = 0
         setMessages((prev) => [
           ...(prev || []),
-          { role: 'assistant', text: DONT_TEXT_OPENING },
+          { role: 'assistant', text: DONT_TEXT_OPENING, at: Date.now() },
         ])
         return
       }
       const ack = MODE_SWITCH_ACK[mode.id]
       if (ack) {
-        setMessages((prev) => [...(prev || []), { role: 'assistant', text: ack }])
+        setMessages((prev) => [...(prev || []), { role: 'assistant', text: ack, at: Date.now() }])
       }
       setDontTextPhase(null)
       return
@@ -351,7 +453,7 @@ export default function HavenChat() {
       sessionRef.current.dontTextMessageCount = 0
       setMessages((prev) => {
         const base = prev?.length ? prev : []
-        return [...base, { role: 'assistant', text: DONT_TEXT_OPENING }]
+        return [...base, { role: 'assistant', text: DONT_TEXT_OPENING, at: Date.now() }]
       })
     } else {
       setDontTextPhase(null)
@@ -364,14 +466,16 @@ export default function HavenChat() {
     return chatMode || { id: DEFAULT_MODE.id, ...DEFAULT_MODE }
   }
 
-  async function send(value) {
+  async function send({ text: value, images = [] } = {}) {
     const v = String(value || '').trim()
-    if (!v || thinking) return
+    const imagePayload = Array.isArray(images) ? images.filter(Boolean).slice(0, 2) : []
+    if ((!v && !imagePayload.length) || thinking) return
 
     let mode = resolveMode()
     if (!chatMode) {
       mode = { id: DEFAULT_MODE.id, ...DEFAULT_MODE }
       setChatMode(mode)
+      setActiveSessionId(CURRENT_SESSION_ID)
       if (!sessionRef.current.startingMode) {
         sessionRef.current.startingMode = DEFAULT_MODE.label
       }
@@ -386,14 +490,15 @@ export default function HavenChat() {
       session.silenceAfterResponseCount += 1
     }
 
-    session.userMessages.push({ length: v.length, sentAt: now, replyGapSeconds: replyGap })
+    session.userMessages.push({ length: v.length || 0, sentAt: now, replyGapSeconds: replyGap })
 
     if (mode.id === 'dont_text') {
       session.dontTextMessageCount += 1
     }
 
     setText('')
-    const nextMessages = [...(messages || []), { role: 'user', text: v }]
+    const displayText = v || (imagePayload.length ? '[Image attached]' : '')
+    const nextMessages = [...(messages || []), { role: 'user', text: displayText, at: now }]
     setMessages(nextMessages)
     setThinking(true)
 
@@ -423,6 +528,7 @@ export default function HavenChat() {
         hiddenInjections: injections,
         isNewSession: isAuthed && isNewSession,
         messages: nextMessages.slice(0, -1),
+        images: imagePayload,
       }
 
       const res = await fetch(endpoint, {
@@ -433,7 +539,7 @@ export default function HavenChat() {
 
       if (res.ok) {
         const data = await res.json()
-        setMessages((prev) => [...(prev || []), { role: 'assistant', text: data.reply }])
+        setMessages((prev) => [...(prev || []), { role: 'assistant', text: data.reply, at: Date.now() }])
         session.lastAssistantAt = Date.now()
         setIsNewSession(false)
         pulseWarmth(1, 1600)
@@ -449,13 +555,13 @@ export default function HavenChat() {
       } else {
         setMessages((prev) => [
           ...(prev || []),
-          { role: 'assistant', text: 'Sorry, something went wrong. Please try again.' },
+          { role: 'assistant', text: 'Sorry, something went wrong. Please try again.', at: Date.now() },
         ])
       }
     } catch {
       setMessages((prev) => [
         ...(prev || []),
-        { role: 'assistant', text: 'Sorry, something went wrong. Please try again.' },
+        { role: 'assistant', text: 'Sorry, something went wrong. Please try again.', at: Date.now() },
       ])
     } finally {
       setThinking(false)
@@ -489,26 +595,19 @@ export default function HavenChat() {
     }
   }
 
-  async function clearChat() {
-    if (thinking) return
-    await sendSessionEnd()
-
-    if (isAuthed) {
-      await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
-    }
-
+  async function resetToPreChat({ refreshOpening = false } = {}) {
     setMessages([])
     setChatMode(null)
     setQuoteRec(null)
     setGuestBannerDismissed(false)
     setDontTextPhase(null)
     setHiddenInjections([])
-    setModePickerOpen(false)
     setIsNewSession(true)
+    setActiveSessionId(null)
     lastRecapAt.current = 0
     sessionRef.current = createSessionState()
 
-    if (isAuthed && memoryEnabled) {
+    if (refreshOpening && isAuthed && memoryEnabled) {
       const openingRes = await fetch('/api/chat/returning-opening', { method: 'POST' })
       const openingPayload = openingRes.ok ? await openingRes.json() : {}
       if (openingPayload?.opening) {
@@ -516,9 +615,114 @@ export default function HavenChat() {
       } else {
         setReturningOpening(null)
       }
+    } else if (refreshOpening) {
+      setReturningOpening(null)
+    }
+  }
+
+  async function clearChat() {
+    if (thinking) return
+
+    const currentMessages = messages || []
+    if (currentMessages.length) {
+      saveChatArchive({
+        id: sessionRef.current.sessionId,
+        title: buildConversationTitle(currentMessages),
+        messages: currentMessages,
+        chatModeId: chatMode?.id,
+      })
     }
 
+    await sendSessionEnd()
+
+    if (isAuthed) {
+      await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
+      const sessionsRes = await fetch('/api/chat/sessions')
+      if (sessionsRes.ok) {
+        const payload = await sessionsRes.json()
+        setServerSessions(Array.isArray(payload) ? payload : [])
+      }
+    }
+
+    await resetToPreChat({ refreshOpening: true })
+    setArchivesRevision((n) => n + 1)
+
     track('chat_deleted', { authed: isAuthed })
+  }
+
+  async function handleDeleteSession(session, e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (thinking || !session?.deletable) return
+
+    if (session.id === CURRENT_SESSION_ID) {
+      await sendSessionEnd()
+      if (isAuthed) {
+        await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
+        const sessionsRes = await fetch('/api/chat/sessions')
+        if (sessionsRes.ok) {
+          const payload = await sessionsRes.json()
+          setServerSessions(Array.isArray(payload) ? payload : [])
+        }
+      }
+      await resetToPreChat({ refreshOpening: true })
+      setArchivesRevision((n) => n + 1)
+      track('chat_deleted', { authed: isAuthed, source: 'sidebar' })
+      return
+    }
+
+    removeChatArchive(session.id)
+    setArchivesRevision((n) => n + 1)
+
+    if (activeSessionId === session.id) {
+      await resetToPreChat({ refreshOpening: false })
+    }
+
+    track('chat_deleted', { authed: isAuthed, source: 'sidebar_archive' })
+  }
+
+  async function handleSelectSession(session) {
+    if (!session?.loadable || thinking) return
+
+    if (session.id === CURRENT_SESSION_ID) {
+      if (activeSessionId === CURRENT_SESSION_ID) {
+        return
+      }
+
+      if (isAuthed) {
+        const historyRes = await fetch('/api/chat/history')
+        const rows = historyRes.ok ? await historyRes.json() : []
+        const history = (rows || []).map((m) => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          text: m.text,
+          at: m.created_at ? new Date(m.created_at).getTime() : undefined,
+        }))
+        setMessages(history)
+        setChatMode(history.length ? { id: DEFAULT_MODE.id, ...DEFAULT_MODE } : null)
+      }
+
+      setActiveSessionId(CURRENT_SESSION_ID)
+      return
+    }
+
+    const archive = getChatArchiveById(session.id)
+    if (!archive) return
+
+    await sendSessionEnd()
+
+    setMessages(archive.messages)
+    setChatMode(
+      archive.chatModeId
+        ? { id: archive.chatModeId, ...getModeById(archive.chatModeId) }
+        : null,
+    )
+    setActiveSessionId(session.id)
+    setQuoteRec(null)
+    setGuestBannerDismissed(false)
+    setDontTextPhase(null)
+    setHiddenInjections([])
+    setIsNewSession(false)
+    sessionRef.current = createSessionState()
   }
 
   if (messages === null) {
@@ -529,157 +733,136 @@ export default function HavenChat() {
   const userMessageCount = visibleMessages.filter((m) => m.role === 'user').length
   const showGuestBanner =
     !isAuthed && !guestBannerDismissed && userMessageCount >= 10 && !showEntry
-  const showModePill = chatMode && !showEntry
   const showDontTextLabel = chatMode?.id === 'dont_text' && !showEntry
 
+  const resolvedActiveSessionId =
+    activeSessionId ??
+    (isAuthed && (visibleMessages.length > 0 || chatMode) ? CURRENT_SESSION_ID : null)
+
   return (
-    <div className="-mt-2 md:-mt-6 min-h-[78vh]">
-      <section className="flex flex-col rounded-[22px] border border-border bg-card/60 min-h-[78vh]">
-        <header className="px-6 py-4 border-b border-border/70">
-          <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
-            A safe conversation
-          </p>
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="font-serif text-xl text-foreground mt-0.5 truncate">Your conversation</h1>
-            {isAuthed ? (
-              <button
-                type="button"
-                onClick={clearChat}
-                className="text-[12px] text-muted-foreground hover:text-foreground transition whitespace-nowrap shrink-0"
-              >
-                Delete chat
-              </button>
-            ) : null}
-          </div>
-        </header>
+    <div className="parle-chat-layout">
+      <ParleChatSidebar
+        isAuthed={isAuthed}
+        user={user}
+        sessions={sidebarSessions}
+        activeSessionId={resolvedActiveSessionId}
+        mobileOpen={false}
+        onCloseMobile={() => {}}
+        onNewChat={clearChat}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+      />
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-10 py-6 space-y-4 min-h-[50vh]">
+      <div className="parle-chat-main">
+        <div ref={scrollRef} className="parle-chat-main__scroll">
+          <div className="parle-chat-main__scroll-inner">
+          <SessionHeader />
+
           {showEntry ? (
-            <EntryScreen
-              returningOpening={returningOpening}
-              onSelectMode={(mode) => startWithMode(mode)}
-            />
+            <div className="parle-chat-main__entry">
+              <EntryScreen
+                returningOpening={returningOpening}
+                onSelectMode={(mode) => startWithMode(mode)}
+              />
+            </div>
           ) : (
-            visibleMessages.map((m, i) => (
-              <Bubble key={`${m.role}-${i}-${m.text.slice(0, 8)}`} msg={m} />
-            ))
+            <div className="parle-chat__messages">
+              {visibleMessages.map((m, i) => (
+                <Bubble key={`${m.role}-${i}-${m.text.slice(0, 8)}`} msg={m} />
+              ))}
+              {thinking && <TypingIndicator />}
+            </div>
           )}
-          {thinking && <TypingIndicator />}
-        </div>
 
-        {showGuestBanner && (
-          <div className="mx-4 md:mx-6 mb-2 flex items-start gap-3 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm">
-            <p className="flex-1 text-muted-foreground leading-relaxed">
-              Your chat disappears when you leave. Create a free account to save it.{' '}
-              <Link
-                href="/register"
-                className="text-foreground underline underline-offset-2 hover:text-clay transition"
-              >
-                Save this chat →
-              </Link>
-            </p>
-            <button
-              type="button"
-              onClick={() => setGuestBannerDismissed(true)}
-              className="shrink-0 text-muted-foreground hover:text-foreground transition p-0.5"
-              aria-label="Dismiss"
-            >
-              <X size={16} strokeWidth={1.8} />
-            </button>
-          </div>
-        )}
-
-        {modePickerOpen && (
-          <ModePicker
-            onSelect={(mode) => startWithMode(mode, { isSwitch: true })}
-            onClose={() => setModePickerOpen(false)}
-          />
-        )}
-
-        {showModePill && (
-          <div className="mx-4 md:mx-6 mb-1">
-            <button
-              type="button"
-              onClick={() => setModePickerOpen((o) => !o)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] text-muted-foreground bg-secondary/60 border border-clay/20 hover:border-clay/35 transition"
-            >
-              <span>{getModeLabel(chatMode.id)}</span>
-              <span className="text-muted-foreground/70">· change</span>
-            </button>
-          </div>
-        )}
-
-        {showDontTextLabel && (
-          <p className="mx-4 md:mx-6 mb-1 text-[12px] text-muted-foreground">
-            Working through the urge to reach out
-          </p>
-        )}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            send(text)
-          }}
-          className="m-4 md:m-6 mt-0 flex items-end gap-2 bg-background rounded-2xl border border-border focus-within:border-clay/60 focus-within:ring-2 focus-within:ring-clay/15 transition p-2 pl-5"
-        >
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                send(text)
-              }
-            }}
-            rows={1}
-            placeholder="Say what's on your mind..."
-            className="flex-1 resize-none bg-transparent outline-none py-3 text-[15px] placeholder:text-muted-foreground/70 max-h-40"
-            disabled={thinking}
-          />
-          <button
-            type="submit"
-            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground grid place-items-center hover:opacity-90 active:scale-95 transition disabled:opacity-40"
-            disabled={!text.trim() || thinking}
-            aria-label="Send"
-          >
-            <Send size={16} />
-          </button>
-        </form>
-      </section>
-
-      {quoteRec && (
-        <div className="mt-5 rounded-[22px] border border-border bg-secondary/40 p-5">
-          <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
-            A line that might fit
-          </p>
-          <p className="mt-2 font-serif text-[18px] text-foreground leading-snug">
-            &ldquo;{quoteRec.text}&rdquo;
-          </p>
-          <p className="mt-2 text-[12px] text-muted-foreground">— {quoteRec.author}</p>
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              {quoteRec.chapter}
-            </p>
-            <button
-              type="button"
-              onClick={() => toggleQuote(quoteRec, quoteRec.chapter)}
-              className={cn(
-                'inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[12px] transition-all shrink-0',
-                savedQuote?.id === quoteRec.id
-                  ? 'bg-rose/15 text-clay border border-rose/40'
-                  : 'text-muted-foreground hover:text-clay border border-transparent hover:bg-secondary',
-              )}
-            >
-              {savedQuote?.id === quoteRec.id ? (
-                <BookmarkCheck size={13} strokeWidth={2} />
-              ) : (
-                <Bookmark size={13} strokeWidth={1.7} />
-              )}
-              {savedQuote?.id === quoteRec.id ? 'Kept' : 'Keep this line'}
-            </button>
+          {quoteRec && (
+            <div className="mt-8 mb-4">
+              <div className="rounded-2xl border border-border/80 bg-white/90 p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
+                  A line that might fit
+                </p>
+                <p className="mt-2 font-serif text-[18px] text-foreground leading-snug">
+                  &ldquo;{quoteRec.text}&rdquo;
+                </p>
+                <p className="mt-2 text-[12px] text-muted-foreground">— {quoteRec.author}</p>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {quoteRec.chapter}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => toggleQuote(quoteRec, quoteRec.chapter)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[12px] transition-all shrink-0',
+                      savedQuote?.id === quoteRec.id
+                        ? 'bg-primary/15 text-primary border border-primary/30'
+                        : 'text-muted-foreground hover:text-primary border border-transparent hover:bg-secondary',
+                    )}
+                  >
+                    {savedQuote?.id === quoteRec.id ? (
+                      <BookmarkCheck size={13} strokeWidth={2} />
+                    ) : (
+                      <Bookmark size={13} strokeWidth={1.7} />
+                    )}
+                    {savedQuote?.id === quoteRec.id ? 'Kept' : 'Keep this line'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
         </div>
-      )}
+
+        <div className="parle-chat-main__bottom-fixed">
+          <div className="parle-chat-main__bottom-inner">
+            {showGuestBanner && (
+              <div className="parle-chat__guest-banner">
+                <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-white/80 px-4 py-3 text-sm max-w-xl mx-auto">
+                  <p className="flex-1 text-muted-foreground leading-relaxed">
+                    Your chat disappears when you leave. Create a free account to save it.{' '}
+                    <Link
+                      href="/register"
+                      className="text-foreground underline underline-offset-2 hover:text-primary transition"
+                    >
+                      Save this chat →
+                    </Link>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setGuestBannerDismissed(true)}
+                    className="shrink-0 text-muted-foreground hover:text-foreground transition p-0.5"
+                    aria-label="Dismiss"
+                  >
+                    <X size={16} strokeWidth={1.8} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showDontTextLabel && (
+              <p className="mb-2 text-center text-[12px] text-muted-foreground px-4">
+                Working through the urge to reach out
+              </p>
+            )}
+
+            <ChatInputBar
+              text={text}
+              onTextChange={setText}
+              onSend={send}
+              disabled={thinking}
+              activeModeId={chatMode?.id || DEFAULT_MODE.id}
+              chatStarted={!showEntry}
+              onModeChange={(mode) => startWithMode(mode, { isSwitch: Boolean(chatMode) })}
+              isAuthed={isAuthed}
+              imageConsentFromServer={imageAttachConsent}
+            />
+
+            <p className="parle-chat__disclaimer">
+              <Lock size={11} strokeWidth={2} aria-hidden />
+              <span>Private · Not a crisis service</span>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -4,6 +4,7 @@
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_session_summary TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS image_attach_consent_at TIMESTAMPTZ;
 
 -- Learned preference profile (logged-in only)
 CREATE TABLE IF NOT EXISTS user_preference_profile (

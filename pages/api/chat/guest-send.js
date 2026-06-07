@@ -14,11 +14,16 @@ export default async function handler(req, res) {
     messages,
     contextRecap,
     hiddenInjections,
+    images,
   } = req.body || {}
 
-  if (!text) return res.status(400).json({ error: 'Missing text' })
+  if (!text && !(Array.isArray(images) && images.length)) {
+    return res.status(400).json({ error: 'Missing text' })
+  }
 
-  if (containsCrisisLanguage(text)) {
+  const userText = String(text || '').trim() || '(See attached image)'
+
+  if (containsCrisisLanguage(userText)) {
     return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
   }
 
@@ -43,14 +48,15 @@ export default async function handler(req, res) {
     crossSessionSummary: null,
     hiddenInjections,
     conversationHistory: recent,
-    userText: text,
+    userText,
+    images,
   })
 
   let reply = ''
   try {
     reply = await openaiChatComplete({ messages: completionMessages, temperature: 0.65 })
   } catch (error) {
-    reply = `Yeah, that's a lot. ${String(text).slice(0, 120)}. What's sitting heaviest right now?`
+    reply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
     console.error('guest_chat_model_error', error)
   }
 
