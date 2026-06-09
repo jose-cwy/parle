@@ -1,7 +1,13 @@
 import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSafety'
-import { openaiChatComplete } from '../../../lib/openai'
-import { buildChatCompletionMessages, sentenceClamp } from '../../../lib/parle/chatComplete'
+import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
+import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
+
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -38,7 +44,7 @@ export default async function handler(req, res) {
     : []
 
   const completionMessages = buildChatCompletionMessages({
-    modeId: modeId || 'listen',
+    modeId: modeId || 'emotional',
     dontTextStep,
     dontTextMessageCount,
     preferenceProfile: null,
@@ -52,14 +58,11 @@ export default async function handler(req, res) {
     images,
   })
 
-  let reply = ''
-  try {
-    reply = await openaiChatComplete({ messages: completionMessages, temperature: 0.65 })
-  } catch (error) {
-    reply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
-    console.error('guest_chat_model_error', error)
-  }
+  const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
 
-  reply = sentenceClamp(reply, 8)
-  return res.status(200).json({ reply })
+  await streamChatReply(res, {
+    messages: completionMessages,
+    temperature: 0.65,
+    fallbackReply,
+  })
 }

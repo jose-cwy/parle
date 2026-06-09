@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const payload = token ? verifyToken(token) : null
   if (token && !payload) return res.status(401).json({ error: 'Unauthorized' })
 
-  const modeLabel = getModeLabel(modeId || 'listen')
+  const modeLabel = getModeLabel(modeId || 'emotional')
 
   try {
     const raw = await openaiChatComplete({

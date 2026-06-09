@@ -8,12 +8,12 @@ export default function TopProgressBar({ visible, opacity, width, completing }) 
       aria-hidden="true"
     >
       <div
-        className="top-progress__bar"
+        className={`top-progress__bar${completing ? ' top-progress__bar--completing' : ''}`}
         style={{
           width: `${width}%`,
           transition: completing
-            ? `width ${300}ms ease-in-out`
-            : `width ${200}ms ease-out`,
+            ? 'width 300ms ease-in-out'
+            : 'width 120ms ease-out',
         }}
       />
     </div>

@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Bookmark, BookmarkCheck, Lock, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Lock, Pencil, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
-import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
 import ChatInputBar from './ChatInputBar'
@@ -14,126 +13,402 @@ import ParleChatSidebar, {
 import {
   DEFAULT_MODE,
   MODE_SWITCH_ACK,
-  DONT_TEXT_OPENING,
+  STOP_CONTACT_OPENING,
+  ENTRY_CHIP_ORDER,
   getModeLabel,
   getModeById,
   getEntryChipLabel,
-  getEntryModes,
+  getModePillClasses,
+  resolveModeId,
 } from '../../lib/parle/modes'
 import {
   getChatArchives,
   getChatArchiveById,
   saveChatArchive,
   removeChatArchive,
-  formatSessionListDate,
+  renameChatArchive,
+  uniquifyArchiveTitle,
+  migrateLegacyArchiveTitles,
 } from '../../lib/parle/chatArchives'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
 
 const CURRENT_SESSION_ID = 'current-live'
 const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
+const LIVE_SESSION_TITLE = 'New Chat'
 
-function buildConversationTitle(msgs) {
-  const first = (msgs || []).find((m) => m.role === 'user')
-  if (first?.text) {
-    const trimmed = String(first.text).trim()
-    return trimmed.length > 48 ? `${trimmed.slice(0, 48)}…` : trimmed
+const MODE_ACK_TEXTS = new Set(
+  Object.values(MODE_SWITCH_ACK).filter((value) => typeof value === 'string' && value),
+)
+
+function createMessageId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
   }
-  return 'New conversation'
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-function formatSessionDate() {
-  const raw = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-  const [month, day] = raw.split(' ')
-  return `${month.toUpperCase()} ${day}`
+function cloneMessage(message) {
+  return { ...message }
 }
 
-function Bubble({ msg }) {
-  const isYou = msg.role === 'user'
+function isEphemeralAssistant(message) {
+  if (!message || message.role !== 'assistant') return false
+  if (message.ephemeral) return true
+  if (message.text === STOP_CONTACT_OPENING) return true
+  return MODE_ACK_TEXTS.has(message.text)
+}
 
-  if (!isYou) {
+function countPersistedBefore(messages, index) {
+  let count = 0
+  for (let i = 0; i < index; i += 1) {
+    const message = messages[i]
+    if (message.role === 'user') count += 1
+    else if (message.role === 'assistant' && !isEphemeralAssistant(message)) count += 1
+  }
+  return count
+}
+
+function toApiHistory(messages) {
+  return (messages || [])
+    .filter((m) => m.role === 'user' || (m.role === 'assistant' && !isEphemeralAssistant(m)))
+    .map((m) => ({ role: m.role, text: m.text }))
+}
+
+function createUserMessage(text, at = Date.now()) {
+  return { id: createMessageId(), role: 'user', text, at }
+}
+
+function createAssistantMessage(text, { ephemeral = false, at = Date.now(), modeId } = {}) {
+  return {
+    id: createMessageId(),
+    role: 'assistant',
+    text,
+    at,
+    ...(ephemeral ? { ephemeral: true } : {}),
+    ...(modeId ? { modeId: resolveModeId(modeId) } : {}),
+  }
+}
+
+function getGreetingDisplayName(user) {
+  const raw = String(user?.preferred_name || '').trim()
+  if (!raw) return null
+  return raw
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
+}
+
+function pickGreetingVariant(variants) {
+  return variants[Math.floor(Math.random() * variants.length)]
+}
+
+function buildTimeGreeting(user, isAuthed) {
+  const hour = new Date().getHours()
+  const displayName = isAuthed ? getGreetingDisplayName(user) : null
+  const nameSuffix = displayName ? `, ${displayName}` : ''
+
+  if (hour >= 5 && hour < 12) {
+    return pickGreetingVariant([
+      `Good morning${nameSuffix}.`,
+      `Morning${nameSuffix}.`,
+      `Hey${nameSuffix}. Good morning.`,
+    ])
+  }
+  if (hour >= 12 && hour < 18) {
+    return pickGreetingVariant([
+      `Hey${nameSuffix}. What's going on?`,
+      `What's on your mind${nameSuffix}?`,
+      `How's your day going${nameSuffix}?`,
+    ])
+  }
+  if (hour >= 18 && hour < 22) {
+    return pickGreetingVariant([
+      `Hey${nameSuffix}. How's your evening?`,
+      `How's tonight treating you${nameSuffix}?`,
+      `What's going on tonight${nameSuffix}?`,
+      `Feeling down${nameSuffix}?`,
+    ])
+  }
+  return pickGreetingVariant([
+    `Rough night${nameSuffix}?`,
+    `Tough day${nameSuffix}?`,
+    `Feeling down${nameSuffix}?`,
+    `Still up${nameSuffix}?`,
+    `Can't sleep${nameSuffix}?`,
+  ])
+}
+
+function isDefaultSessionTitle(title) {
+  return /^New Chat(\s\(\d+\))?$/.test(String(title || '').trim())
+}
+
+function hasUserMessages(msgs) {
+  return (msgs || []).some((m) => m.role === 'user')
+}
+
+async function consumeChatStream(res, onUpdate) {
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let reply = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const events = buffer.split('\n\n')
+    buffer = events.pop() || ''
+
+    for (const event of events) {
+      const line = event.split('\n').find((entry) => entry.startsWith('data:'))
+      if (!line) continue
+
+      let payload
+      try {
+        payload = JSON.parse(line.slice(5).trim())
+      } catch {
+        continue
+      }
+
+      if (payload.delta) {
+        reply += payload.delta
+        onUpdate(reply)
+      }
+      if (payload.done) {
+        reply = payload.reply || reply
+        onUpdate(reply)
+      }
+    }
+  }
+
+  return reply
+}
+
+function splitAssistantParagraphs(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return []
+  const parts = (/\n{2,}/.test(raw) ? raw.split(/\n{2,}/) : raw.split(/\n/))
+    .map((part) => part.trim())
+    .filter(Boolean)
+  return parts
+}
+
+function AssistantBody({ text }) {
+  const paragraphs = splitAssistantParagraphs(text)
+
+  if (!paragraphs.length) return null
+
+  return (
+    <div className="parle-chat-msg__body">
+      {paragraphs.map((paragraph, index) => (
+        <p key={index} className="parle-chat-msg__paragraph">
+          {paragraph}
+        </p>
+      ))}
+    </div>
+  )
+}
+
+function UserMessageBubble({
+  msg,
+  messageIndex,
+  disabled,
+  onEdit,
+  onBranchChange,
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(msg.text)
+  const textareaRef = useRef(null)
+  const branchCount = msg.branches?.length ?? 0
+  const activeBranch = msg.activeBranch ?? Math.max(branchCount - 1, 0)
+  const showBranchNav = branchCount > 1
+  const canEdit = msg.text !== '[Image attached]'
+
+  useEffect(() => {
+    setDraft(msg.text)
+  }, [msg.text])
+
+  useEffect(() => {
+    if (!editing || !textareaRef.current) return
+    textareaRef.current.focus()
+    const len = textareaRef.current.value.length
+    textareaRef.current.setSelectionRange(len, len)
+  }, [editing])
+
+  function startEdit() {
+    setDraft(msg.text)
+    setEditing(true)
+  }
+
+  function cancelEdit() {
+    setDraft(msg.text)
+    setEditing(false)
+  }
+
+  function saveEdit() {
+    const trimmed = String(draft || '').trim()
+    if (!trimmed) return
+    if (trimmed === msg.text) {
+      setEditing(false)
+      return
+    }
+    onEdit(messageIndex, trimmed)
+    setEditing(false)
+  }
+
+  if (editing) {
     return (
-      <article className="parle-chat-msg parle-chat-msg--assistant">
-        <p className="parle-chat-msg__body">{msg.text}</p>
+      <article className="parle-chat-msg parle-chat-msg--user parle-chat-msg--editing">
+        <div className="parle-chat-msg__edit-wrap">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                saveEdit()
+              }
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                cancelEdit()
+              }
+            }}
+            rows={3}
+            className="parle-chat-msg__edit-input"
+            aria-label="Edit message"
+          />
+          <div className="parle-chat-msg__edit-actions">
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="parle-chat-msg__action-btn"
+              aria-label="Cancel edit"
+            >
+              <X size={16} strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              onClick={saveEdit}
+              className="parle-chat-msg__action-btn parle-chat-msg__action-btn--primary"
+              aria-label="Save edit"
+            >
+              <Check size={16} strokeWidth={1.75} />
+            </button>
+          </div>
+        </div>
       </article>
     )
   }
 
   return (
     <article className="parle-chat-msg parle-chat-msg--user">
-      <div className="parle-chat-msg__bubble">{msg.text}</div>
+      <div className="parle-chat-msg__bubble parle-chat-msg__bubble--user">{msg.text}</div>
+      <div className="parle-chat-msg__user-actions">
+        {showBranchNav && (
+          <div className="parle-chat-msg__branch-nav" aria-label="Message versions">
+            <button
+              type="button"
+              className="parle-chat-msg__action-btn"
+              disabled={disabled || activeBranch <= 0}
+              onClick={() => onBranchChange(messageIndex, activeBranch - 1)}
+              aria-label="Previous version"
+            >
+              <ChevronLeft size={16} strokeWidth={1.75} />
+            </button>
+            <span className="parle-chat-msg__branch-label">
+              {activeBranch + 1}/{branchCount}
+            </span>
+            <button
+              type="button"
+              className="parle-chat-msg__action-btn"
+              disabled={disabled || activeBranch >= branchCount - 1}
+              onClick={() => onBranchChange(messageIndex, activeBranch + 1)}
+              aria-label="Next version"
+            >
+              <ChevronRight size={16} strokeWidth={1.75} />
+            </button>
+          </div>
+        )}
+        {canEdit && (
+          <button
+            type="button"
+            className="parle-chat-msg__action-btn"
+            disabled={disabled}
+            onClick={startEdit}
+            aria-label="Edit message"
+          >
+            <Pencil size={15} strokeWidth={1.75} />
+          </button>
+        )}
+      </div>
     </article>
   )
 }
 
+function Bubble({ msg, messageIndex, thinking, onEditUserMessage, onBranchChange }) {
+  if (msg.role === 'user') {
+    return (
+      <UserMessageBubble
+        msg={msg}
+        messageIndex={messageIndex}
+        disabled={thinking}
+        onEdit={onEditUserMessage}
+        onBranchChange={onBranchChange}
+      />
+    )
+  }
+
+  if (msg.role === 'assistant') {
+    return (
+      <article className="parle-chat-msg parle-chat-msg--assistant">
+        <AssistantBody text={msg.text} />
+      </article>
+    )
+  }
+
+  return null
+}
+
 function TypingIndicator() {
   return (
-    <div className="parle-chat-msg parle-chat-msg--assistant parle-chat-msg--typing" aria-live="polite">
+    <div
+      className="parle-chat-msg parle-chat-msg--assistant parle-chat-msg--typing"
+      role="status"
+      aria-live="polite"
+      aria-label="Thinking of a response"
+    >
       <div className="parle-chat-msg__typing-dots">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse" />
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:150ms]" />
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/45 animate-pulse [animation-delay:300ms]" />
+        <span className="parle-chat-msg__typing-dot" />
+        <span className="parle-chat-msg__typing-dot" />
+        <span className="parle-chat-msg__typing-dot" />
       </div>
     </div>
   )
 }
 
-function SessionHeader() {
+function EntryModePicker({ selectedModeId, onPillClick, exiting }) {
   return (
-    <header className="text-center px-2 pt-2 pb-8 md:pb-10">
-      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-        SESSION · {formatSessionDate()}
-      </p>
-      <h1 className="mt-4 font-serif text-[clamp(2rem,5vw,3rem)] leading-[1.15] text-foreground">
-        A quiet place to talk.
-      </h1>
-      <p className="mt-3 text-[0.95rem] text-muted-foreground max-w-md mx-auto leading-relaxed">
-        Whatever comes out is okay. No tracking, no transcripts shared.
-      </p>
-    </header>
-  )
-}
-
-function EntryChip({ children, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'px-3.5 py-2 rounded-full border text-[13px] transition whitespace-nowrap',
-        'border-border bg-card text-foreground/90',
-        'hover:bg-rose/[0.08] hover:border-clay/35',
-      )}
+    <div
+      className={cn('parle-chat-empty-state__pills', exiting && 'parle-chat-empty-state__pills--exit')}
+      role="group"
+      aria-label="Conversation mode"
     >
-      {children}
-    </button>
-  )
-}
-
-function EntryScreen({ returningOpening, onSelectMode }) {
-  const entryModes = getEntryModes()
-
-  return (
-    <div className="pb-6">
-      {returningOpening ? (
-        <div className="mb-8">
-          <Bubble msg={{ role: 'assistant', text: returningOpening, at: Date.now() }} />
-        </div>
-      ) : null}
-
-      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground text-center">
-        What do you need right now?
-      </p>
-      <p className="mt-2 text-sm text-muted-foreground max-w-lg mx-auto text-center leading-relaxed">
-        Comfort first. Advice when you&apos;re ready. You can change this anytime.
-      </p>
-
-      <div className="mt-5 flex flex-wrap gap-2 justify-center">
-        {entryModes.map((mode) => (
-          <EntryChip key={mode.id} onClick={() => onSelectMode(mode)}>
-            {getEntryChipLabel(mode.id)}
-          </EntryChip>
-        ))}
-      </div>
+      {ENTRY_CHIP_ORDER.map((id) => {
+        const selected = selectedModeId === id
+        return (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onPillClick(id)}
+            className={getModePillClasses(id, { selected })}
+          >
+            {getEntryChipLabel(id)}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -148,8 +423,10 @@ function createSessionState() {
     lastAssistantAt: null,
     silenceAfterResponseCount: 0,
     repeatSentimentDetected: false,
-    dontTextMessageCount: 0,
+    stopContactMessageCount: 0,
     ended: false,
+    titleAutoGenerated: false,
+    titleManuallyRenamed: false,
   }
 }
 
@@ -162,26 +439,42 @@ export default function HavenChat() {
   const [isAuthed, setIsAuthed] = useState(false)
   const [memoryEnabled, setMemoryEnabled] = useState(false)
   const [returningOpening, setReturningOpening] = useState(null)
-  const [quoteRec, setQuoteRec] = useState(null)
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false)
   const [imageAttachConsent, setImageAttachConsent] = useState(false)
-  const [dontTextPhase, setDontTextPhase] = useState(null)
+  const [stopContactPhase, setStopContactPhase] = useState(null)
   const [hiddenInjections, setHiddenInjections] = useState([])
   const [isNewSession, setIsNewSession] = useState(true)
   const [user, setUser] = useState(null)
-  const [serverSessions, setServerSessions] = useState([])
   const [sidebarSessions, setSidebarSessions] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
   const [archivesRevision, setArchivesRevision] = useState(0)
+  const [liveSessionTitle, setLiveSessionTitle] = useState(LIVE_SESSION_TITLE)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [entrySelectedModeId, setEntrySelectedModeId] = useState(null)
+  const [entryExiting, setEntryExiting] = useState(false)
   const sessionRef = useRef(createSessionState())
   const lastRecapAt = useRef(0)
+  const greetingPickRef = useRef(false)
+  const [emptyGreeting, setEmptyGreeting] = useState('')
   const messagesRef = useRef(messages)
+  const liveSessionTitleRef = useRef(LIVE_SESSION_TITLE)
   messagesRef.current = messages
-  const { saved: savedQuote, toggleQuote } = useSavedQuote()
+  liveSessionTitleRef.current = liveSessionTitle
 
   useTopProgress(messages === null)
+
+  useEffect(() => {
+    if (messages === null) return
+    if (hasUserMessages(messages)) {
+      greetingPickRef.current = false
+      return
+    }
+    if (greetingPickRef.current) return
+    if (isAuthed && !user) return
+    greetingPickRef.current = true
+    setEmptyGreeting(buildTimeGreeting(user, isAuthed))
+  }, [messages, user, isAuthed])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -273,18 +566,14 @@ export default function HavenChat() {
 
         if (authed) {
           track('chat_loaded', { authed: true })
-          const [historyRes, contextRes, sessionsRes] = await Promise.all([
+          const [historyRes, contextRes] = await Promise.all([
             fetch('/api/chat/history'),
             fetch('/api/chat/context'),
-            fetch('/api/chat/sessions'),
           ])
           const rows = historyRes.ok ? await historyRes.json() : []
           const context = contextRes.ok ? await contextRes.json() : {}
-          const sessionsPayload = sessionsRes.ok ? await sessionsRes.json() : []
 
           if (!active) return
-
-          setServerSessions(Array.isArray(sessionsPayload) ? sessionsPayload : [])
 
           setMemoryEnabled(Boolean(context?.memory_enabled))
           setImageAttachConsent(Boolean(context?.image_attach_consent))
@@ -352,22 +641,29 @@ export default function HavenChat() {
   useEffect(() => {
     if (messages === null) return
 
-    const archives = getChatArchives()
-    const archiveIds = new Set(archives.map((item) => item.id))
-    const items = []
-    const hasLiveConversation = visibleMessages.length > 0 || chatMode
+    if (migrateLegacyArchiveTitles()) {
+      setArchivesRevision((n) => n + 1)
+      return
+    }
 
-    if (isAuthed && hasLiveConversation) {
+    const archives = getChatArchives()
+    const items = []
+    const hasUserMessageInLiveSession = hasUserMessages(visibleMessages)
+    const isLiveSession = !activeSessionId || activeSessionId === CURRENT_SESSION_ID
+
+    if (isAuthed && hasUserMessageInLiveSession && isLiveSession) {
       items.push({
         id: CURRENT_SESSION_ID,
-        title: buildConversationTitle(visibleMessages),
+        title: liveSessionTitle,
         loadable: true,
-        deletable: visibleMessages.length > 0,
+        deletable: true,
+        renamable: true,
       })
     }
 
     archives.forEach((archive) => {
-      if (archive.id === sessionRef.current.sessionId && activeSessionId === CURRENT_SESSION_ID) {
+      if (!hasUserMessages(archive.messages)) return
+      if (archive.id === sessionRef.current.sessionId && isLiveSession) {
         return
       }
       items.push({
@@ -375,36 +671,27 @@ export default function HavenChat() {
         title: archive.title,
         loadable: true,
         deletable: true,
+        renamable: true,
       })
     })
 
-    if (isAuthed) {
-      serverSessions.forEach((session) => {
-        if (archiveIds.has(session.session_id)) return
-        if (
-          session.session_id === sessionRef.current.sessionId &&
-          activeSessionId === CURRENT_SESSION_ID
-        ) {
-          return
-        }
-        const archived = getChatArchiveById(session.session_id)
-        items.push({
-          id: session.session_id,
-          title: archived?.title || formatSessionListDate(session.created_at),
-          loadable: Boolean(archived),
-        })
-      })
-    }
-
+    const seen = new Set()
     setSidebarSessions(
-      items.map(({ id, title, loadable, deletable }) => ({
-        id,
-        title,
-        loadable,
-        deletable: Boolean(deletable),
-      })),
+      items
+        .filter(({ id }) => {
+          if (seen.has(id)) return false
+          seen.add(id)
+          return true
+        })
+        .map(({ id, title, loadable, deletable, renamable }) => ({
+          id,
+          title,
+          loadable,
+          deletable: Boolean(deletable),
+          renamable: Boolean(renamable),
+        })),
     )
-  }, [messages, chatMode, visibleMessages, isAuthed, serverSessions, activeSessionId, archivesRevision])
+  }, [messages, chatMode, visibleMessages, isAuthed, activeSessionId, archivesRevision, liveSessionTitle])
 
   async function maybeGenerateRecap(currentMessages, modeId) {
     const count = currentMessages.filter((m) => m.role === 'user' || m.role === 'assistant').length
@@ -444,6 +731,48 @@ export default function HavenChat() {
     }
   }
 
+  async function maybeAutoTitleSession(currentMessages) {
+    const session = sessionRef.current
+    if (session.titleAutoGenerated || session.titleManuallyRenamed) return
+    if (!isDefaultSessionTitle(liveSessionTitleRef.current)) return
+
+    const userCount = currentMessages.filter((m) => m.role === 'user').length
+    const assistantCount = currentMessages.filter((m) => m.role === 'assistant').length
+    if (userCount !== 1 || assistantCount < 1) return
+
+    session.titleAutoGenerated = true
+
+    try {
+      const res = await fetch('/api/chat/session-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: currentMessages.slice(0, 6).map((m) => ({
+            role: m.role,
+            text: m.text,
+          })),
+        }),
+      })
+      if (!res.ok) {
+        session.titleAutoGenerated = false
+        return
+      }
+
+      const data = await res.json()
+      const title = String(data?.title || '').trim().slice(0, 80)
+      if (!title || session.titleManuallyRenamed) {
+        session.titleAutoGenerated = false
+        return
+      }
+      if (!isDefaultSessionTitle(liveSessionTitleRef.current)) return
+
+      setLiveSessionTitle(uniquifyArchiveTitle(title, session.sessionId))
+      track('chat_title_auto', { authed: isAuthed })
+    } catch {
+      session.titleAutoGenerated = false
+    }
+  }
+
   function startWithMode(mode, { isSwitch = false } = {}) {
     setChatMode({ id: mode.id, style: mode.style, mood: mode.mood })
     setIsNewSession(false)
@@ -455,32 +784,44 @@ export default function HavenChat() {
 
     if (isSwitch) {
       sessionRef.current.modeSwitchCount += 1
-      if (mode.id === 'dont_text') {
-        setDontTextPhase('awaiting_unsent')
-        sessionRef.current.dontTextMessageCount = 0
+      if (mode.id === 'stop_contact') {
+        setStopContactPhase('awaiting_unsent')
+        sessionRef.current.stopContactMessageCount = 0
         setMessages((prev) => [
           ...(prev || []),
-          { role: 'assistant', text: DONT_TEXT_OPENING, at: Date.now() },
+          createAssistantMessage(STOP_CONTACT_OPENING, {
+            ephemeral: true,
+            modeId: 'stop_contact',
+          }),
         ])
         return
       }
       const ack = MODE_SWITCH_ACK[mode.id]
       if (ack) {
-        setMessages((prev) => [...(prev || []), { role: 'assistant', text: ack, at: Date.now() }])
+        setMessages((prev) => [
+          ...(prev || []),
+          createAssistantMessage(ack, { ephemeral: true, modeId: mode.id }),
+        ])
       }
-      setDontTextPhase(null)
+      setStopContactPhase(null)
       return
     }
 
-    if (mode.id === 'dont_text') {
-      setDontTextPhase('awaiting_unsent')
-      sessionRef.current.dontTextMessageCount = 0
+    if (mode.id === 'stop_contact') {
+      setStopContactPhase('awaiting_unsent')
+      sessionRef.current.stopContactMessageCount = 0
       setMessages((prev) => {
         const base = prev?.length ? prev : []
-        return [...base, { role: 'assistant', text: DONT_TEXT_OPENING, at: Date.now() }]
+        return [
+          ...base,
+          createAssistantMessage(STOP_CONTACT_OPENING, {
+            ephemeral: true,
+            modeId: 'stop_contact',
+          }),
+        ]
       })
     } else {
-      setDontTextPhase(null)
+      setStopContactPhase(null)
     }
 
     track('entry_started', { style: mode.id })
@@ -490,19 +831,277 @@ export default function HavenChat() {
     return chatMode || { id: DEFAULT_MODE.id, ...DEFAULT_MODE }
   }
 
+  function syncBranchTail(messageList, messageIndex) {
+    const userMsg = messageList[messageIndex]
+    if (!userMsg?.branches?.length) return messageList
+
+    const active = userMsg.activeBranch ?? userMsg.branches.length - 1
+    const branches = userMsg.branches.map((branch, index) =>
+      index === active
+        ? {
+            text: userMsg.text,
+            tail: messageList.slice(messageIndex + 1).map(cloneMessage),
+          }
+        : branch,
+    )
+
+    const next = [...messageList]
+    next[messageIndex] = { ...userMsg, branches }
+    return next
+  }
+
+  async function requestAssistantReply({
+    userText,
+    nextMessages,
+    mode,
+    dontTextStep,
+    injections = hiddenInjections,
+    images = [],
+    isEdit = false,
+    dbKeepCount,
+    editMessageIndex,
+  }) {
+    const session = sessionRef.current
+    const endpoint = isAuthed ? '/api/chat/send' : '/api/chat/guest-send'
+    const body = {
+      text: userText,
+      modeId: mode.id,
+      dontTextStep,
+      dontTextMessageCount: session.stopContactMessageCount,
+      hiddenInjections: injections,
+      isNewSession: isAuthed && isNewSession && !isEdit,
+      messages: toApiHistory(nextMessages.slice(0, -1)),
+      images,
+      ...(isEdit && isAuthed ? { isEdit: true, dbKeepCount } : {}),
+    }
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      setMessages((prev) => [
+        ...(prev || []),
+        createAssistantMessage('Sorry, something went wrong. Please try again.', {
+          modeId: mode.id,
+        }),
+      ])
+      return
+    }
+
+    const contentType = res.headers.get('content-type') || ''
+    const assistantAt = Date.now()
+
+    if (contentType.includes('text/event-stream')) {
+      setMessages((prev) => [
+        ...(prev || []),
+        createAssistantMessage('', { at: assistantAt, modeId: mode.id }),
+      ])
+
+      const finalReply = await consumeChatStream(res, (replyText) => {
+        setMessages((prev) =>
+          (prev || []).map((m) =>
+            m.at === assistantAt ? { ...m, text: replyText, modeId: mode.id } : m,
+          ),
+        )
+      })
+
+      const replyMessage = createAssistantMessage(finalReply || '', {
+        at: assistantAt,
+        modeId: mode.id,
+      })
+      const withReply = [...nextMessages, replyMessage]
+      if (finalReply) {
+        setMessages((prev) => {
+          const mapped = (prev || []).map((m) =>
+            m.at === assistantAt ? { ...m, text: finalReply, modeId: mode.id } : m,
+          )
+          return isEdit && typeof editMessageIndex === 'number'
+            ? syncBranchTail(mapped, editMessageIndex)
+            : mapped
+        })
+      } else if (isEdit && typeof editMessageIndex === 'number') {
+        setMessages((prev) => syncBranchTail(prev || [], editMessageIndex))
+      }
+
+      session.lastAssistantAt = Date.now()
+      setIsNewSession(false)
+      pulseWarmth(1, 1600)
+      track('chat_reply', { authed: isAuthed, safety: false, edit: isEdit })
+      maybeAutoTitleSession(withReply)
+
+      if (isAuthed && !isEdit) {
+        await fetch('/api/gamification/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deltaChat: 1 }),
+        }).catch(() => null)
+      }
+    } else {
+      const data = await res.json()
+      const replyMessage = createAssistantMessage(data.reply, {
+        at: Date.now(),
+        modeId: mode.id,
+      })
+      const withReply = [...nextMessages, replyMessage]
+      setMessages((prev) => {
+        const merged = [...(prev || []), replyMessage]
+        return isEdit && typeof editMessageIndex === 'number'
+          ? syncBranchTail(merged, editMessageIndex)
+          : merged
+      })
+      session.lastAssistantAt = Date.now()
+      setIsNewSession(false)
+      pulseWarmth(1, 1600)
+      track('chat_reply', { authed: isAuthed, safety: Boolean(data?.safety), edit: isEdit })
+      maybeAutoTitleSession(withReply)
+
+      if (isAuthed && !isEdit) {
+        await fetch('/api/gamification/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deltaChat: 1 }),
+        }).catch(() => null)
+      }
+    }
+  }
+
+  function switchMessageBranch(messageIndex, newBranchIndex) {
+    if (thinking) return
+
+    const prior = messages || []
+    const target = prior[messageIndex]
+    if (!target?.branches?.length) return
+    if (newBranchIndex < 0 || newBranchIndex >= target.branches.length) return
+
+    const branches = target.branches.map((branch) => ({
+      text: branch.text,
+      tail: branch.tail.map(cloneMessage),
+    }))
+
+    const currentActive = target.activeBranch ?? branches.length - 1
+    const currentTail = prior.slice(messageIndex + 1).map(cloneMessage)
+    branches[currentActive] = { text: target.text, tail: currentTail }
+
+    const selected = branches[newBranchIndex]
+    const updatedUser = {
+      ...target,
+      text: selected.text,
+      branches,
+      activeBranch: newBranchIndex,
+    }
+
+    setMessages([...prior.slice(0, messageIndex), updatedUser, ...selected.tail])
+  }
+
+  async function editUserMessage(messageIndex, newText) {
+    if (thinking) return
+
+    const trimmed = String(newText || '').trim()
+    if (!trimmed) return
+
+    const prior = messages || []
+    const target = prior[messageIndex]
+    if (!target || target.role !== 'user') return
+    if (target.text === '[Image attached]') return
+
+    const mode = resolveMode()
+    const session = sessionRef.current
+
+    let branches = target.branches
+      ? target.branches.map((branch) => ({
+          text: branch.text,
+          tail: branch.tail.map(cloneMessage),
+        }))
+      : []
+
+    const activeIdx = target.activeBranch ?? (branches.length ? branches.length - 1 : -1)
+    const currentTail = prior.slice(messageIndex + 1).map(cloneMessage)
+
+    if (branches.length === 0) {
+      branches.push({ text: target.text, tail: currentTail })
+    } else if (activeIdx >= 0) {
+      branches[activeIdx] = { text: target.text, tail: currentTail }
+    }
+
+    branches.push({ text: trimmed, tail: [] })
+    const newActiveBranch = branches.length - 1
+    const updatedUser = {
+      ...target,
+      text: trimmed,
+      branches,
+      activeBranch: newActiveBranch,
+    }
+
+    const truncated = [...prior.slice(0, messageIndex), updatedUser]
+    setMessages(truncated)
+    setThinking(true)
+
+    const dbKeepCount = countPersistedBefore(prior, messageIndex)
+
+    await checkRepeatSentiment(truncated)
+    const newRecap = await maybeGenerateRecap(truncated, mode.id)
+    const injections = newRecap ? [...hiddenInjections, newRecap] : hiddenInjections
+
+    let dontTextStep = null
+    if (mode.id === 'stop_contact') {
+      dontTextStep = 'processing'
+    }
+
+    try {
+      track('chat_edit', { authed: isAuthed, mode: mode.id })
+      await requestAssistantReply({
+        userText: trimmed,
+        nextMessages: truncated,
+        mode,
+        dontTextStep,
+        injections,
+        isEdit: true,
+        dbKeepCount,
+        editMessageIndex: messageIndex,
+      })
+    } catch {
+      setMessages((prev) => [
+        ...(prev || []),
+        createAssistantMessage('Sorry, something went wrong. Please try again.', {
+          modeId: mode.id,
+        }),
+      ])
+    } finally {
+      setThinking(false)
+    }
+  }
+
   async function send({ text: value, images = [] } = {}) {
     const v = String(value || '').trim()
     const imagePayload = Array.isArray(images) ? images.filter(Boolean).slice(0, 2) : []
     if ((!v && !imagePayload.length) || thinking) return
 
     let mode = resolveMode()
+    let activeStopContactPhase = stopContactPhase
     if (!chatMode) {
-      mode = { id: DEFAULT_MODE.id, ...DEFAULT_MODE }
+      const selectedMode = getModeById(entrySelectedModeId || DEFAULT_MODE.id)
+      mode = { id: selectedMode.id, style: selectedMode.style, mood: selectedMode.mood }
       setChatMode(mode)
       setActiveSessionId(CURRENT_SESSION_ID)
       if (!sessionRef.current.startingMode) {
-        sessionRef.current.startingMode = DEFAULT_MODE.label
+        sessionRef.current.startingMode = selectedMode.label
       }
+      if (mode.id === 'stop_contact') {
+        activeStopContactPhase = 'awaiting_unsent'
+        setStopContactPhase('awaiting_unsent')
+        sessionRef.current.stopContactMessageCount = 0
+      } else {
+        setStopContactPhase(null)
+      }
+      track('entry_started', { style: mode.id })
+    }
+
+    if (!hasUserMessages(messages || [])) {
+      setEntryExiting(true)
+      window.setTimeout(() => setEntryExiting(false), 200)
     }
 
     const now = Date.now()
@@ -516,13 +1115,30 @@ export default function HavenChat() {
 
     session.userMessages.push({ length: v.length || 0, sentAt: now, replyGapSeconds: replyGap })
 
-    if (mode.id === 'dont_text') {
-      session.dontTextMessageCount += 1
+    if (mode.id === 'stop_contact') {
+      session.stopContactMessageCount += 1
     }
 
     setText('')
     const displayText = v || (imagePayload.length ? '[Image attached]' : '')
-    const nextMessages = [...(messages || []), { role: 'user', text: displayText, at: now }]
+    const priorMessages = messages || []
+    const hasStopContactOpening = priorMessages.some(
+      (m) => m.role === 'assistant' && m.text === STOP_CONTACT_OPENING,
+    )
+    let nextMessages
+    if (mode.id === 'stop_contact' && !hasStopContactOpening && activeStopContactPhase === 'awaiting_unsent') {
+      nextMessages = [
+        ...priorMessages,
+        createAssistantMessage(STOP_CONTACT_OPENING, {
+          ephemeral: true,
+          modeId: 'stop_contact',
+          at: now - 1,
+        }),
+        createUserMessage(displayText, now),
+      ]
+    } else {
+      nextMessages = [...priorMessages, createUserMessage(displayText, now)]
+    }
     setMessages(nextMessages)
     setThinking(true)
 
@@ -531,10 +1147,10 @@ export default function HavenChat() {
     const injections = newRecap ? [...hiddenInjections, newRecap] : hiddenInjections
 
     let dontTextStep = null
-    if (mode.id === 'dont_text') {
-      if (dontTextPhase === 'awaiting_unsent') {
+    if (mode.id === 'stop_contact') {
+      if (activeStopContactPhase === 'awaiting_unsent') {
         dontTextStep = 'after_unsent'
-        setDontTextPhase('processing')
+        setStopContactPhase('processing')
       } else {
         dontTextStep = 'processing'
       }
@@ -542,96 +1158,32 @@ export default function HavenChat() {
 
     try {
       track('chat_send', { authed: isAuthed, mode: mode.id })
-
-      const endpoint = isAuthed ? '/api/chat/send' : '/api/chat/guest-send'
-      const body = {
-        text: v,
-        modeId: mode.id,
+      await requestAssistantReply({
+        userText: v,
+        nextMessages,
+        mode,
         dontTextStep,
-        dontTextMessageCount: session.dontTextMessageCount,
-        hiddenInjections: injections,
-        isNewSession: isAuthed && isNewSession,
-        messages: nextMessages.slice(0, -1),
+        injections,
         images: imagePayload,
-      }
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
       })
-
-      if (res.ok) {
-        const data = await res.json()
-        setMessages((prev) => [...(prev || []), { role: 'assistant', text: data.reply, at: Date.now() }])
-        session.lastAssistantAt = Date.now()
-        setIsNewSession(false)
-        pulseWarmth(1, 1600)
-        recommendQuote(v)
-        track('chat_reply', { authed: isAuthed, safety: Boolean(data?.safety) })
-        if (isAuthed) {
-          await fetch('/api/gamification/progress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deltaChat: 1 }),
-          }).catch(() => null)
-        }
-      } else {
-        setMessages((prev) => [
-          ...(prev || []),
-          { role: 'assistant', text: 'Sorry, something went wrong. Please try again.', at: Date.now() },
-        ])
-      }
     } catch {
       setMessages((prev) => [
         ...(prev || []),
-        { role: 'assistant', text: 'Sorry, something went wrong. Please try again.', at: Date.now() },
+        createAssistantMessage('Sorry, something went wrong. Please try again.', {
+          modeId: mode.id,
+        }),
       ])
     } finally {
       setThinking(false)
     }
   }
 
-  async function recommendQuote(latestUserText) {
-    try {
-      const res = await fetch('/api/quotes')
-      if (!res.ok) return
-      const chapters = await res.json()
-      const mode = resolveMode()
-      const preferred =
-        mode.id === 'dont_text' ? 'Heartbreak'
-        : mode.id === 'vent' ? 'Healing'
-        : mode.id === 'understand' ? 'Moving On'
-        : mode.id === 'honest' ? 'Letting Go'
-        : mode.id === 'comfort' ? 'Healing'
-        : null
-
-      const chapterNames = Object.keys(chapters || {})
-      const chosenChapter = preferred && chapters[preferred] ? preferred : chapterNames[0]
-      const list = (chapters?.[chosenChapter] || []).filter(Boolean)
-      if (!list.length) return
-
-      const seed = String(latestUserText || '').length % list.length
-      const pick = list[seed] || list[0]
-      setQuoteRec({ ...pick, chapter: chosenChapter })
-    } catch {
-      /* ignore */
+  async function refreshReturningOpening() {
+    if (!isAuthed || !memoryEnabled) {
+      setReturningOpening(null)
+      return
     }
-  }
-
-  async function resetToPreChat({ refreshOpening = false } = {}) {
-    setMessages([])
-    setChatMode(null)
-    setQuoteRec(null)
-    setGuestBannerDismissed(false)
-    setDontTextPhase(null)
-    setHiddenInjections([])
-    setIsNewSession(true)
-    setActiveSessionId(null)
-    lastRecapAt.current = 0
-    sessionRef.current = createSessionState()
-
-    if (refreshOpening && isAuthed && memoryEnabled) {
+    try {
       const openingRes = await fetch('/api/chat/returning-opening', { method: 'POST' })
       const openingPayload = openingRes.ok ? await openingRes.json() : {}
       if (openingPayload?.opening) {
@@ -639,59 +1191,150 @@ export default function HavenChat() {
       } else {
         setReturningOpening(null)
       }
-    } else if (refreshOpening) {
+    } catch {
       setReturningOpening(null)
     }
   }
 
-  async function clearChat() {
+  function resetToPreChatSync() {
+    setMessages([])
+    setChatMode(null)
+    setEntrySelectedModeId(null)
+    setEntryExiting(false)
+    setGuestBannerDismissed(false)
+    setStopContactPhase(null)
+    setHiddenInjections([])
+    setIsNewSession(true)
+    setActiveSessionId(null)
+    setLiveSessionTitle(LIVE_SESSION_TITLE)
+    setReturningOpening(null)
+    lastRecapAt.current = 0
+    greetingPickRef.current = false
+    setEmptyGreeting('')
+    sessionRef.current = createSessionState()
+  }
+
+  function captureSessionSnapshot() {
+    const session = sessionRef.current
+    const currentMessages = (messages || []).filter(
+      (m) => m.role === 'user' || m.role === 'assistant',
+    )
+    return {
+      sessionId: session.sessionId,
+      ended: session.ended,
+      userMessages: session.userMessages,
+      startedAt: session.startedAt,
+      modeSwitchCount: session.modeSwitchCount,
+      startingMode: session.startingMode,
+      silenceAfterResponseCount: session.silenceAfterResponseCount,
+      repeatSentimentDetected: session.repeatSentimentDetected,
+      messages: currentMessages,
+      chatModeId: chatMode?.id,
+    }
+  }
+
+  async function finalizePreviousSession(snapshot) {
+    if (!snapshot) return
+
+    const {
+      sessionId,
+      ended,
+      userMessages,
+      startedAt,
+      modeSwitchCount,
+      startingMode,
+      silenceAfterResponseCount,
+      repeatSentimentDetected,
+      messages: currentMessages,
+      chatModeId,
+    } = snapshot
+
+    if (isAuthed && !ended && (userMessages.length || currentMessages.length)) {
+      const avgLen = userMessages.length
+        ? Math.round(userMessages.reduce((a, m) => a + m.length, 0) / userMessages.length)
+        : 0
+      const avgGap = userMessages.length
+        ? Math.round(userMessages.reduce((a, m) => a + (m.replyGapSeconds || 0), 0) / userMessages.length)
+        : 0
+      const durationMin = Math.max(1, Math.round((Date.now() - startedAt) / 60000))
+      const transcript = currentMessages
+        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
+        .join('\n')
+
+      await fetch('/api/chat/session-end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          message_count: currentMessages.length,
+          user_avg_message_length: avgLen,
+          avg_reply_gap_seconds: avgGap,
+          mode_switches: modeSwitchCount,
+          starting_mode: startingMode || getModeLabel(chatModeId),
+          final_mode: getModeLabel(chatModeId),
+          silence_after_response_count: silenceAfterResponseCount,
+          repeat_sentiment_detected: repeatSentimentDetected,
+          session_length_minutes: durationMin,
+          transcript,
+        }),
+      }).catch(() => null)
+    }
+
+    if (isAuthed) {
+      await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
+    }
+  }
+
+  function clearChat() {
     if (thinking) return
 
     const currentMessages = messages || []
-    if (currentMessages.length) {
+    const hadUserMessages = hasUserMessages(currentMessages)
+    const snapshot = hadUserMessages ? captureSessionSnapshot() : null
+
+    if (hadUserMessages) {
       saveChatArchive({
         id: sessionRef.current.sessionId,
-        title: buildConversationTitle(currentMessages),
+        title: uniquifyArchiveTitle(liveSessionTitle.trim() || LIVE_SESSION_TITLE, sessionRef.current.sessionId),
         messages: currentMessages,
         chatModeId: chatMode?.id,
       })
     }
 
-    await sendSessionEnd()
-
-    if (isAuthed) {
-      await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
-      const sessionsRes = await fetch('/api/chat/sessions')
-      if (sessionsRes.ok) {
-        const payload = await sessionsRes.json()
-        setServerSessions(Array.isArray(payload) ? payload : [])
-      }
-    }
-
-    await resetToPreChat({ refreshOpening: true })
+    resetToPreChatSync()
     setArchivesRevision((n) => n + 1)
-
     track('chat_deleted', { authed: isAuthed })
+
+    void (async () => {
+      if (snapshot) {
+        await finalizePreviousSession(snapshot)
+      } else if (isAuthed) {
+        await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
+      }
+      await refreshReturningOpening()
+    })()
   }
 
-  async function handleDeleteSession(session, e) {
-    e.preventDefault()
-    e.stopPropagation()
+  function handleDeleteSession(session, e) {
+    e?.preventDefault?.()
+    e?.stopPropagation?.()
     if (thinking || !session?.deletable) return
 
     if (session.id === CURRENT_SESSION_ID) {
-      await sendSessionEnd()
-      if (isAuthed) {
-        await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
-        const sessionsRes = await fetch('/api/chat/sessions')
-        if (sessionsRes.ok) {
-          const payload = await sessionsRes.json()
-          setServerSessions(Array.isArray(payload) ? payload : [])
-        }
-      }
-      await resetToPreChat({ refreshOpening: true })
+      const snapshot = hasUserMessages(messages || []) ? captureSessionSnapshot() : null
+
+      resetToPreChatSync()
       setArchivesRevision((n) => n + 1)
       track('chat_deleted', { authed: isAuthed, source: 'sidebar' })
+
+      void (async () => {
+        if (snapshot) {
+          await finalizePreviousSession(snapshot)
+        } else if (isAuthed) {
+          await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
+        }
+        await refreshReturningOpening()
+      })()
       return
     }
 
@@ -699,10 +1342,26 @@ export default function HavenChat() {
     setArchivesRevision((n) => n + 1)
 
     if (activeSessionId === session.id) {
-      await resetToPreChat({ refreshOpening: false })
+      resetToPreChatSync()
     }
 
     track('chat_deleted', { authed: isAuthed, source: 'sidebar_archive' })
+  }
+
+  function handleRenameSession(session, newTitle) {
+    if (!session?.renamable) return false
+    const trimmed = String(newTitle || '').trim().slice(0, 80)
+    if (!trimmed) return false
+
+    if (session.id === CURRENT_SESSION_ID) {
+      sessionRef.current.titleManuallyRenamed = true
+      setLiveSessionTitle(trimmed)
+      return true
+    }
+
+    const ok = renameChatArchive(session.id, trimmed)
+    if (ok) setArchivesRevision((n) => n + 1)
+    return ok
   }
 
   async function handleSelectSession(session) {
@@ -741,27 +1400,38 @@ export default function HavenChat() {
         : null,
     )
     setActiveSessionId(session.id)
-    setQuoteRec(null)
     setGuestBannerDismissed(false)
-    setDontTextPhase(null)
+    setStopContactPhase(null)
     setHiddenInjections([])
     setIsNewSession(false)
     sessionRef.current = createSessionState()
+  }
+
+  function handleEntryPillClick(modeId) {
+    setEntrySelectedModeId((prev) => (prev === modeId ? null : modeId))
   }
 
   if (messages === null) {
     return null
   }
 
-  const showEntry = !chatMode && !thinking
+  const hasLiveUserMessages = hasUserMessages(visibleMessages)
+  const chatActive = hasLiveUserMessages || thinking
+  const showEmptyUI = entryExiting || (!hasLiveUserMessages && !thinking)
   const userMessageCount = visibleMessages.filter((m) => m.role === 'user').length
   const showGuestBanner =
-    !isAuthed && !guestBannerDismissed && userMessageCount >= 10 && !showEntry
-  const showDontTextLabel = chatMode?.id === 'dont_text' && !showEntry
+    !isAuthed && !guestBannerDismissed && userMessageCount >= 10 && chatActive
+  const showStopContactLabel = chatMode?.id === 'stop_contact' && chatActive
+  const lastVisibleMessage = visibleMessages[visibleMessages.length - 1]
+  const showTypingIndicator =
+    thinking &&
+    (!lastVisibleMessage ||
+      lastVisibleMessage.role === 'user' ||
+      (lastVisibleMessage.role === 'assistant' && !String(lastVisibleMessage.text || '').trim()))
 
   const resolvedActiveSessionId =
     activeSessionId ??
-    (isAuthed && (visibleMessages.length > 0 || chatMode) ? CURRENT_SESSION_ID : null)
+    (isAuthed && hasLiveUserMessages ? CURRENT_SESSION_ID : null)
 
   return (
     <div
@@ -781,6 +1451,7 @@ export default function HavenChat() {
         onNewChat={clearChat}
         onSelectSession={handleSelectSession}
         onDeleteSession={handleDeleteSession}
+        onRenameSession={handleRenameSession}
       />
 
       <div className="parle-chat-main">
@@ -791,65 +1462,83 @@ export default function HavenChat() {
 
         <div ref={scrollRef} className="parle-chat-main__scroll">
           <div className="parle-chat-main__scroll-inner">
-          <SessionHeader />
-
-          {showEntry ? (
-            <div className="parle-chat-main__entry">
-              <EntryScreen
-                returningOpening={returningOpening}
-                onSelectMode={(mode) => startWithMode(mode)}
+          {!hasLiveUserMessages && returningOpening ? (
+            <div className="parle-chat__messages">
+              <Bubble
+                msg={{
+                  role: 'assistant',
+                  text: returningOpening,
+                  at: Date.now(),
+                  modeId: 'emotional',
+                }}
               />
             </div>
-          ) : (
+          ) : chatActive ? (
             <div className="parle-chat__messages">
-              {visibleMessages.map((m, i) => (
-                <Bubble key={`${m.role}-${i}-${m.text.slice(0, 8)}`} msg={m} />
-              ))}
-              {thinking && <TypingIndicator />}
+              {(messages || []).map((m, i) => {
+                if (m.role !== 'user' && m.role !== 'assistant') return null
+                if (
+                  m.role === 'assistant' &&
+                  showTypingIndicator &&
+                  !String(m.text || '').trim()
+                ) {
+                  return null
+                }
+                return (
+                  <Bubble
+                    key={m.id || `${m.role}-${i}-${m.text.slice(0, 8)}`}
+                    msg={m}
+                    messageIndex={i}
+                    thinking={thinking}
+                    onEditUserMessage={editUserMessage}
+                    onBranchChange={switchMessageBranch}
+                  />
+                )
+              })}
+              {showTypingIndicator && <TypingIndicator />}
             </div>
-          )}
+          ) : null}
 
-          {quoteRec && (
-            <div className="mt-8 mb-4">
-              <div className="rounded-2xl border border-border/80 bg-white/90 p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-                <p className="text-[10.5px] uppercase tracking-[0.24em] text-muted-foreground">
-                  A line that might fit
-                </p>
-                <p className="mt-2 font-serif text-[18px] text-foreground leading-snug">
-                  &ldquo;{quoteRec.text}&rdquo;
-                </p>
-                <p className="mt-2 text-[12px] text-muted-foreground">— {quoteRec.author}</p>
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                    {quoteRec.chapter}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => toggleQuote(quoteRec, quoteRec.chapter)}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-[12px] transition-all shrink-0',
-                      savedQuote?.id === quoteRec.id
-                        ? 'bg-primary/15 text-primary border border-primary/30'
-                        : 'text-muted-foreground hover:text-primary border border-transparent hover:bg-secondary',
-                    )}
-                  >
-                    {savedQuote?.id === quoteRec.id ? (
-                      <BookmarkCheck size={13} strokeWidth={2} />
-                    ) : (
-                      <Bookmark size={13} strokeWidth={1.7} />
-                    )}
-                    {savedQuote?.id === quoteRec.id ? 'Kept' : 'Keep this line'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
           </div>
         </div>
 
+        {showEmptyUI && (
+          <div className="parle-chat-empty-state">
+            <h1
+              className={cn(
+                'parle-chat-empty-state__greeting',
+                entryExiting && 'parle-chat-empty-state__greeting--exit',
+              )}
+            >
+              {emptyGreeting}
+            </h1>
+
+            <div className="parle-chat-empty-state__input">
+              <ChatInputBar
+                text={text}
+                onTextChange={setText}
+                onSend={send}
+                disabled={thinking}
+                loading={thinking}
+                activeModeId={entrySelectedModeId || DEFAULT_MODE.id}
+                chatStarted={false}
+                onModeChange={(mode) => startWithMode(mode, { isSwitch: Boolean(chatMode) })}
+                isAuthed={isAuthed}
+                imageConsentFromServer={imageAttachConsent}
+              />
+            </div>
+
+            <EntryModePicker
+              selectedModeId={entrySelectedModeId}
+              onPillClick={handleEntryPillClick}
+              exiting={entryExiting}
+            />
+          </div>
+        )}
+
         <div className="parle-chat-main__bottom-fixed">
           <div className="parle-chat-main__bottom-inner">
-            {showGuestBanner && (
+            {!showEmptyUI && showGuestBanner && (
               <div className="parle-chat__guest-banner">
                 <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-white/80 px-4 py-3 text-sm max-w-xl mx-auto">
                   <p className="flex-1 text-muted-foreground leading-relaxed">
@@ -873,23 +1562,26 @@ export default function HavenChat() {
               </div>
             )}
 
-            {showDontTextLabel && (
+            {!showEmptyUI && showStopContactLabel && (
               <p className="mb-2 text-center text-[12px] text-muted-foreground px-4">
                 Working through the urge to reach out
               </p>
             )}
 
-            <ChatInputBar
-              text={text}
-              onTextChange={setText}
-              onSend={send}
-              disabled={thinking}
-              activeModeId={chatMode?.id || DEFAULT_MODE.id}
-              chatStarted={!showEntry}
-              onModeChange={(mode) => startWithMode(mode, { isSwitch: Boolean(chatMode) })}
-              isAuthed={isAuthed}
-              imageConsentFromServer={imageAttachConsent}
-            />
+            {!showEmptyUI && (
+              <ChatInputBar
+                text={text}
+                onTextChange={setText}
+                onSend={send}
+                disabled={thinking}
+                loading={thinking}
+                activeModeId={chatMode?.id || DEFAULT_MODE.id}
+                chatStarted
+                onModeChange={(mode) => startWithMode(mode, { isSwitch: Boolean(chatMode) })}
+                isAuthed={isAuthed}
+                imageConsentFromServer={imageAttachConsent}
+              />
+            )}
 
             <p className="parle-chat__disclaimer">
               <Lock size={11} strokeWidth={2} aria-hidden />

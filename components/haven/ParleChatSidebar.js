@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ChevronLeft,
   Lock,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Pencil,
   Settings,
   SquarePen,
   Trash2,
@@ -36,9 +37,20 @@ export default function ParleChatSidebar({
   onNewChat,
   onSelectSession,
   onDeleteSession,
+  onRenameSession,
 }) {
   const router = useRouter()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const renameInputRef = useRef(null)
+
+  useEffect(() => {
+    if (renamingId && renameInputRef.current) {
+      renameInputRef.current.focus()
+      renameInputRef.current.select()
+    }
+  }, [renamingId])
 
   function handleBack() {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -46,6 +58,26 @@ export default function ParleChatSidebar({
       return
     }
     router.push(isAuthed ? '/dashboard' : '/')
+  }
+
+  function startRename(session, e) {
+    e.preventDefault()
+    e.stopPropagation()
+    setRenamingId(session.id)
+    setRenameDraft(session.title)
+  }
+
+  function cancelRename() {
+    setRenamingId(null)
+    setRenameDraft('')
+  }
+
+  function commitRename(session) {
+    const trimmed = renameDraft.trim()
+    if (trimmed && trimmed !== session.title) {
+      onRenameSession?.(session, trimmed)
+    }
+    cancelRename()
   }
 
   return (
@@ -105,7 +137,7 @@ export default function ParleChatSidebar({
             className="mt-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/80 text-[13px] text-foreground/90 hover:bg-black/[0.03] transition"
           >
             <SquarePen size={15} strokeWidth={1.75} className="shrink-0 opacity-70" />
-            <span>New chat</span>
+            <span>New Chat</span>
           </button>
         </div>
 
@@ -117,45 +149,91 @@ export default function ParleChatSidebar({
                   const active = session.id === activeSessionId
                   const disabled = session.loadable === false
                   const showDelete = session.deletable && !disabled
+                  const showRename = session.renamable && !disabled
+                  const showActions = showRename || showDelete
+                  const isRenaming = renamingId === session.id
+
                   return (
                     <li key={session.id} className="group relative">
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                          if (!disabled) {
-                            onSelectSession(session)
-                            onCloseMobile?.()
-                          }
-                        }}
-                        className={cn(
-                          'w-full text-left px-3 py-2.5 rounded-lg text-[13px] leading-snug transition',
-                          showDelete ? 'pr-9' : '',
-                          active
-                            ? 'bg-black/[0.06] text-foreground'
-                            : disabled
-                              ? 'text-muted-foreground/50 cursor-default'
-                              : 'text-foreground/80 hover:bg-black/[0.04]',
-                        )}
-                        title={session.title}
-                      >
-                        <span className="block truncate">{session.title}</span>
-                      </button>
-                      {showDelete && (
-                        <button
-                          type="button"
-                          onClick={(e) => onDeleteSession(session, e)}
-                          className={cn(
-                            'absolute right-1.5 top-1/2 -translate-y-1/2',
-                            'h-7 w-7 grid place-items-center rounded-md',
-                            'text-muted-foreground hover:text-primary hover:bg-black/[0.06]',
-                            'opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity',
+                      {isRenaming ? (
+                        <div className="px-2 py-1.5">
+                          <input
+                            ref={renameInputRef}
+                            type="text"
+                            value={renameDraft}
+                            maxLength={80}
+                            onChange={(e) => setRenameDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                commitRename(session)
+                              }
+                              if (e.key === 'Escape') {
+                                e.preventDefault()
+                                cancelRename()
+                              }
+                            }}
+                            onBlur={() => commitRename(session)}
+                            className="parle-chat-sidebar__rename-input"
+                            aria-label="Chat name"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => {
+                              if (!disabled) {
+                                onSelectSession(session)
+                                onCloseMobile?.()
+                              }
+                            }}
+                            className={cn(
+                              'w-full text-left px-3 py-2.5 rounded-lg text-[13px] leading-snug transition',
+                              showActions ? 'pr-[4.25rem]' : '',
+                              active
+                                ? 'bg-black/[0.06] text-foreground'
+                                : disabled
+                                  ? 'text-muted-foreground/50 cursor-default'
+                                  : 'text-foreground/80 hover:bg-black/[0.04]',
+                            )}
+                            title={session.title}
+                          >
+                            <span className="block truncate">{session.title}</span>
+                          </button>
+                          {showActions && (
+                            <div
+                              className={cn(
+                                'parle-chat-sidebar__session-actions',
+                                active && 'parle-chat-sidebar__session-actions--visible',
+                              )}
+                            >
+                              {showRename && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => startRename(session, e)}
+                                  className="parle-chat-sidebar__session-action"
+                                  aria-label={`Rename ${session.title}`}
+                                  title="Rename chat"
+                                >
+                                  <Pencil size={14} strokeWidth={1.75} />
+                                </button>
+                              )}
+                              {showDelete && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => onDeleteSession(session, e)}
+                                  className="parle-chat-sidebar__session-action parle-chat-sidebar__session-action--delete"
+                                  aria-label={`Delete ${session.title}`}
+                                  title="Delete chat"
+                                >
+                                  <Trash2 size={14} strokeWidth={1.75} />
+                                </button>
+                              )}
+                            </div>
                           )}
-                          aria-label={`Delete ${session.title}`}
-                          title="Delete chat"
-                        >
-                          <Trash2 size={14} strokeWidth={1.75} />
-                        </button>
+                        </>
                       )}
                     </li>
                   )

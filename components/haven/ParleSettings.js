@@ -193,14 +193,6 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
   )
 }
 
-export default function ParleSettings() {
-  return (
-    <section className="rise rise-5 paper p-6 md:p-8">
-      <ParleSettingsPanel />
-    </section>
-  )
-}
-
 export function ParleSettingsPopup({ open, onClose, isAuthed }) {
   useEffect(() => {
     if (!open) return undefined

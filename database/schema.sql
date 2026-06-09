@@ -74,3 +74,20 @@ CREATE INDEX IF NOT EXISTS idx_letters_to_self_user_completed ON letters_to_self
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_session_summary TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS session_signals (
+  session_id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message_count INTEGER NOT NULL DEFAULT 0,
+  user_avg_message_length INTEGER NOT NULL DEFAULT 0,
+  avg_reply_gap_seconds INTEGER NOT NULL DEFAULT 0,
+  mode_switches INTEGER NOT NULL DEFAULT 0,
+  final_mode VARCHAR(64),
+  silence_after_response_count INTEGER NOT NULL DEFAULT 0,
+  repeat_sentiment_detected BOOLEAN NOT NULL DEFAULT FALSE,
+  session_length_minutes INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_signals_user ON session_signals(user_id);
+CREATE INDEX IF NOT EXISTS idx_session_signals_created ON session_signals(user_id, created_at DESC);

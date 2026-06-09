@@ -1,26 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Mic, Plus, Send, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowUp, Loader2, Mic, Plus, SlidersHorizontal, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
-import { getModeById } from '../../lib/parle/modes'
+import {
+  getModeById,
+  getModePillClasses,
+  getModeShortLabel,
+  MODE_PILL_ORDER,
+} from '../../lib/parle/modes'
 
 const IMAGE_CONSENT_KEY = 'parle.image.consent.v1'
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const MAX_IMAGES = 2
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const TEXTAREA_MAX_HEIGHT = 120
-
-/** Display order and compact labels for the in-chat mode pill selector */
-const MODE_PILL_ORDER = ['listen', 'vent', 'comfort', 'honest', 'understand', 'dont_text']
-
-const MODE_PILL_LABELS = {
-  listen: 'Just listen',
-  vent: 'Need to vent',
-  comfort: 'Comfort me first',
-  honest: 'Be honest',
-  understand: 'Help me understand',
-  dont_text: 'Stop reaching out',
-}
 
 function getSpeechRecognition() {
   if (typeof window === 'undefined') return null
@@ -62,14 +55,9 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef }) {
               role="option"
               aria-selected={active}
               onClick={() => onSelect(mode)}
-              className={cn(
-                'text-[12px] leading-none py-[5px] px-3 rounded-[20px] border transition-colors whitespace-nowrap',
-                active
-                  ? 'bg-primary/15 border-primary text-primary'
-                  : 'bg-transparent border-border text-muted-foreground hover:bg-primary/[0.08]',
-              )}
+              className={getModePillClasses(id, { selected: active, compact: true })}
             >
-              {MODE_PILL_LABELS[id] || mode.label}
+              {getModeShortLabel(id)}
             </button>
           )
         })}
@@ -83,6 +71,7 @@ export default function ChatInputBar({
   onTextChange,
   onSend,
   disabled,
+  loading = false,
   activeModeId,
   chatStarted,
   onModeChange,
@@ -303,7 +292,7 @@ export default function ChatInputBar({
   }
 
   const canSend = (String(text || '').trim().length > 0 || attachments.length > 0) && !disabled
-  const modeId = activeModeId || 'listen'
+  const modeId = activeModeId || 'emotional'
 
   return (
     <div className="parle-chat__input-wrap">
@@ -340,7 +329,7 @@ export default function ChatInputBar({
         <p className="mb-2 text-[12px] text-muted-foreground">{imageError}</p>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} aria-busy={loading || undefined}>
         <input
           ref={fileInputRef}
           type="file"
@@ -365,10 +354,10 @@ export default function ChatInputBar({
             type="button"
             onClick={handleAttachClick}
             disabled={disabled || attachments.length >= MAX_IMAGES}
-            className="h-8 w-8 shrink-0 self-center text-muted-foreground hover:text-foreground grid place-items-center transition disabled:opacity-40 -ml-1"
+            className="h-9 w-9 shrink-0 self-center text-muted-foreground hover:text-foreground grid place-items-center transition disabled:opacity-40 -ml-1"
             aria-label="Attach image"
           >
-            <Plus size={20} strokeWidth={1.75} />
+            <Plus size={22} strokeWidth={1.75} />
           </button>
 
           <textarea
@@ -395,12 +384,12 @@ export default function ChatInputBar({
                 type="button"
                 onClick={() => setModeOpen((o) => !o)}
                 disabled={disabled}
-                className="h-8 w-8 grid place-items-center text-muted-foreground hover:text-foreground transition rounded-full hover:bg-secondary/60"
+                className="h-9 w-9 grid place-items-center text-muted-foreground hover:text-foreground transition rounded-full hover:bg-secondary/60"
                 aria-expanded={modeOpen}
                 aria-haspopup="listbox"
                 aria-label="Change conversation mode"
               >
-                <SlidersHorizontal size={18} strokeWidth={1.75} />
+                <SlidersHorizontal size={20} strokeWidth={1.75} />
               </button>
               {modeOpen && (
                 <ModePillSelector
@@ -422,7 +411,7 @@ export default function ChatInputBar({
               onClick={toggleMic}
               disabled={disabled}
               className={cn(
-                'relative h-8 w-8 shrink-0 self-center grid place-items-center transition rounded-full',
+                'relative h-9 w-9 shrink-0 self-center grid place-items-center transition rounded-full',
                 recording
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
@@ -435,22 +424,24 @@ export default function ChatInputBar({
                   aria-hidden
                 />
               )}
-              <Mic size={18} strokeWidth={1.75} className="relative z-[1]" />
+              <Mic size={20} strokeWidth={1.75} className="relative z-[1]" />
             </button>
           )}
 
           <button
             type="submit"
             className={cn(
-              'h-9 w-9 shrink-0 self-center rounded-full grid place-items-center transition active:scale-95 -mr-0.5',
-              canSend
-                ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
-                : 'bg-secondary/70 text-muted-foreground',
+              'parle-chat-send-btn shrink-0 self-center -mr-0.5',
+              loading || canSend ? 'parle-chat-send-btn--active' : 'parle-chat-send-btn--idle',
             )}
-            disabled={!canSend}
-            aria-label="Send"
+            disabled={loading || !canSend}
+            aria-label={loading ? 'Waiting for response' : 'Send'}
           >
-            <Send size={15} strokeWidth={2.25} className={canSend ? 'text-primary-foreground' : ''} />
+            {loading ? (
+              <Loader2 size={18} strokeWidth={2.25} className="animate-spin" />
+            ) : (
+              <ArrowUp size={18} strokeWidth={2.5} />
+            )}
           </button>
         </div>
       </form>

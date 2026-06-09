@@ -1,10 +1,17 @@
 import db from '../../../lib/db'
 import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSafety'
-import { openaiChatComplete } from '../../../lib/openai'
-import { buildChatCompletionMessages, sentenceClamp } from '../../../lib/parle/chatComplete'
+import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
+import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getUserChatSettings } from '../../../lib/parle/preferences'
 import { getModeLabel } from '../../../lib/parle/modes'
+import { truncateChatMemory } from '../../../lib/parle/chatMemory'
+
+export const config = {
+  api: {
+    responseLimit: false,
+  },
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -22,6 +29,9 @@ export default async function handler(req, res) {
     hiddenInjections,
     isNewSession,
     images,
+    isEdit,
+    dbKeepCount,
+    messages: clientMessages,
   } = req.body || {}
 
   if (!text && !(Array.isArray(images) && images.length)) {
@@ -42,6 +52,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
   }
 
+  if (isEdit && typeof dbKeepCount === 'number') {
+    await truncateChatMemory(payload.id, dbKeepCount)
+  }
+
   await db.query(
     'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
     [payload.id, 'user', userText, new Date()],
@@ -51,20 +65,31 @@ export default async function handler(req, res) {
   const crossSummary =
     isNewSession && settings.memory_enabled ? settings.last_session_summary : crossSessionSummary
 
-  const history = await db.query(
-    'SELECT role,text FROM chat_memory WHERE user_id=$1 ORDER BY created_at DESC LIMIT 14',
-    [payload.id],
-  )
-  const recent = (history.rows || [])
-    .reverse()
-    .slice(0, -1)
-    .map((m) => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      text: m.text,
-    }))
+  let recent
+  if (isEdit && Array.isArray(clientMessages)) {
+    recent = clientMessages
+      .filter((m) => m?.role === 'user' || m?.role === 'assistant')
+      .slice(-14)
+      .map((m) => ({
+        role: m.role,
+        text: m.text,
+      }))
+  } else {
+    const history = await db.query(
+      'SELECT role,text FROM chat_memory WHERE user_id=$1 ORDER BY created_at DESC LIMIT 14',
+      [payload.id],
+    )
+    recent = (history.rows || [])
+      .reverse()
+      .slice(0, -1)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        text: m.text,
+      }))
+  }
 
   const messages = buildChatCompletionMessages({
-    modeId: modeId || 'listen',
+    modeId: modeId || 'emotional',
     dontTextStep,
     dontTextMessageCount,
     preferenceProfile: settings.profile,
@@ -78,20 +103,16 @@ export default async function handler(req, res) {
     images,
   })
 
-  let reply = ''
-  try {
-    reply = await openaiChatComplete({ messages, temperature: 0.65 })
-  } catch (error) {
-    reply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
-    console.error('chat_model_error', error)
-  }
+  const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
 
-  reply = sentenceClamp(reply, 8)
+  const reply = await streamChatReply(res, {
+    messages,
+    temperature: 0.65,
+    fallbackReply,
+  })
 
   await db.query(
     'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
     [payload.id, 'assistant', reply, new Date()],
   )
-
-  res.status(200).json({ reply })
 }

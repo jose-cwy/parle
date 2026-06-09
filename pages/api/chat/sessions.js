@@ -19,6 +19,9 @@ export default async function handler(req, res) {
     )
     return res.status(200).json(result.rows || [])
   } catch (error) {
+    if (error?.code === '42P01' || error?.code === '42703') {
+      return res.status(200).json([])
+    }
     console.error('chat_sessions_error', error)
     return res.status(500).json({ error: 'Unable to load sessions' })
   }
