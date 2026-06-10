@@ -1,24 +1,76 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Head from 'next/head'
 import { safetyAgreementSections } from '../data/safetyAgreementContent'
+
+function TermsReadingProgress({ progress }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  const percent = Math.round(progress * 100)
+
+  return createPortal(
+    <div
+      className="pss-terms-page__progress-rail"
+      role="progressbar"
+      aria-valuenow={percent}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label="Reading progress"
+    >
+      <div
+        className="pss-terms-page__progress-bar"
+        style={{ width: `${percent}%` }}
+      />
+    </div>,
+    document.body,
+  )
+}
 
 export default function TermsPage() {
   const [scrollProgress, setScrollProgress] = useState(0)
 
   useEffect(() => {
+    document.documentElement.classList.add('html--terms-page')
+    document.body.classList.add('body--terms-page')
+
+    function syncNavHeight() {
+      const header =
+        document.querySelector('.pss-nav') || document.querySelector('.marketing-header')
+      const height = header?.getBoundingClientRect().height
+      if (height && height > 0) {
+        const px = `${Math.ceil(height)}px`
+        document.documentElement.style.setProperty('--pss-nav-height', px)
+        document.documentElement.style.setProperty('--hs-navbar-height', px)
+      }
+    }
+
     function updateScrollState() {
       const doc = document.documentElement
       const maxScroll = doc.scrollHeight - window.innerHeight
       setScrollProgress(maxScroll <= 0 ? 1 : Math.min(1, window.scrollY / maxScroll))
     }
 
+    function onResize() {
+      syncNavHeight()
+      updateScrollState()
+    }
+
+    syncNavHeight()
     updateScrollState()
     window.addEventListener('scroll', updateScrollState, { passive: true })
-    window.addEventListener('resize', updateScrollState)
+    window.addEventListener('resize', onResize)
     return () => {
+      document.documentElement.classList.remove('html--terms-page')
+      document.body.classList.remove('body--terms-page')
       window.removeEventListener('scroll', updateScrollState)
-      window.removeEventListener('resize', updateScrollState)
+      window.removeEventListener('resize', onResize)
     }
   }, [])
 
@@ -32,21 +84,9 @@ export default function TermsPage() {
         />
       </Head>
 
-      <main className="pss-terms-page">
-        <div
-          className="pss-terms-page__progress-rail"
-          role="progressbar"
-          aria-valuenow={Math.round(scrollProgress * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="Reading progress"
-        >
-          <div
-            className="pss-terms-page__progress-bar"
-            style={{ width: `${Math.round(scrollProgress * 100)}%` }}
-          />
-        </div>
+      <TermsReadingProgress progress={scrollProgress} />
 
+      <main className="pss-terms-page">
         <header className="pss-terms-page__hero">
           <div className="pss-terms-page__inner">
             <p className="pss-terms-page__eyebrow">Terms &amp; Safety</p>

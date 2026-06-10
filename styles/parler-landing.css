@@ -424,8 +424,14 @@ body.body--parler-landing .terms-agreement-modal__subtitle {
   color: var(--muted-foreground);
 }
 
+body.body--parler-landing .terms-agreement-modal__progress {
+  background: color-mix(in srgb, var(--primary) 16%, var(--muted));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
 body.body--parler-landing .terms-agreement-modal__progress-bar {
   background: var(--primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 50%, transparent);
 }
 
 body.body--parler-landing .terms-agreement-modal__section {
@@ -1022,6 +1028,35 @@ body.body--parler-landing .terms-agreement-modal__btn--accept:hover:not(:disable
   }
 }
 
+/* Standalone /terms page — visible document scrollbar */
+html.html--terms-page {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 75%, #8f3a34) color-mix(in srgb, var(--foreground) 12%, var(--background));
+}
+
+html.html--terms-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+html.html--terms-page::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--foreground) 8%, var(--background));
+}
+
+html.html--terms-page::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 88%, #fff),
+    color-mix(in srgb, var(--primary) 95%, #8f3a34)
+  );
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--foreground) 8%, var(--background));
+  min-height: 2.5rem;
+}
+
+html.html--terms-page::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
 /* Standalone /terms page — full document layout */
 body.body--parler-landing .pss-terms-page {
   min-height: 100%;
@@ -1030,18 +1065,30 @@ body.body--parler-landing .pss-terms-page {
   font-family: var(--font-haven-sans);
 }
 
+/* Portaled to document.body so fixed positioning is not trapped by page transitions */
 body.body--parler-landing .pss-terms-page__progress-rail {
-  position: sticky;
+  position: fixed;
   top: var(--pss-nav-height, 4.5rem);
-  z-index: 20;
-  height: 3px;
-  background: color-mix(in srgb, var(--border) 55%, transparent);
+  left: 0;
+  right: 0;
+  z-index: 45;
+  height: 5px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--foreground) 16%, var(--background));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--border) 75%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 body.body--parler-landing .pss-terms-page__progress-bar {
   height: 100%;
-  background: var(--primary);
-  transition: width 0.15s ease;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 92%, #fff),
+    var(--primary)
+  );
+  box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 70%, transparent);
+  transition: width 0.12s ease-out;
 }
 
 body.body--parler-landing .pss-terms-page__inner {

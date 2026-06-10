@@ -641,16 +641,18 @@ body.body--landing .auth-page__terms-hint {
 
 .terms-agreement-modal__progress {
   margin-top: 0.65rem;
-  height: 2px;
+  height: 4px;
   border-radius: 999px;
-  background: var(--hs-surface-muted, #f3ede4);
+  background: color-mix(in srgb, var(--hs-auth-red, #c54b44) 14%, var(--hs-surface-muted, #f3ede4));
   overflow: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hs-auth-red, #c54b44) 10%, transparent);
 }
 
 .terms-agreement-modal__progress-bar {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--hs-auth-red, #c54b44), var(--hs-auth-red-hover, #a63f3a));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hs-auth-red, #c54b44) 45%, transparent);
   transition: width 0.2s ease;
 }
 
@@ -659,35 +661,39 @@ body.body--landing .auth-page__terms-hint {
   z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding: 0.85rem 1.05rem 1rem;
+  padding-right: 0.75rem;
   outline: none;
   background: #f6f1ea;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgba(168, 90, 82, 0.55) #ebe4da;
+  scrollbar-color: rgba(168, 90, 82, 0.85) rgba(92, 84, 77, 0.22);
 }
 
 .terms-agreement-modal__body::-webkit-scrollbar {
-  width: 7px;
+  width: 10px;
 }
 
 .terms-agreement-modal__body::-webkit-scrollbar-track {
   margin: 4px 0;
-  background: #ebe4da;
+  background: rgba(92, 84, 77, 0.14);
   border-radius: 999px;
+  border: 1px solid rgba(92, 84, 77, 0.12);
 }
 
 .terms-agreement-modal__body::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(197, 75, 68, 0.55), rgba(168, 90, 82, 0.65));
+  background: linear-gradient(180deg, rgba(197, 75, 68, 0.82), rgba(143, 58, 52, 0.92));
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 2px solid rgba(246, 241, 234, 0.85);
+  min-height: 2.5rem;
 }
 
 .terms-agreement-modal__body::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 90, 82, 0.75);
+  background: linear-gradient(180deg, rgba(197, 75, 68, 0.95), rgba(143, 58, 52, 1));
 }
 
 .terms-agreement-modal__body:focus-visible {
