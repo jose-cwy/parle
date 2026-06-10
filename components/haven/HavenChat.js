@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Check, ChevronLeft, ChevronRight, Lock, Pencil, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Copy, Lock, Pencil, RotateCcw, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
@@ -14,11 +14,8 @@ import {
   DEFAULT_MODE,
   MODE_SWITCH_ACK,
   STOP_CONTACT_OPENING,
-  ENTRY_CHIP_ORDER,
   getModeLabel,
   getModeById,
-  getEntryChipLabel,
-  getModePillClasses,
   resolveModeId,
 } from '../../lib/parle/modes'
 import {
@@ -35,6 +32,12 @@ import { buildContextRecapBlock } from '../../lib/parle/prompts'
 const CURRENT_SESSION_ID = 'current-live'
 const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
 const LIVE_SESSION_TITLE = 'New Chat'
+
+const EMPTY_STATE_QUICK_PROMPTS = [
+  'I miss them',
+  "I can't move on",
+  'It really hurts right now',
+]
 
 const MODE_ACK_TEXTS = new Set(
   Object.values(MODE_SWITCH_ACK).filter((value) => typeof value === 'string' && value),
@@ -215,11 +218,14 @@ function UserMessageBubble({
   messageIndex,
   disabled,
   onEdit,
+  onResend,
   onBranchChange,
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(msg.text)
+  const [copied, setCopied] = useState(false)
   const textareaRef = useRef(null)
+  const copiedTimerRef = useRef(null)
   const branchCount = msg.branches?.length ?? 0
   const activeBranch = msg.activeBranch ?? Math.max(branchCount - 1, 0)
   const showBranchNav = branchCount > 1
@@ -235,6 +241,39 @@ function UserMessageBubble({
     const len = textareaRef.current.value.length
     textareaRef.current.setSelectionRange(len, len)
   }, [editing])
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+    }
+  }, [])
+
+  async function copyMessage() {
+    const text = String(msg.text || '').trim()
+    if (!text) return
+
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      try {
+        const el = document.createElement('textarea')
+        el.value = text
+        el.setAttribute('readonly', '')
+        el.style.position = 'fixed'
+        el.style.left = '-9999px'
+        document.body.appendChild(el)
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
+      } catch {
+        return
+      }
+    }
+
+    setCopied(true)
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+    copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
+  }
 
   function startEdit() {
     setDraft(msg.text)
@@ -331,23 +370,60 @@ function UserMessageBubble({
             </button>
           </div>
         )}
+        <button
+          type="button"
+          className={cn(
+            'parle-chat-msg__action-btn',
+            copied && 'parle-chat-msg__action-btn--primary',
+          )}
+          onClick={copyMessage}
+          disabled={disabled}
+          aria-label={copied ? 'Copied' : 'Copy message'}
+          title={copied ? 'Copied' : 'Copy'}
+        >
+          {copied ? (
+            <Check size={15} strokeWidth={1.75} />
+          ) : (
+            <Copy size={15} strokeWidth={1.75} />
+          )}
+        </button>
         {canEdit && (
-          <button
-            type="button"
-            className="parle-chat-msg__action-btn"
-            disabled={disabled}
-            onClick={startEdit}
-            aria-label="Edit message"
-          >
-            <Pencil size={15} strokeWidth={1.75} />
-          </button>
+          <>
+            <button
+              type="button"
+              className="parle-chat-msg__action-btn"
+              disabled={disabled}
+              onClick={() => onResend(messageIndex)}
+              aria-label="Resend message"
+              title="Resend"
+            >
+              <RotateCcw size={15} strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              className="parle-chat-msg__action-btn"
+              disabled={disabled}
+              onClick={startEdit}
+              aria-label="Edit message"
+              title="Edit"
+            >
+              <Pencil size={15} strokeWidth={1.75} />
+            </button>
+          </>
         )}
       </div>
     </article>
   )
 }
 
-function Bubble({ msg, messageIndex, thinking, onEditUserMessage, onBranchChange }) {
+function Bubble({
+  msg,
+  messageIndex,
+  thinking,
+  onEditUserMessage,
+  onResendUserMessage,
+  onBranchChange,
+}) {
   if (msg.role === 'user') {
     return (
       <UserMessageBubble
@@ -355,6 +431,7 @@ function Bubble({ msg, messageIndex, thinking, onEditUserMessage, onBranchChange
         messageIndex={messageIndex}
         disabled={thinking}
         onEdit={onEditUserMessage}
+        onResend={onResendUserMessage}
         onBranchChange={onBranchChange}
       />
     )
@@ -388,27 +465,27 @@ function TypingIndicator() {
   )
 }
 
-function EntryModePicker({ selectedModeId, onPillClick, exiting }) {
+function EmptyStateQuickPrompts({ onSelect, disabled, exiting }) {
   return (
     <div
-      className={cn('parle-chat-empty-state__pills', exiting && 'parle-chat-empty-state__pills--exit')}
+      className={cn(
+        'parle-chat-empty-state__quick-prompts',
+        exiting && 'parle-chat-empty-state__quick-prompts--exit',
+      )}
       role="group"
-      aria-label="Conversation mode"
+      aria-label="Quick prompts"
     >
-      {ENTRY_CHIP_ORDER.map((id) => {
-        const selected = selectedModeId === id
-        return (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onPillClick(id)}
-            className={getModePillClasses(id, { selected })}
-          >
-            {getEntryChipLabel(id)}
-          </button>
-        )
-      })}
+      {EMPTY_STATE_QUICK_PROMPTS.map((prompt) => (
+        <button
+          key={prompt}
+          type="button"
+          disabled={disabled}
+          onClick={() => onSelect(prompt)}
+          className="parle-chat-empty-state__quick-prompt"
+        >
+          {prompt}
+        </button>
+      ))}
     </div>
   )
 }
@@ -451,7 +528,7 @@ export default function HavenChat() {
   const [liveSessionTitle, setLiveSessionTitle] = useState(LIVE_SESSION_TITLE)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [entrySelectedModeId, setEntrySelectedModeId] = useState(null)
+  const [pendingModeId, setPendingModeId] = useState(DEFAULT_MODE.id)
   const [entryExiting, setEntryExiting] = useState(false)
   const sessionRef = useRef(createSessionState())
   const lastRecapAt = useRef(0)
@@ -646,26 +723,16 @@ export default function HavenChat() {
       return
     }
 
-    const archives = getChatArchives()
-    const items = []
     const hasUserMessageInLiveSession = hasUserMessages(visibleMessages)
     const isLiveSession = !activeSessionId || activeSessionId === CURRENT_SESSION_ID
-
-    if (isAuthed && hasUserMessageInLiveSession && isLiveSession) {
-      items.push({
-        id: CURRENT_SESSION_ID,
-        title: liveSessionTitle,
-        loadable: true,
-        deletable: true,
-        renamable: true,
-      })
-    }
+    const liveSessionId = sessionRef.current.sessionId
+    const archives = getChatArchives()
+    const items = []
 
     archives.forEach((archive) => {
       if (!hasUserMessages(archive.messages)) return
-      if (archive.id === sessionRef.current.sessionId && isLiveSession) {
-        return
-      }
+      // Hide archive only while the same live session is still open (avoids twin with CURRENT_SESSION_ID)
+      if (isLiveSession && archive.id === liveSessionId) return
       items.push({
         id: archive.id,
         title: archive.title,
@@ -674,6 +741,16 @@ export default function HavenChat() {
         renamable: true,
       })
     })
+
+    if (hasUserMessageInLiveSession && isLiveSession) {
+      items.unshift({
+        id: CURRENT_SESSION_ID,
+        title: liveSessionTitle,
+        loadable: true,
+        deletable: true,
+        renamable: true,
+      })
+    }
 
     const seen = new Set()
     setSidebarSessions(
@@ -825,6 +902,15 @@ export default function HavenChat() {
     }
 
     track('entry_started', { style: mode.id })
+  }
+
+  function handleModeChange(mode) {
+    const chatActive = hasUserMessages(messages || [])
+    if (chatActive) {
+      startWithMode(mode, { isSwitch: Boolean(chatMode) })
+      return
+    }
+    setPendingModeId(mode.id)
   }
 
   function resolveMode() {
@@ -996,10 +1082,10 @@ export default function HavenChat() {
     setMessages([...prior.slice(0, messageIndex), updatedUser, ...selected.tail])
   }
 
-  async function editUserMessage(messageIndex, newText) {
+  async function regenerateUserMessageReply(messageIndex, userText, { trackEvent = 'chat_edit' } = {}) {
     if (thinking) return
 
-    const trimmed = String(newText || '').trim()
+    const trimmed = String(userText || '').trim()
     if (!trimmed) return
 
     const prior = messages || []
@@ -1008,7 +1094,6 @@ export default function HavenChat() {
     if (target.text === '[Image attached]') return
 
     const mode = resolveMode()
-    const session = sessionRef.current
 
     let branches = target.branches
       ? target.branches.map((branch) => ({
@@ -1051,7 +1136,7 @@ export default function HavenChat() {
     }
 
     try {
-      track('chat_edit', { authed: isAuthed, mode: mode.id })
+      track(trackEvent, { authed: isAuthed, mode: mode.id })
       await requestAssistantReply({
         userText: trimmed,
         nextMessages: truncated,
@@ -1074,6 +1159,26 @@ export default function HavenChat() {
     }
   }
 
+  async function editUserMessage(messageIndex, newText) {
+    const trimmed = String(newText || '').trim()
+    if (!trimmed) return
+
+    const prior = messages || []
+    const target = prior[messageIndex]
+    if (!target || target.role !== 'user') return
+    if (trimmed === target.text) return
+
+    await regenerateUserMessageReply(messageIndex, trimmed, { trackEvent: 'chat_edit' })
+  }
+
+  async function resendUserMessage(messageIndex) {
+    const prior = messages || []
+    const target = prior[messageIndex]
+    if (!target || target.role !== 'user') return
+
+    await regenerateUserMessageReply(messageIndex, target.text, { trackEvent: 'chat_resend' })
+  }
+
   async function send({ text: value, images = [] } = {}) {
     const v = String(value || '').trim()
     const imagePayload = Array.isArray(images) ? images.filter(Boolean).slice(0, 2) : []
@@ -1082,7 +1187,7 @@ export default function HavenChat() {
     let mode = resolveMode()
     let activeStopContactPhase = stopContactPhase
     if (!chatMode) {
-      const selectedMode = getModeById(entrySelectedModeId || DEFAULT_MODE.id)
+      const selectedMode = getModeById(pendingModeId)
       mode = { id: selectedMode.id, style: selectedMode.style, mood: selectedMode.mood }
       setChatMode(mode)
       setActiveSessionId(CURRENT_SESSION_ID)
@@ -1199,7 +1304,7 @@ export default function HavenChat() {
   function resetToPreChatSync() {
     setMessages([])
     setChatMode(null)
-    setEntrySelectedModeId(null)
+    setPendingModeId(DEFAULT_MODE.id)
     setEntryExiting(false)
     setGuestBannerDismissed(false)
     setStopContactPhase(null)
@@ -1285,34 +1390,35 @@ export default function HavenChat() {
     }
   }
 
-  function clearChat() {
+  async function clearChat() {
     if (thinking) return
 
+    const isLiveSession = !activeSessionId || activeSessionId === CURRENT_SESSION_ID
     const currentMessages = messages || []
     const hadUserMessages = hasUserMessages(currentMessages)
-    const snapshot = hadUserMessages ? captureSessionSnapshot() : null
+    const snapshot = hadUserMessages && isLiveSession ? captureSessionSnapshot() : null
 
-    if (hadUserMessages) {
+    if (snapshot) {
+      const archiveId = snapshot.sessionId
       saveChatArchive({
-        id: sessionRef.current.sessionId,
-        title: uniquifyArchiveTitle(liveSessionTitle.trim() || LIVE_SESSION_TITLE, sessionRef.current.sessionId),
-        messages: currentMessages,
+        id: archiveId,
+        title: uniquifyArchiveTitle(
+          liveSessionTitle.trim() || LIVE_SESSION_TITLE,
+          archiveId,
+        ),
+        messages: currentMessages.map(cloneMessage),
         chatModeId: chatMode?.id,
       })
+      setArchivesRevision((n) => n + 1)
+      await finalizePreviousSession(snapshot)
+    } else if (isAuthed && isLiveSession) {
+      await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
     }
 
     resetToPreChatSync()
     setArchivesRevision((n) => n + 1)
     track('chat_deleted', { authed: isAuthed })
-
-    void (async () => {
-      if (snapshot) {
-        await finalizePreviousSession(snapshot)
-      } else if (isAuthed) {
-        await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
-      }
-      await refreshReturningOpening()
-    })()
+    await refreshReturningOpening()
   }
 
   function handleDeleteSession(session, e) {
@@ -1407,10 +1513,6 @@ export default function HavenChat() {
     sessionRef.current = createSessionState()
   }
 
-  function handleEntryPillClick(modeId) {
-    setEntrySelectedModeId((prev) => (prev === modeId ? null : modeId))
-  }
-
   if (messages === null) {
     return null
   }
@@ -1429,9 +1531,12 @@ export default function HavenChat() {
       lastVisibleMessage.role === 'user' ||
       (lastVisibleMessage.role === 'assistant' && !String(lastVisibleMessage.text || '').trim()))
 
+  const isLiveSession =
+    !activeSessionId || activeSessionId === CURRENT_SESSION_ID
+
   const resolvedActiveSessionId =
     activeSessionId ??
-    (isAuthed && hasLiveUserMessages ? CURRENT_SESSION_ID : null)
+    (hasLiveUserMessages && isLiveSession ? CURRENT_SESSION_ID : null)
 
   return (
     <div
@@ -1491,6 +1596,7 @@ export default function HavenChat() {
                     messageIndex={i}
                     thinking={thinking}
                     onEditUserMessage={editUserMessage}
+                    onResendUserMessage={resendUserMessage}
                     onBranchChange={switchMessageBranch}
                   />
                 )
@@ -1520,17 +1626,16 @@ export default function HavenChat() {
                 onSend={send}
                 disabled={thinking}
                 loading={thinking}
-                activeModeId={entrySelectedModeId || DEFAULT_MODE.id}
-                chatStarted={false}
-                onModeChange={(mode) => startWithMode(mode, { isSwitch: Boolean(chatMode) })}
+                activeModeId={chatMode?.id || pendingModeId}
+                onModeChange={handleModeChange}
                 isAuthed={isAuthed}
                 imageConsentFromServer={imageAttachConsent}
               />
             </div>
 
-            <EntryModePicker
-              selectedModeId={entrySelectedModeId}
-              onPillClick={handleEntryPillClick}
+            <EmptyStateQuickPrompts
+              onSelect={(prompt) => send({ text: prompt })}
+              disabled={thinking}
               exiting={entryExiting}
             />
           </div>
@@ -1540,7 +1645,7 @@ export default function HavenChat() {
           <div className="parle-chat-main__bottom-inner">
             {!showEmptyUI && showGuestBanner && (
               <div className="parle-chat__guest-banner">
-                <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-white/80 px-4 py-3 text-sm max-w-xl mx-auto">
+                <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-card/90 px-4 py-3 text-[12px] max-w-xl mx-auto">
                   <p className="flex-1 text-muted-foreground leading-relaxed">
                     Your chat disappears when you leave. Create a free account to save it.{' '}
                     <Link
@@ -1563,7 +1668,7 @@ export default function HavenChat() {
             )}
 
             {!showEmptyUI && showStopContactLabel && (
-              <p className="mb-2 text-center text-[12px] text-muted-foreground px-4">
+              <p className="mb-2 text-center text-[10px] text-muted-foreground px-4">
                 Working through the urge to reach out
               </p>
             )}
@@ -1575,9 +1680,8 @@ export default function HavenChat() {
                 onSend={send}
                 disabled={thinking}
                 loading={thinking}
-                activeModeId={chatMode?.id || DEFAULT_MODE.id}
-                chatStarted
-                onModeChange={(mode) => startWithMode(mode, { isSwitch: Boolean(chatMode) })}
+                activeModeId={chatMode?.id || pendingModeId}
+                onModeChange={handleModeChange}
                 isAuthed={isAuthed}
                 imageConsentFromServer={imageAttachConsent}
               />

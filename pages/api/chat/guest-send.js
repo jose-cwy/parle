@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     : []
 
   const completionMessages = buildChatCompletionMessages({
-    modeId: modeId || 'emotional',
+    modeId: modeId || 'cross',
     dontTextStep,
     dontTextMessageCount,
     preferenceProfile: null,

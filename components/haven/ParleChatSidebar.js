@@ -111,7 +111,7 @@ export default function ParleChatSidebar({
             </button>
             <Link
               href="/dashboard"
-              className="parle-chat-sidebar__wordmark parle-chat-sidebar__wordmark-link font-serif text-[1.35rem] leading-none text-foreground tracking-tight"
+              className="parle-chat-sidebar__wordmark parle-chat-sidebar__wordmark-link font-serif text-[1.2125rem] leading-none text-foreground tracking-tight"
             >
               parlé
             </Link>
@@ -134,7 +134,7 @@ export default function ParleChatSidebar({
               onNewChat()
               onCloseMobile?.()
             }}
-            className="mt-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/80 text-[13px] text-foreground/90 hover:bg-black/[0.03] transition"
+            className="mt-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/80 text-[11px] text-foreground/90 hover:bg-black/[0.03] transition"
           >
             <SquarePen size={15} strokeWidth={1.75} className="shrink-0 opacity-70" />
             <span>New Chat</span>
@@ -142,8 +142,7 @@ export default function ParleChatSidebar({
         </div>
 
         <div className="parle-chat-sidebar__history">
-          {isAuthed ? (
-            sessions.length > 0 ? (
+          {sessions.length > 0 ? (
               <ul className="flex flex-col gap-0.5">
                 {sessions.map((session) => {
                   const active = session.id === activeSessionId
@@ -190,7 +189,7 @@ export default function ParleChatSidebar({
                               }
                             }}
                             className={cn(
-                              'w-full text-left px-3 py-2.5 rounded-lg text-[13px] leading-snug transition',
+                              'w-full text-left px-3 py-2.5 rounded-lg text-[11px] leading-snug transition',
                               showActions ? 'pr-[4.25rem]' : '',
                               active
                                 ? 'bg-black/[0.06] text-foreground'
@@ -240,27 +239,28 @@ export default function ParleChatSidebar({
                 })}
               </ul>
             ) : (
-              <p className="px-3 text-[12px] text-muted-foreground leading-relaxed">
+              <p className="px-3 text-[10px] text-muted-foreground leading-relaxed">
                 Your conversations will appear here.
               </p>
-            )
-          ) : (
-            <div className="px-3">
-              <p className="text-[12px] text-muted-foreground leading-relaxed">
-                Create a free account to save your chats.
+            )}
+          {!isAuthed && (
+            <div className="px-3 mt-3 pt-3 border-t border-border/60">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Chats are saved on this device.{' '}
+                <Link
+                  href="/register"
+                  className="text-foreground underline underline-offset-2 hover:text-primary transition"
+                >
+                  Sign up
+                </Link>{' '}
+                to sync across devices.
               </p>
-              <Link
-                href="/register"
-                className="inline-block mt-2 text-[13px] text-foreground underline underline-offset-2 hover:text-primary transition"
-              >
-                Sign up
-              </Link>
             </div>
           )}
         </div>
 
         <div className="parle-chat-sidebar__footer">
-          <div className="flex items-center gap-1.5 px-3 pb-3 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 px-3 pb-3 text-[8px] text-muted-foreground">
             <Lock size={11} strokeWidth={2} aria-hidden />
             <span>Private by default</span>
           </div>
@@ -270,7 +270,7 @@ export default function ParleChatSidebar({
               <span className="parle-chat-sidebar__avatar" aria-hidden="true">
                 {userInitial(user)}
               </span>
-              <span className="flex-1 min-w-0 text-[13px] text-foreground truncate">
+              <span className="flex-1 min-w-0 text-[11px] text-foreground truncate">
                 {userDisplayName(user)}
               </span>
               <button
@@ -284,7 +284,7 @@ export default function ParleChatSidebar({
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-4 px-3 py-2 text-[13px]">
+            <div className="flex items-center gap-4 px-3 py-2 text-[11px]">
               <Link href="/login" className="text-muted-foreground hover:text-foreground transition">
                 Log in
               </Link>

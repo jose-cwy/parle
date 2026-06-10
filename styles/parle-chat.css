@@ -217,7 +217,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   border-radius: 0.5rem;
   background: rgba(255, 252, 248, 0.95);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--foreground);
   outline: none;
@@ -242,7 +242,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #fff;
@@ -371,9 +371,9 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-chat-empty-state__greeting {
-  margin: 0 0 1.25rem;
+  margin: 0 0 2.5rem;
   font-family: var(--font-serif), Georgia, 'Times New Roman', serif;
-  font-size: 2rem;
+  font-size: 30px;
   font-weight: 400;
   line-height: 1.2;
   color: var(--foreground);
@@ -389,7 +389,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .parle-chat-empty-state__input {
   width: 100%;
   max-width: 860px;
-  margin-bottom: 12px;
+  margin-bottom: 2.5rem;
   pointer-events: auto;
 }
 
@@ -414,13 +414,54 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   opacity: 0;
 }
 
+.parle-chat-empty-state__quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  max-width: 860px;
+  transition: opacity 200ms ease;
+  pointer-events: auto;
+}
+
+.parle-chat-empty-state__quick-prompts--exit {
+  opacity: 0;
+}
+
+.parle-chat-empty-state__quick-prompt {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, var(--border));
+  background: color-mix(in srgb, var(--card) 72%, transparent);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  line-height: 1.3;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.parle-chat-empty-state__quick-prompt:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--card));
+  border-color: color-mix(in srgb, var(--foreground) 28%, var(--border));
+}
+
+.parle-chat-empty-state__quick-prompt:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .parle-mode-pill {
   padding: 6px 16px;
   border-radius: 20px;
   border: 1px solid transparent;
   background: transparent;
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.3;
   cursor: pointer;
   white-space: nowrap;
@@ -432,7 +473,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 
 .parle-mode-pill--compact {
   padding: 5px 12px;
-  font-size: 12px;
+  font-size: 10px;
   line-height: 1;
 }
 
@@ -500,6 +541,96 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   color: #b91c1c;
 }
 
+.parle-mode-pill--cross {
+  border-color: color-mix(in srgb, #8e44ad 42%, transparent);
+  color: #6b2d8a;
+}
+
+.parle-mode-pill--cross:hover {
+  border-color: color-mix(in srgb, #8e44ad 62%, transparent);
+  background: color-mix(in srgb, #f3e8ff 55%, transparent);
+}
+
+.parle-mode-pill--cross.parle-mode-pill--selected {
+  background: color-mix(in srgb, #f3e8ff 92%, transparent);
+  border-color: #8e44ad;
+  color: #5b21a8;
+}
+
+.parle-mode-pill--filled {
+  border-color: transparent;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.parle-mode-pill--filled.parle-mode-pill--vent {
+  color: #1c1917;
+}
+
+.parle-mode-pill--filled:hover {
+  filter: brightness(1.06);
+}
+
+.parle-mode-pill--filled.parle-mode-pill--selected {
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.parle-mode-selector {
+  position: relative;
+}
+
+.parle-mode-selector > .parle-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 11.5rem;
+  padding: 6px 14px 6px 14px;
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+
+.parle-mode-selector__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.parle-mode-selector__chevron {
+  flex-shrink: 0;
+  opacity: 0.9;
+  transition: transform 0.15s ease;
+}
+
+.parle-mode-selector__chevron--open {
+  transform: rotate(180deg);
+}
+
+.parle-mode-selector__menu {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 12.5rem;
+  max-width: min(100vw - 2rem, 16rem);
+  padding: 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.parle-mode-selector__menu .parle-mode-pill {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 7px 14px;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
 .parle-chat__messages {
   display: flex;
   flex-direction: column;
@@ -534,7 +665,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .parle-chat-msg__label {
   margin: 0 0 0.5rem;
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -548,10 +679,10 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-chat-msg__paragraph {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 1.125rem;
-  line-height: 1.75;
+  font-size: 16px;
+  line-height: 1.7;
   color: var(--foreground, #1a1a1a);
   white-space: pre-wrap;
   word-break: break-word;
@@ -567,7 +698,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   padding: 0.625rem 1rem;
   border-radius: 1.25rem;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 1.125rem;
+  font-size: 16px;
   line-height: 1.75;
   white-space: pre-wrap;
   word-break: break-word;
@@ -605,7 +736,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 
 .parle-chat-msg__branch-label {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 9px;
   color: var(--muted-foreground);
   min-width: 2rem;
   text-align: center;
@@ -670,7 +801,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   resize: vertical;
   background: transparent;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 1.125rem;
+  font-size: 16px;
   line-height: 1.75;
   color: var(--foreground);
 }
@@ -755,7 +886,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   }
 
   .parle-chat-sidebar__wordmark {
-    font-size: 1.25rem;
+    font-size: 18px;
   }
 }
 
@@ -809,15 +940,12 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-chat-send-btn--active {
-  background: #fff;
-  color: #1a1a1a;
-  box-shadow:
-    0 0 0 1px rgba(61, 53, 48, 0.14),
-    0 1px 3px rgba(61, 53, 48, 0.1);
+  background: #e8e4df;
+  color: #333;
 }
 
 .parle-chat-send-btn--active:not(:disabled):hover {
-  opacity: 0.9;
+  background: #dedad4;
 }
 
 .parle-chat-send-btn--active:active:not(:disabled) {
@@ -825,8 +953,8 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-chat-send-btn--idle {
-  background: rgba(61, 53, 48, 0.1);
-  color: rgba(61, 53, 48, 0.32);
+  background: #e8e4df;
+  color: rgba(51, 51, 51, 0.28);
   cursor: default;
 }
 
@@ -842,7 +970,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   gap: 0.35rem;
   margin-top: 0.65rem;
   padding-bottom: 0.25rem;
-  font-size: 11px;
+  font-size: 9px;
   letter-spacing: 0.06em;
   color: var(--muted-foreground);
   opacity: 0.65;

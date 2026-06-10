@@ -1,8 +1,59 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { Moon, Sun, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { THEMES } from '../../lib/theme'
+import { useTheme } from '../ThemeProvider'
 import HavenModal from './HavenModal'
+
+function AppearanceToggle({ compact }) {
+  const { theme, setTheme } = useTheme()
+
+  return (
+    <div className={cn('flex items-start justify-between gap-4', compact ? 'mt-0' : 'mt-6')}>
+      <div className="min-w-0">
+        <p className="text-[12px] font-medium text-foreground">Appearance</p>
+        <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+          Choose light or dark mode for the interface.
+        </p>
+      </div>
+      <div
+        className="flex shrink-0 rounded-full border border-border bg-muted p-0.5"
+        role="group"
+        aria-label="Appearance"
+      >
+        <button
+          type="button"
+          onClick={() => setTheme(THEMES.LIGHT)}
+          aria-pressed={theme === THEMES.LIGHT}
+          className={cn(
+            'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[10px] font-medium transition',
+            theme === THEMES.LIGHT
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Sun size={14} strokeWidth={1.75} aria-hidden />
+          Light
+        </button>
+        <button
+          type="button"
+          onClick={() => setTheme(THEMES.DARK)}
+          aria-pressed={theme === THEMES.DARK}
+          className={cn(
+            'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[10px] font-medium transition',
+            theme === THEMES.DARK
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Moon size={14} strokeWidth={1.75} aria-hidden />
+          Dark
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function useParleSettings() {
   const [memoryEnabled, setMemoryEnabled] = useState(false)
@@ -98,16 +149,17 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
       <div className={compact ? '' : 'mt-2'}>
         {!compact && (
           <>
-            <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">parlé</p>
-            <h2 className="mt-2 font-serif text-2xl text-foreground">Chat preferences</h2>
+            <p className="text-[9px] uppercase tracking-[0.24em] text-muted-foreground">parlé</p>
+            <h2 className="mt-2 font-serif text-[22px] text-foreground">Chat preferences</h2>
           </>
         )}
-        <p className={cn('text-sm text-muted-foreground leading-relaxed', compact ? 'mt-0' : 'mt-6')}>
+        <AppearanceToggle compact={compact} />
+        <p className={cn('text-[12px] text-muted-foreground leading-relaxed', compact ? 'mt-5' : 'mt-6')}>
           Sign in to manage chat preferences and memory settings.
         </p>
         <Link
           href="/login"
-          className="inline-block mt-4 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-[13px] leading-9 hover:opacity-90 transition"
+          className="inline-block mt-4 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-[11px] leading-9 hover:opacity-90 transition"
         >
           Log in
         </Link>
@@ -119,15 +171,17 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
     <>
       {!compact && (
         <>
-          <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">parlé</p>
-          <h2 className="mt-2 font-serif text-2xl text-foreground">Chat preferences</h2>
+          <p className="text-[9px] uppercase tracking-[0.24em] text-muted-foreground">parlé</p>
+          <h2 className="mt-2 font-serif text-[22px] text-foreground">Chat preferences</h2>
         </>
       )}
 
-      <div className={cn('flex items-start justify-between gap-4', compact ? 'mt-0' : 'mt-6')}>
+      <AppearanceToggle compact={compact} />
+
+      <div className={cn('flex items-start justify-between gap-4 border-t border-border/70', compact ? 'mt-5 pt-4' : 'mt-6 pt-5')}>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">Remember my conversations</p>
-          <p className="mt-1 text-[13px] text-muted-foreground leading-relaxed">
+          <p className="text-[12px] font-medium text-foreground">Remember my conversations</p>
+          <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
             When on, parlé picks up where you left off next time you start a chat.
           </p>
         </div>
@@ -158,13 +212,13 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
           <button
             type="button"
             onClick={() => setConfirmReset(true)}
-            className="text-[13px] text-muted-foreground hover:text-foreground transition"
+            className="text-[11px] text-muted-foreground hover:text-foreground transition"
           >
             Reset my preferences
           </button>
         ) : (
           <div className="space-y-3">
-            <p className="text-[13px] text-muted-foreground leading-relaxed">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               This will reset what parlé has learned about you. Are you sure?
             </p>
             <div className="flex gap-2">
@@ -172,14 +226,14 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
                 type="button"
                 onClick={resetPreferences}
                 disabled={resetting}
-                className="h-8 px-3.5 rounded-lg bg-primary text-primary-foreground text-[13px] hover:opacity-90 disabled:opacity-50"
+                className="h-8 px-3.5 rounded-lg bg-primary text-primary-foreground text-[11px] hover:opacity-90 disabled:opacity-50"
               >
                 Confirm
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmReset(false)}
-                className="h-8 px-3.5 rounded-lg border border-border text-[13px] text-muted-foreground hover:text-foreground"
+                className="h-8 px-3.5 rounded-lg border border-border text-[11px] text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </button>
@@ -188,7 +242,7 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
         )}
       </div>
 
-      {status ? <p className="mt-3 text-xs text-muted-foreground">{status}</p> : null}
+      {status ? <p className="mt-3 text-[10px] text-muted-foreground">{status}</p> : null}
     </>
   )
 }
@@ -209,7 +263,7 @@ export function ParleSettingsPopup({ open, onClose, isAuthed }) {
     <HavenModal onClose={onClose} small>
       <div className="parle-settings-popup">
         <div className="parle-settings-popup__header">
-          <h2 id="parle-settings-title" className="font-serif text-xl text-foreground">
+          <h2 id="parle-settings-title" className="font-serif text-[18px] text-foreground">
             Settings
           </h2>
           <button

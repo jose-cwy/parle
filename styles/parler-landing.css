@@ -572,13 +572,13 @@ body.body--parler-landing .terms-agreement-modal__btn--accept:hover:not(:disable
 }
 
 .parler-landing .pss-hero-btn--secondary {
-  background: #ffffff;
+  background: transparent;
   color: var(--foreground);
-  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 32%, transparent);
 }
 
 .parler-landing .pss-hero-btn--secondary:hover {
-  background: color-mix(in srgb, var(--foreground) 3%, #ffffff);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .parler-landing .pss-hero-footnote {

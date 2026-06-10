@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowUp, Loader2, Mic, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { ArrowUp, ChevronDown, Loader2, Mic, Plus, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
 import {
   getModeById,
+  getModeColor,
   getModePillClasses,
   getModeShortLabel,
   MODE_PILL_ORDER,
@@ -40,28 +41,27 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef }) {
   return (
     <div
       ref={menuRef}
-      className="absolute bottom-full right-0 mb-2 max-w-[min(100vw-2rem,28rem)] rounded-[20px] border border-border bg-[var(--cream)] px-2.5 py-2 z-30 shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
+      className="parle-mode-selector__menu"
       role="listbox"
       aria-label="Conversation mode"
     >
-      <div className="flex flex-wrap gap-1.5">
-        {MODE_PILL_ORDER.map((id) => {
-          const mode = getModeById(id)
-          const active = id === activeModeId
-          return (
-            <button
-              key={id}
-              type="button"
-              role="option"
-              aria-selected={active}
-              onClick={() => onSelect(mode)}
-              className={getModePillClasses(id, { selected: active, compact: true })}
-            >
-              {getModeShortLabel(id)}
-            </button>
-          )
-        })}
-      </div>
+      {MODE_PILL_ORDER.map((id) => {
+        const mode = getModeById(id)
+        const active = id === activeModeId
+        return (
+          <button
+            key={id}
+            type="button"
+            role="option"
+            aria-selected={active}
+            onClick={() => onSelect(mode)}
+            className={getModePillClasses(id, { selected: active, compact: true, filled: true })}
+            style={{ backgroundColor: getModeColor(id) }}
+          >
+            {getModeShortLabel(id)}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -73,7 +73,6 @@ export default function ChatInputBar({
   disabled,
   loading = false,
   activeModeId,
-  chatStarted,
   onModeChange,
   isAuthed,
   imageConsentFromServer,
@@ -292,7 +291,7 @@ export default function ChatInputBar({
   }
 
   const canSend = (String(text || '').trim().length > 0 || attachments.length > 0) && !disabled
-  const modeId = activeModeId || 'emotional'
+  const modeId = activeModeId || 'cross'
 
   return (
     <div className="parle-chat__input-wrap">
@@ -320,13 +319,13 @@ export default function ChatInputBar({
       )}
 
       {micDenied && (
-        <p className="mb-2 text-[12px] text-muted-foreground">
+        <p className="mb-2 text-[10px] text-muted-foreground">
           Microphone access needed. Check your browser settings.
         </p>
       )}
 
       {imageError && (
-        <p className="mb-2 text-[12px] text-muted-foreground">{imageError}</p>
+        <p className="mb-2 text-[10px] text-muted-foreground">{imageError}</p>
       )}
 
       <form onSubmit={handleSubmit} aria-busy={loading || undefined}>
@@ -345,7 +344,7 @@ export default function ChatInputBar({
         <div
           className={cn(
             'flex items-end gap-1.5 min-h-[52px] px-4 py-2.5 rounded-full',
-            'bg-white border border-border/80',
+            'bg-card border border-border/80',
             'shadow-[0_1px_6px_rgba(0,0,0,0.06)]',
             'focus-within:border-border transition',
           )}
@@ -373,23 +372,29 @@ export default function ChatInputBar({
             rows={1}
             placeholder="say what's on your mind..."
             style={{ maxHeight: TEXTAREA_MAX_HEIGHT }}
-            className="flex-1 resize-none bg-transparent border-0 outline-none text-[15px] leading-relaxed placeholder:text-muted-foreground/50 min-w-0 self-center py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="flex-1 resize-none bg-transparent border-0 outline-none text-[13px] leading-relaxed placeholder:text-muted-foreground/50 min-w-0 self-center py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             disabled={disabled}
           />
 
-          {chatStarted && (
-            <div className="relative shrink-0 self-center">
+          <div className="relative shrink-0 self-center parle-mode-selector">
               <button
                 ref={modeButtonRef}
                 type="button"
                 onClick={() => setModeOpen((o) => !o)}
                 disabled={disabled}
-                className="h-9 w-9 grid place-items-center text-muted-foreground hover:text-foreground transition rounded-full hover:bg-secondary/60"
+                className={getModePillClasses(modeId, { selected: true, compact: true, filled: true })}
+                style={{ backgroundColor: getModeColor(modeId) }}
                 aria-expanded={modeOpen}
                 aria-haspopup="listbox"
-                aria-label="Change conversation mode"
+                aria-label={`Conversation mode: ${getModeShortLabel(modeId)}`}
               >
-                <SlidersHorizontal size={20} strokeWidth={1.75} />
+                <span className="parle-mode-selector__label">{getModeShortLabel(modeId)}</span>
+                <ChevronDown
+                  size={14}
+                  strokeWidth={2}
+                  className={cn('parle-mode-selector__chevron', modeOpen && 'parle-mode-selector__chevron--open')}
+                  aria-hidden
+                />
               </button>
               {modeOpen && (
                 <ModePillSelector
@@ -403,7 +408,6 @@ export default function ChatInputBar({
                 />
               )}
             </div>
-          )}
 
           {showMic && (
             <button
@@ -447,34 +451,34 @@ export default function ChatInputBar({
       </form>
 
       {showDisclaimer && (
-        <p className="mt-2 text-center text-[11px] italic text-muted-foreground opacity-[0.35] leading-relaxed px-2">
+        <p className="mt-2 text-center text-[9px] italic text-muted-foreground opacity-[0.35] leading-relaxed px-2">
           parlé can make mistakes. This is not a substitute for professional help.
         </p>
       )}
 
       {showConsentModal && (
         <HavenModal onClose={() => setShowConsentModal(false)} small>
-          <h2 className="font-serif text-xl text-foreground">Before you attach an image</h2>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          <h2 className="font-serif text-[18px] text-foreground">Before you attach an image</h2>
+          <p className="mt-3 text-[12px] text-muted-foreground leading-relaxed">
             Screenshots may contain private conversations belonging to other people. By attaching,
             you confirm the content is yours to share and you understand parlé&apos;s AI will read
             it to help support you.
           </p>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">
             This is not stored beyond your current session.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-2">
             <button
               type="button"
               onClick={handleConsentContinue}
-              className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-[13px] hover:opacity-90 transition"
+              className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-[11px] hover:opacity-90 transition"
             >
               I understand, continue
             </button>
             <button
               type="button"
               onClick={() => setShowConsentModal(false)}
-              className="h-10 px-4 rounded-xl border border-border text-[13px] text-muted-foreground hover:text-foreground transition"
+              className="h-10 px-4 rounded-xl border border-border text-[11px] text-muted-foreground hover:text-foreground transition"
             >
               Cancel
             </button>

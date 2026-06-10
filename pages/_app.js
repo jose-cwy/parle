@@ -8,8 +8,10 @@ import '../styles/parle-chat.css'
 import '../styles/quotes-book.css'
 import '../styles/marketing.css'
 import '../styles/parler-landing.css'
+import '../styles/dark-mode.css'
 import { useEffect } from 'react'
 import TopProgressProvider from '../components/TopProgressProvider'
+import { ThemeProvider } from '../components/ThemeProvider'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Head from 'next/head'
@@ -69,6 +71,7 @@ export default function App({ Component, pageProps }) {
   }, [landingTheme, marketingCream, appLayout, isParlerShell, isAuthPage])
 
   return (
+    <ThemeProvider>
     <TopProgressProvider>
     <div
       className={`min-h-screen flex flex-col app-shell${landingTheme ? ' app-shell--landing-theme' : ''}`}
@@ -133,5 +136,6 @@ export default function App({ Component, pageProps }) {
       {!fullBleed && !appLayout && !isAuthPage && !isParlerMarketing && <Footer />}
     </div>
     </TopProgressProvider>
+    </ThemeProvider>
   )
 }
