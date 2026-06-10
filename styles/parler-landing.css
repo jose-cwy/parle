@@ -291,6 +291,39 @@ body.body--parler-landing .pss-nav-drawer__label {
   flex: 1;
 }
 
+body.body--parler-landing .pss-nav-drawer__auth-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.35rem 0.65rem 0.5rem;
+}
+
+body.body--parler-landing .pss-nav-drawer__auth-inline .pss-nav-drawer__link {
+  width: auto;
+  padding: 0.5rem 0.65rem;
+}
+
+body.body--parler-landing .pss-nav-drawer__auth-sep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  user-select: none;
+}
+
+body.body--parler-landing .pss-nav-drawer__divider {
+  height: 1px;
+  margin: 0.65rem 0.85rem;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
 body.body--parler-landing .pss-menu-enter {
   animation: pss-fade-in 0.2s ease-out;
 }
@@ -424,27 +457,52 @@ body.body--parler-landing .terms-agreement-modal__subtitle {
   color: var(--muted-foreground);
 }
 
+body.body--parler-landing .terms-agreement-modal__header,
+body.body--parler-landing .terms-agreement-modal__footer {
+  background: var(--card);
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+body.body--parler-landing .terms-agreement-modal__footer {
+  box-shadow: 0 -8px 20px color-mix(in srgb, var(--background) 55%, transparent);
+}
+
+body.body--parler-landing .terms-agreement-modal__body {
+  background: color-mix(in srgb, var(--muted) 55%, var(--card));
+}
+
 body.body--parler-landing .terms-agreement-modal__progress {
-  background: color-mix(in srgb, var(--primary) 16%, var(--muted));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent);
+  height: 5px;
+  background: color-mix(in srgb, var(--foreground) 14%, var(--muted));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 body.body--parler-landing .terms-agreement-modal__progress-bar {
-  background: var(--primary);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 50%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 88%, #fff), var(--primary));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 55%, transparent);
 }
 
 body.body--parler-landing .terms-agreement-modal__section {
   border-color: color-mix(in srgb, var(--border) 65%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, var(--background));
 }
 
 body.body--parler-landing .terms-agreement-modal__section h3 {
   font-family: var(--font-haven-serif);
   font-weight: 400;
+  color: var(--foreground);
+}
+
+body.body--parler-landing .terms-agreement-modal__prose p {
+  color: color-mix(in srgb, var(--foreground) 82%, var(--muted-foreground));
 }
 
 body.body--parler-landing .terms-agreement-modal__arrow {
   color: var(--primary);
+}
+
+body.body--parler-landing .terms-agreement-modal__checkbox {
+  color: var(--foreground);
 }
 
 body.body--parler-landing .terms-agreement-modal__checkbox input:focus-visible {
@@ -455,10 +513,12 @@ body.body--parler-landing .terms-agreement-modal__btn--accept {
   border-radius: 9999px;
   border-color: color-mix(in srgb, var(--primary) 85%, #000);
   background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 body.body--parler-landing .terms-agreement-modal__btn--accept:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--primary) 92%, #000);
+  background: color-mix(in srgb, var(--primary) 88%, #fff);
+  color: var(--primary-foreground);
 }
 
 .parler-landing .pss-nav {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Check, ChevronLeft, ChevronRight, Copy, Lock, Pencil, RotateCcw, X } from 'lucide-react'
+import { fetchAuthUser } from '../../lib/authSession'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
@@ -508,7 +509,8 @@ function createSessionState() {
 }
 
 export default function HavenChat() {
-  const [messages, setMessages] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(true)
   const [text, setText] = useState('')
   const [thinking, setThinking] = useState(false)
   const scrollRef = useRef(null)
@@ -539,10 +541,10 @@ export default function HavenChat() {
   messagesRef.current = messages
   liveSessionTitleRef.current = liveSessionTitle
 
-  useTopProgress(messages === null)
+  useTopProgress(historyLoading)
 
   useEffect(() => {
-    if (messages === null) return
+    if (historyLoading) return
     if (hasUserMessages(messages)) {
       greetingPickRef.current = false
       return
@@ -609,9 +611,10 @@ export default function HavenChat() {
       .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
       .join('\n')
 
-    await fetch('/api/chat/session-end', {
+    fetch('/api/chat/session-end', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
       body: JSON.stringify({
         sessionId: session.sessionId,
         message_count: currentMessages.length,
@@ -633,13 +636,12 @@ export default function HavenChat() {
 
     async function init() {
       try {
-        const authRes = await fetch('/api/auth/me')
-        const authPayload = authRes.ok ? await authRes.json() : { user: null }
+        const authUser = await fetchAuthUser()
         if (!active) return
 
-        const authed = Boolean(authPayload?.user)
+        const authed = Boolean(authUser)
         setIsAuthed(authed)
-        setUser(authPayload?.user || null)
+        setUser(authUser)
 
         if (authed) {
           track('chat_loaded', { authed: true })
@@ -667,18 +669,22 @@ export default function HavenChat() {
             setIsNewSession(false)
             setActiveSessionId(CURRENT_SESSION_ID)
             sessionRef.current.startingMode = getModeLabel(DEFAULT_MODE.id)
+            setHistoryLoading(false)
             return
           }
 
           setMessages([])
+          setHistoryLoading(false)
 
           if (context?.memory_enabled && context?.last_session_summary) {
-            const openingRes = await fetch('/api/chat/returning-opening', { method: 'POST' })
-            const openingPayload = openingRes.ok ? await openingRes.json() : {}
-            if (!active) return
-            if (openingPayload?.opening) {
-              setReturningOpening(openingPayload.opening)
-            }
+            fetch('/api/chat/returning-opening', { method: 'POST' })
+              .then((openingRes) => (openingRes.ok ? openingRes.json() : {}))
+              .then((openingPayload) => {
+                if (active && openingPayload?.opening) {
+                  setReturningOpening(openingPayload.opening)
+                }
+              })
+              .catch(() => {})
           }
           return
         }
@@ -686,10 +692,12 @@ export default function HavenChat() {
         track('chat_loaded', { authed: false })
         setUser(null)
         setMessages([])
+        setHistoryLoading(false)
       } catch {
         if (active) {
           setIsAuthed(false)
           setMessages([])
+          setHistoryLoading(false)
         }
       }
     }
@@ -707,7 +715,6 @@ export default function HavenChat() {
     window.addEventListener('beforeunload', onLeave)
     return () => {
       window.removeEventListener('beforeunload', onLeave)
-      sendSessionEnd()
     }
   }, [sendSessionEnd])
 
@@ -716,7 +723,7 @@ export default function HavenChat() {
   }, [messages, thinking])
 
   useEffect(() => {
-    if (messages === null) return
+    if (historyLoading) return
 
     if (migrateLegacyArchiveTitles()) {
       setArchivesRevision((n) => n + 1)
@@ -1511,10 +1518,6 @@ export default function HavenChat() {
     setHiddenInjections([])
     setIsNewSession(false)
     sessionRef.current = createSessionState()
-  }
-
-  if (messages === null) {
-    return null
   }
 
   const hasLiveUserMessages = hasUserMessages(visibleMessages)

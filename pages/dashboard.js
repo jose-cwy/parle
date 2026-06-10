@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
+import { fetchAuthUser, getCachedAuthUser } from '../lib/authSession'
 import RequireAuth from '../components/RequireAuth'
 import AppShell from '../components/AppShell'
 import HavenDashboard from '../components/haven/HavenDashboard'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(getCachedAuthUser)
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.user) setUser(data.user)
-      })
-      .catch(() => {})
+    fetchAuthUser().then((authUser) => {
+      if (authUser) setUser(authUser)
+    }).catch(() => {})
   }, [])
 
   return (

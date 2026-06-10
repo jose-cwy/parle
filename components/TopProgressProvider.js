@@ -15,12 +15,25 @@ export default function TopProgressProvider({ children }) {
   useEffect(() => topProgress.subscribe(setBarState), [])
 
   useEffect(() => {
+    let showTimer = null
+    let routePending = false
+
     function onStart() {
-      topProgress.start()
+      routePending = true
+      if (showTimer) clearTimeout(showTimer)
+      showTimer = setTimeout(() => {
+        showTimer = null
+        if (routePending) topProgress.start()
+      }, 180)
     }
 
     function onDone() {
-      topProgress.done()
+      routePending = false
+      if (showTimer) {
+        clearTimeout(showTimer)
+        showTimer = null
+      }
+      topProgress.complete()
     }
 
     router.events.on('routeChangeStart', onStart)
@@ -28,6 +41,8 @@ export default function TopProgressProvider({ children }) {
     router.events.on('routeChangeError', onDone)
 
     return () => {
+      routePending = false
+      if (showTimer) clearTimeout(showTimer)
       router.events.off('routeChangeStart', onStart)
       router.events.off('routeChangeComplete', onDone)
       router.events.off('routeChangeError', onDone)

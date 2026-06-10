@@ -9,6 +9,12 @@ import {
   BookOpen,
   LogOut,
 } from 'lucide-react'
+import {
+  clearAuthCache,
+  fetchAuthUser,
+  getCachedAuthUser,
+  isAuthCacheReady,
+} from '../lib/authSession'
 import { cn } from '../lib/cn'
 import HavenMark from './haven/HavenMark'
 
@@ -29,8 +35,8 @@ export default function AppShell({ children, hideRail = false }) {
   const [hovered, setHovered] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [user, setUser] = useState(null)
-  const [authReady, setAuthReady] = useState(false)
+  const [user, setUser] = useState(getCachedAuthUser)
+  const [authReady, setAuthReady] = useState(isAuthCacheReady)
   const expanded = hovered || pinned
 
   useEffect(() => {
@@ -39,15 +45,10 @@ export default function AppShell({ children, hideRail = false }) {
 
   useEffect(() => {
     let active = true
-    fetch('/api/auth/me')
-      .then(async (res) => {
+    fetchAuthUser()
+      .then((authUser) => {
         if (!active) return
-        if (res.ok) {
-          const payload = await res.json()
-          setUser(payload.user || null)
-        } else {
-          setUser(null)
-        }
+        setUser(authUser)
         setAuthReady(true)
       })
       .catch(() => {
@@ -59,11 +60,12 @@ export default function AppShell({ children, hideRail = false }) {
     return () => {
       active = false
     }
-  }, [router.asPath])
+  }, [])
 
   async function handleLogout() {
     if (!user) return
     await fetch('/api/auth/logout', { method: 'POST' })
+    clearAuthCache()
     router.push('/')
   }
 

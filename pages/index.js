@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { fetchAuthUser, isAuthCacheReady } from '../lib/authSession'
 import LandingSplash from '../components/landing/LandingSplash'
 import ParlerLandingPage from '../components/landing/ParlerLandingPage'
 
 export default function Home() {
   const router = useRouter()
-  const [checking, setChecking] = useState(true)
+  const [checking, setChecking] = useState(() => !isAuthCacheReady())
   const signupDeclined = router.query.signup === 'declined'
 
   useEffect(() => {
     let active = true
-    fetch('/api/auth/me')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
+
+    fetchAuthUser()
+      .then((user) => {
         if (!active) return
-        if (data?.user) {
+        if (user) {
           router.replace('/dashboard')
           return
         }
@@ -24,10 +25,11 @@ export default function Home() {
       .catch(() => {
         if (active) setChecking(false)
       })
+
     return () => {
       active = false
     }
-  }, [router])
+  }, [])
 
   if (checking) {
     return <LandingSplash />

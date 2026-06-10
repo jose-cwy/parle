@@ -17,7 +17,8 @@ import Footer from '../components/Footer'
 import Head from 'next/head'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
-import { pageTransition } from '../lib/motion'
+import { marketingPageTransition, pageTransition } from '../lib/motion'
+import { rememberChatReturnPath } from '../lib/parle/chatNavigation'
 import { isAppRoute, isFullBleedRoute, isLandingThemeRoute, isMarketingCreamRoute, isParlerMarketingPage } from '../lib/routes'
 
 export default function App({ Component, pageProps }) {
@@ -70,6 +71,29 @@ export default function App({ Component, pageProps }) {
     }
   }, [landingTheme, marketingCream, appLayout, isParlerShell, isAuthPage])
 
+  useEffect(() => {
+    function onRouteChangeStart(url) {
+      const next = url.split('?')[0].split('#')[0]
+      const current = router.asPath.split('?')[0].split('#')[0]
+      if (
+        (next === '/chat' || next.startsWith('/chat/')) &&
+        current !== '/chat' &&
+        !current.startsWith('/chat/')
+      ) {
+        rememberChatReturnPath(current)
+      }
+    }
+
+    router.events.on('routeChangeStart', onRouteChangeStart)
+    return () => router.events.off('routeChangeStart', onRouteChangeStart)
+  }, [router])
+
+  useEffect(() => {
+    ;['/', '/login', '/register', '/chat', '/dashboard', '/journal', '/quotes'].forEach(
+      (path) => router.prefetch(path),
+    )
+  }, [router])
+
   return (
     <ThemeProvider>
     <TopProgressProvider>
@@ -100,25 +124,21 @@ export default function App({ Component, pageProps }) {
           <Component {...pageProps} />
         </div>
       ) : appLayout ? (
-        <main className="flex-1 relative z-10">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={router.asPath} {...pageTransition} className="h-full min-h-[calc(100vh-0px)]">
-              <Component {...pageProps} />
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 relative z-10 h-full min-h-[calc(100vh-0px)]">
+          <Component {...pageProps} key={router.asPath} />
         </main>
       ) : isAuthPage ? (
         <main className="flex-1 relative z-10 auth-page-main">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={router.asPath} {...pageTransition}>
+          <AnimatePresence mode="sync" initial={false}>
+            <motion.div key={router.asPath} {...marketingPageTransition}>
               <Component {...pageProps} />
             </motion.div>
           </AnimatePresence>
         </main>
       ) : isParlerMarketing ? (
         <div className="flex-1 relative z-10">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={router.asPath} {...pageTransition}>
+          <AnimatePresence mode="sync" initial={false}>
+            <motion.div key={router.asPath} {...marketingPageTransition}>
               <Component {...pageProps} />
             </motion.div>
           </AnimatePresence>

@@ -13,6 +13,12 @@ import {
   Trash2,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import {
+  getChatReturnPath,
+  navigateAwayFromChat,
+  prefetchChatExitRoutes,
+  rememberChatReturnFromReferrer,
+} from '../../lib/parle/chatNavigation'
 import { ParleSettingsPopup } from './ParleSettings'
 
 function userDisplayName(user) {
@@ -52,12 +58,29 @@ export default function ParleChatSidebar({
     }
   }, [renamingId])
 
+  useEffect(() => {
+    rememberChatReturnFromReferrer()
+    prefetchChatExitRoutes(router)
+  }, [router])
+
+  function navigateFromSidebar(path) {
+    navigateAwayFromChat(router, path, { onNavigate: onCloseMobile })
+  }
+
   function handleBack() {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back()
-      return
-    }
-    router.push(isAuthed ? '/dashboard' : '/')
+    navigateFromSidebar(getChatReturnPath('/'))
+  }
+
+  function handleLogoClick() {
+    navigateFromSidebar('/')
+  }
+
+  function handleLoginClick() {
+    navigateFromSidebar('/login')
+  }
+
+  function handleSignupClick() {
+    navigateFromSidebar('/register')
   }
 
   function startRename(session, e) {
@@ -109,12 +132,13 @@ export default function ParleChatSidebar({
             >
               <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
-            <Link
-              href="/dashboard"
+            <button
+              type="button"
+              onClick={handleLogoClick}
               className="parle-chat-sidebar__wordmark parle-chat-sidebar__wordmark-link font-serif text-[1.2125rem] leading-none text-foreground tracking-tight"
             >
               parlé
-            </Link>
+            </button>
             <div className="parle-chat-sidebar__brand-actions">
               <button
                 type="button"
@@ -260,7 +284,7 @@ export default function ParleChatSidebar({
         </div>
 
         <div className="parle-chat-sidebar__footer">
-          <div className="flex items-center gap-1.5 px-3 pb-3 text-[8px] text-muted-foreground">
+          <div className="parle-chat-sidebar__privacy-note">
             <Lock size={11} strokeWidth={2} aria-hidden />
             <span>Private by default</span>
           </div>
@@ -284,13 +308,21 @@ export default function ParleChatSidebar({
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-4 px-3 py-2 text-[11px]">
-              <Link href="/login" className="text-muted-foreground hover:text-foreground transition">
+            <div className="parle-chat-sidebar__auth-links">
+              <button
+                type="button"
+                onClick={handleLoginClick}
+                className="parle-chat-sidebar__auth-pill parle-chat-sidebar__auth-pill--login"
+              >
                 Log in
-              </Link>
-              <Link href="/register" className="text-foreground hover:text-primary transition">
+              </button>
+              <button
+                type="button"
+                onClick={handleSignupClick}
+                className="parle-chat-sidebar__auth-pill parle-chat-sidebar__auth-pill--signup"
+              >
                 Sign up
-              </Link>
+              </button>
             </div>
           )}
         </div>
