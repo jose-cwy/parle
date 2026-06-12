@@ -28,7 +28,6 @@ html {
 
 @media (max-width: 767px) {
   .haven-shell__content,
-  .haven-quotes,
   .haven-journal,
   .parler-landing .pss-hero-section,
   .parler-landing .pss-compare,
@@ -468,53 +467,204 @@ body.body--parler-landing .pss-nav-logo__mark {
 /* ——— Quotes ——— */
 
 @media (max-width: 767px) {
+  body.body--app .haven-quotes {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .haven-quotes__hero {
+    margin-bottom: 1rem;
+    padding-inline: 0;
+    text-align: left;
+  }
+
+  .haven-quotes__title {
+    font-size: 1.5rem;
+    line-height: 1.15;
+  }
+
+  .haven-quotes__subtitle {
+    margin-top: 0.45rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    max-width: none;
+  }
+
   .haven-quotes__layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .haven-quotes__sidebar {
+    order: 1;
     position: static;
-    padding-bottom: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    gap: 0;
+    padding-bottom: 0;
+    margin-bottom: 0.15rem;
+  }
+
+  .haven-quotes__saved-mobile {
+    order: 2;
+    display: inline-flex;
+    align-self: flex-start;
+    margin: 0 0 -0.15rem;
+  }
+
+  .haven-quotes__main {
+    order: 3;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin-top: 0;
+    padding-top: 0.35rem;
   }
 
   .haven-quotes__nav-label {
-    display: none;
+    display: block;
+    margin-bottom: 0.4rem;
+    padding-inline: 0;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+  }
+
+  .haven-quotes__chapter-nav {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .haven-quotes__chapter-list {
+    display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.4rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0.15rem 0 0.4rem;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.25rem;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 0.35rem,
+      #000 calc(100% - 0.85rem),
+      transparent 100%
+    );
+  }
+
+  .haven-quotes__chapter-list::-webkit-scrollbar {
+    display: block;
+    height: 4px;
+  }
+
+  .haven-quotes__chapter-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  }
+
+  .haven-quotes__chapter-list > li {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
   }
 
   .haven-quotes__chapter-btn {
     width: auto;
+    max-width: min(16rem, 78vw);
     flex-shrink: 0;
+    padding: 0.5rem 0.85rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .haven-quotes__saved-btn {
+  .haven-quotes__chapter-btn--active .haven-quotes__chapter-accent {
     display: none;
   }
 
-  .haven-quotes__saved-mobile {
-    display: inline-flex;
+  .haven-quotes__sidebar .haven-quotes__saved-btn:not(.haven-quotes__saved-mobile) {
+    display: none;
+  }
+
+  .haven-quotes__saved-btn:not(.haven-quotes__saved-mobile) {
+    display: none;
+  }
+
+  .haven-quotes__search {
+    margin-top: 0;
+    margin-bottom: 1.15rem;
+    padding: 0.65rem 0.9rem;
+  }
+
+  .haven-quotes__search-input {
+    font-size: 16px;
+  }
+
+  .haven-quotes__main-head {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    margin-bottom: 0.85rem;
+    margin-top: 0.15rem;
+  }
+
+  .haven-quotes__main-title {
+    font-size: 1.35rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .haven-quotes__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+    width: 100%;
+  }
+
+  body.body--app .haven-quotes__card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 0;
+    padding: 1.15rem 1rem 1rem;
+  }
+
+  .haven-quotes__card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 0;
+  }
+
+  body.body--app .haven-quotes__card-text {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
   .haven-quotes__card-text {
     font-size: max(14px, 1em);
+    overflow-wrap: anywhere;
   }
 
   .haven-quotes__drawer-toggle {
     display: none;
-  }
-
-  .haven-quotes__title {
-    font-size: 1.75rem;
   }
 }
 
