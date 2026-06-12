@@ -204,22 +204,11 @@ body.body--app .page-fade {
 }
 
 .haven-shell__mobile-header {
-  display: flex;
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: color-mix(in oklch, var(--background) 85%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border);
+  display: none;
 }
 
-@media (min-width: 768px) {
-  .haven-shell__mobile-header {
-    display: none;
-  }
+.haven-shell__mobile-bottom-nav {
+  display: none;
 }
 
 .haven-shell__main {

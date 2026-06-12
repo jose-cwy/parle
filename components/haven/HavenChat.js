@@ -550,6 +550,27 @@ export default function HavenChat() {
   useTopProgress(historyLoading)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const mq = window.matchMedia('(max-width: 767px)')
+    function sync() {
+      if (!mq.matches) {
+        document.body.classList.remove('body--chat-active')
+        return
+      }
+      const hasUser = messages.some(
+        (m) => m.role === 'user' && String(m.text || '').trim(),
+      )
+      document.body.classList.toggle('body--chat-active', hasUser || thinking)
+    }
+    sync()
+    mq.addEventListener('change', sync)
+    return () => {
+      mq.removeEventListener('change', sync)
+      document.body.classList.remove('body--chat-active')
+    }
+  }, [messages, thinking])
+
+  useEffect(() => {
     if (historyLoading) return
     if (hasUserMessages(messages)) {
       greetingPickRef.current = false

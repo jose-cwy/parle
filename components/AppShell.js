@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Home,
@@ -8,6 +8,7 @@ import {
   BookHeart,
   BookOpen,
   LogOut,
+  Bookmark,
 } from 'lucide-react'
 import {
   clearAuthCache,
@@ -17,17 +18,24 @@ import {
 } from '../lib/authSession'
 import { cn } from '../lib/cn'
 import HavenMark from './haven/HavenMark'
+import { ParleSettingsPopup } from './haven/ParleSettings'
 
 const NAV = [
-  { href: '/dashboard', label: 'Home', icon: Home, exact: true },
-  { href: '/chat', label: 'AI Chatbot', icon: MessageCircle },
-  { href: '/journal', label: 'Journal', icon: BookHeart },
-  { href: '/quotes', label: 'Quotes Book', icon: BookOpen },
+  { href: '/dashboard', label: 'Home', mobileLabel: 'Home', icon: Home, exact: true },
+  { href: '/chat', label: 'AI Chatbot', mobileLabel: 'Chat', icon: MessageCircle },
+  { href: '/journal', label: 'Journal', mobileLabel: 'Journal', icon: BookHeart },
+  { href: '/quotes', label: 'Quotes Book', mobileLabel: 'Quotes', icon: BookOpen, mobileIcon: Bookmark },
 ]
 
 function isActive(pathname, item) {
   if (item.exact) return pathname === item.href
   return pathname === item.href || pathname.startsWith(`${item.href}/`)
+}
+
+function userInitial(user) {
+  if (user?.preferred_name?.trim()) return user.preferred_name.trim().charAt(0).toUpperCase()
+  const email = user?.email || ''
+  return email.charAt(0).toUpperCase() || '?'
 }
 
 export default function AppShell({ children, hideRail = false }) {
@@ -37,7 +45,12 @@ export default function AppShell({ children, hideRail = false }) {
   const [mounted, setMounted] = useState(false)
   const [user, setUser] = useState(getCachedAuthUser)
   const [authReady, setAuthReady] = useState(isAuthCacheReady)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const accountRef = useRef(null)
   const expanded = hovered || pinned
+
+  const closeAccount = useCallback(() => setAccountOpen(false), [])
 
   useEffect(() => {
     setMounted(true)
@@ -62,12 +75,36 @@ export default function AppShell({ children, hideRail = false }) {
     }
   }, [])
 
+  useEffect(() => {
+    closeAccount()
+  }, [router.asPath, closeAccount])
+
+  useEffect(() => {
+    if (!accountOpen) return undefined
+    function onPointerDown(e) {
+      if (accountRef.current?.contains(e.target)) return
+      closeAccount()
+    }
+    function onKeyDown(e) {
+      if (e.key === 'Escape') closeAccount()
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [accountOpen, closeAccount])
+
   async function handleLogout() {
     if (!user) return
+    closeAccount()
     await fetch('/api/auth/logout', { method: 'POST' })
     clearAuthCache()
     router.push('/')
   }
+
+  const showMobileChrome = authReady && user
 
   const rail = (
       <aside
@@ -183,33 +220,81 @@ export default function AppShell({ children, hideRail = false }) {
       className={cn(
         'haven-shell min-h-screen w-full relative',
         hideRail && 'haven-shell--no-rail',
+        showMobileChrome && 'haven-shell--has-mobile-chrome',
       )}
     >
       {mounted && !hideRail ? createPortal(rail, document.body) : null}
 
-      {!hideRail && (
-      <header className="haven-shell__mobile-header md:hidden">
-        <HavenMark expanded />
-        <nav className="flex items-center gap-1" aria-label="Mobile">
-          {NAV.map((item) => {
-            const active = isActive(router.pathname, item)
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'h-9 w-9 grid place-items-center rounded-xl',
-                  active ? 'bg-secondary text-clay' : 'text-muted-foreground',
-                )}
-                aria-label={item.label}
+      {showMobileChrome && (
+        <>
+          <header className="haven-shell__mobile-header">
+            <Link href="/dashboard" className="haven-shell__mobile-wordmark font-serif">
+              parlé
+            </Link>
+            <div className="haven-shell__mobile-avatar-wrap" ref={accountRef}>
+              <button
+                type="button"
+                className="haven-shell__mobile-avatar"
+                onClick={() => setAccountOpen((open) => !open)}
+                aria-label="Account menu"
+                aria-expanded={accountOpen}
               >
-                <Icon size={17} strokeWidth={1.6} />
-              </Link>
-            )
-          })}
-        </nav>
-      </header>
+                {userInitial(user)}
+              </button>
+              {accountOpen ? (
+                <div className="haven-shell__mobile-account-menu" role="menu">
+                  <button
+                    type="button"
+                    className="haven-shell__mobile-account-item"
+                    role="menuitem"
+                    onClick={() => {
+                      closeAccount()
+                      setSettingsOpen(true)
+                    }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    className="haven-shell__mobile-account-item haven-shell__mobile-account-item--logout"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </header>
+
+          <nav className="haven-shell__mobile-bottom-nav" aria-label="Primary">
+            {NAV.map((item) => {
+              const active = isActive(router.pathname, item)
+              const Icon = item.mobileIcon || item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'haven-shell__mobile-bottom-nav-item',
+                    active && 'haven-shell__mobile-bottom-nav-item--active',
+                  )}
+                  aria-label={item.mobileLabel}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <Icon size={22} strokeWidth={active ? 2.25 : 1.6} fill={active ? 'currentColor' : 'none'} />
+                  <span className="haven-shell__mobile-bottom-nav-label">{item.mobileLabel}</span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          <ParleSettingsPopup
+            open={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            isAuthed={Boolean(user)}
+          />
+        </>
       )}
 
       <main className="haven-shell__main">

@@ -29,22 +29,36 @@ function DictionaryHero() {
 
           <div className="pss-hero-divider pss-hero-rule" aria-hidden />
 
-          <p className="pss-hero-defs pss-hero-definition">
+          <p className="pss-hero-defs pss-hero-definition pss-hero-definition--desktop">
             A private space to say the things you can&apos;t say out loud.
+          </p>
+          <p className="pss-hero-defs pss-hero-definition pss-hero-definition--mobile">
+            No advice unless you want it. Just space.
           </p>
 
           <div className="pss-hero-ctas">
             <Link href="/chat" className="pss-hero-btn pss-hero-btn--primary">
-              Start talking
+              <span className="pss-hero-btn-label--desktop">Start talking</span>
+              <span className="pss-hero-btn-label--mobile">just start talking</span>
             </Link>
             <a href="#how" className="pss-hero-btn pss-hero-btn--secondary">
               See how it works
             </a>
           </div>
 
+          <Link href="/login" className="pss-hero-login-link">
+            or log in
+          </Link>
+
           <p className="pss-hero-footnote">
             Free to start · Private by default · Available 24/7
           </p>
+
+          <div className="pss-hero-scroll-hint" aria-hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
       </div>
     </section>
@@ -103,31 +117,60 @@ function Nights() {
   )
 }
 
-function Features() {
-  const features = [
-    {
-      icon: MessageCircle,
-      title: 'Talk it through',
-      description: 'Chat with an AI that listens without judgment — free to start, no account required.',
-      href: '/chat',
-      cta: 'Start talking',
-    },
-    {
-      icon: BookOpen,
-      title: 'Private journal',
-      description: 'Write what you cannot say out loud. Your entries stay yours, not on any feed.',
-      href: '/register',
-      cta: 'Start writing',
-    },
-    {
-      icon: Quote,
-      title: 'Quotes book',
-      description: 'Find words when yours feel too heavy — curated lines for late nights and hard days.',
-      href: '/register',
-      cta: 'Explore quotes',
-    },
-  ]
+const LANDING_FEATURES = [
+  {
+    icon: MessageCircle,
+    title: 'Talk it through',
+    description: 'Chat with an AI that listens without judgment — free to start, no account required.',
+    href: '/chat',
+    cta: 'Start talking',
+  },
+  {
+    icon: BookOpen,
+    title: 'Private journal',
+    description: 'Write what you cannot say out loud. Your entries stay yours, not on any feed.',
+    href: '/register',
+    cta: 'Start writing',
+  },
+  {
+    icon: Quote,
+    title: 'Quotes book',
+    description: 'Find words when yours feel too heavy — curated lines for late nights and hard days.',
+    href: '/register',
+    cta: 'Explore quotes',
+  },
+]
 
+function FeatureCard({ icon: Icon, title, description, href, cta }) {
+  return (
+    <Link href={href} className="pss-features-card__link">
+      <span className="pss-features-card__icon" aria-hidden="true">
+        <Icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
+      </span>
+      <h3 className="pss-features-card__title font-serif">{title}</h3>
+      <p className="pss-features-card__desc">{description}</p>
+      <span className="pss-features-card__cta">{cta} →</span>
+    </Link>
+  )
+}
+
+function FeatureStackItem({ icon: Icon, title, description, href }) {
+  return (
+    <li className="pss-features-stack__item">
+      <Link href={href} className="pss-features-stack__link">
+        <span className="pss-features-stack__icon" aria-hidden="true">
+          <Icon className="w-5 h-5 text-primary" strokeWidth={1.75} />
+        </span>
+        <div className="pss-features-stack__body">
+          <h3 className="pss-features-stack__title font-serif">{title}</h3>
+          <p className="pss-features-stack__desc">{description}</p>
+        </div>
+      </Link>
+    </li>
+  )
+}
+
+function Features() {
   return (
     <section id="features" className="pss-features-section px-6 md:px-12 py-20 md:py-28">
       <div className="max-w-6xl mx-auto">
@@ -139,8 +182,20 @@ function Features() {
           </p>
         </div>
 
-        <ul className="pss-features-grid">
-          {features.map(({ icon: Icon, title, description, href, cta }, index) => (
+        <ul className="pss-features-stack">
+          {LANDING_FEATURES.map(({ icon, title, description, href }) => (
+            <FeatureStackItem
+              key={title}
+              icon={icon}
+              title={title}
+              description={description}
+              href={href}
+            />
+          ))}
+        </ul>
+
+        <ul className="pss-features-grid pss-features-grid--desktop">
+          {LANDING_FEATURES.map(({ icon: Icon, title, description, href, cta }, index) => (
             <motion.li
               key={title}
               className="pss-features-card"
@@ -149,19 +204,31 @@ function Features() {
               viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              <Link href={href} className="pss-features-card__link">
-                <span className="pss-features-card__icon" aria-hidden="true">
-                  <Icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
-                </span>
-                <h3 className="pss-features-card__title font-serif">{title}</h3>
-                <p className="pss-features-card__desc">{description}</p>
-                <span className="pss-features-card__cta">{cta} →</span>
-              </Link>
+              <FeatureCard icon={Icon} title={title} description={description} href={href} cta={cta} />
             </motion.li>
           ))}
         </ul>
       </div>
     </section>
+  )
+}
+
+function CompareItem({ title, description, variant = 'yes' }) {
+  const isYes = variant === 'yes'
+  return (
+    <div className={isYes ? 'pss-compare__item' : 'pss-compare__item pss-compare__item--muted'}>
+      <span className={isYes ? 'pss-compare__icon pss-compare__icon--yes' : 'pss-compare__icon pss-compare__icon--no'}>
+        {isYes ? (
+          <Check className="w-4 h-4 text-primary-foreground" />
+        ) : (
+          <X className="w-4 h-4 text-muted-foreground" />
+        )}
+      </span>
+      <div className="pss-compare__copy">
+        <div className="font-semibold">{title}</div>
+        <div className="text-sm text-muted-foreground">{description}</div>
+      </div>
+    </div>
   )
 }
 
@@ -179,34 +246,35 @@ function Compare() {
     ['"Just move on"', 'Rushed healing'],
   ]
 
+  const pairs = yes.map((entry, index) => ({
+    parle: { title: entry[0], description: entry[1] },
+    other: { title: no[index][0], description: no[index][1] },
+  }))
+
   return (
     <div className="pss-compare">
       <h3 className="pss-compare__title font-serif text-2xl md:text-3xl">parlé vs other support</h3>
-      <div className="pss-compare__grid">
+
+      <div className="pss-compare__pairs md:hidden">
+        {pairs.map(({ parle, other }) => (
+          <div key={parle.title} className="pss-compare__pair">
+            <p className="pss-compare__pair-label">parlé</p>
+            <CompareItem title={parle.title} description={parle.description} variant="yes" />
+            <p className="pss-compare__pair-label pss-compare__pair-label--muted">other AI</p>
+            <CompareItem title={other.title} description={other.description} variant="no" />
+          </div>
+        ))}
+      </div>
+
+      <div className="pss-compare__grid pss-compare__grid--desktop">
         <div className="pss-compare__col">
           {yes.map(([t, d]) => (
-            <div key={t} className="pss-compare__item">
-              <span className="pss-compare__icon pss-compare__icon--yes">
-                <Check className="w-4 h-4 text-primary-foreground" />
-              </span>
-              <div className="pss-compare__copy">
-                <div className="font-semibold">{t}</div>
-                <div className="text-sm text-muted-foreground">{d}</div>
-              </div>
-            </div>
+            <CompareItem key={t} title={t} description={d} variant="yes" />
           ))}
         </div>
         <div className="pss-compare__col">
           {no.map(([t, d]) => (
-            <div key={t} className="pss-compare__item pss-compare__item--muted">
-              <span className="pss-compare__icon pss-compare__icon--no">
-                <X className="w-4 h-4 text-muted-foreground" />
-              </span>
-              <div className="pss-compare__copy">
-                <div className="font-semibold">{t}</div>
-                <div className="text-sm text-muted-foreground">{d}</div>
-              </div>
-            </div>
+            <CompareItem key={t} title={t} description={d} variant="no" />
           ))}
         </div>
       </div>
@@ -296,15 +364,20 @@ export default function ParlerLandingPage({ signupDeclined = false }) {
       <How />
       <VerticalTestimonialsSpin />
       <CTA />
-      <footer className="px-6 md:px-12 py-10 text-center text-sm text-muted-foreground">
-        <span className="font-serif italic text-lg text-foreground">parlé</span> · A quiet space, always open.{' '}
-        <Link href="/terms" className="text-primary hover:underline">
-          Terms &amp; Safety
-        </Link>
-        {' · '}
-        <Link href="/contact" className="text-primary hover:underline">
-          Contact
-        </Link>
+      <footer className="pss-landing-footer px-6 md:px-12 py-10 text-center text-sm text-muted-foreground">
+        <p className="pss-landing-footer__tagline">
+          <span className="pss-landing-footer__wordmark font-serif italic text-lg text-foreground">parlé</span>
+          {' · '}A quiet space, always open.
+        </p>
+        <p className="pss-landing-footer__links">
+          <Link href="/terms" className="text-primary hover:underline">
+            Terms &amp; Safety
+          </Link>
+          {' · '}
+          <Link href="/contact" className="text-primary hover:underline">
+            Contact
+          </Link>
+        </p>
       </footer>
     </main>
   )

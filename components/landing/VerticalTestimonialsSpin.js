@@ -43,7 +43,25 @@ function VerticalLane({ items, direction, speed, delay = '0s' }) {
   )
 }
 
+function HorizontalLane({ items, speed = 42, direction = 'left' }) {
+  const loop = [...items, ...items]
+
+  return (
+    <div className="pss-vtest-mobile__viewport">
+      <div
+        className={`pss-vtest-mobile__track pss-vtest-mobile__track--${direction}`}
+        style={{ animationDuration: `${speed}s` }}
+      >
+        {loop.map((item, i) => (
+          <TestimonialCard key={`mobile-${direction}-${item.name}-${i}`} {...item} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const LANES = splitIntoLanes(TESTIMONIALS, 3)
+const MOBILE_LANES = splitIntoLanes(TESTIMONIALS, 2)
 const LANE_CONFIG = [
   { direction: 'up', speed: 48, delay: '0s' },
   { direction: 'down', speed: 54, delay: '-12s' },
@@ -58,7 +76,10 @@ export default function VerticalTestimonialsSpin() {
         <p className="mt-4 text-muted-foreground">Others have been where you are now</p>
       </div>
 
-      <div className="pss-vtest mt-12 max-w-5xl mx-auto" aria-label="Community testimonials">
+      <div
+        className="pss-vtest pss-vtest--desktop mt-12 max-w-5xl mx-auto"
+        aria-label="Community testimonials"
+      >
         <div className="pss-vtest__fade pss-vtest__fade--top" aria-hidden />
         <div className="pss-vtest__fade pss-vtest__fade--bottom" aria-hidden />
 
@@ -75,8 +96,20 @@ export default function VerticalTestimonialsSpin() {
         </div>
       </div>
 
+      <div
+        className="pss-vtest-mobile mt-10 max-w-5xl mx-auto"
+        aria-label="Community testimonials"
+      >
+        <div className="pss-vtest-mobile__fade pss-vtest-mobile__fade--left" aria-hidden />
+        <div className="pss-vtest-mobile__fade pss-vtest-mobile__fade--right" aria-hidden />
+        <div className="pss-vtest-mobile__rows">
+          <HorizontalLane items={MOBILE_LANES[0]} direction="left" speed={44} />
+          <HorizontalLane items={MOBILE_LANES[1]} direction="right" speed={52} />
+        </div>
+      </div>
+
       <div className="pss-vtest__static max-w-5xl mx-auto mt-8" aria-label="Testimonials">
-        {TESTIMONIALS.slice(0, 6).map((item) => (
+        {TESTIMONIALS.map((item) => (
           <TestimonialCard key={item.name} {...item} />
         ))}
       </div>

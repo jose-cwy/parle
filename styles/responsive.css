@@ -30,7 +30,6 @@ html {
   .haven-shell__content,
   .haven-quotes,
   .haven-journal,
-  body.body--parler-landing .pss-nav__inner,
   .parler-landing .pss-hero-section,
   .parler-landing .pss-compare,
   body.body--auth .auth-page__inner,
@@ -180,9 +179,6 @@ html {
     text-align: center;
   }
 
-  .parler-landing .pss-vtest__grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -209,6 +205,13 @@ html {
 
 body.body--parler-landing .pss-nav-logo__mark {
   display: none;
+}
+
+@media (max-width: 767px) {
+  body.body--parler-landing .pss-nav__inner {
+    padding-left: 0.5rem;
+    padding-right: 1rem;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -266,12 +269,6 @@ body.body--parler-landing .pss-nav-logo__mark {
 
 /* ——— Haven app shell ——— */
 
-@media (max-width: 767px) {
-  .haven-shell__mobile-header a {
-    width: 2.75rem;
-    height: 2.75rem;
-  }
-}
 
 @media (min-width: 768px) and (max-width: 1024px) {
   .haven-shell__rail--expanded {
@@ -365,11 +362,6 @@ body.body--parler-landing .pss-nav-logo__mark {
     align-items: center;
   }
 
-  .parle-chat__input-wrap {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
   .parle-chat-main__bottom-fixed {
     left: 0;
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
@@ -378,14 +370,6 @@ body.body--parler-landing .pss-nav-logo__mark {
   .parle-chat__input-wrap textarea,
   .parle-chat__input-wrap input {
     font-size: 16px;
-  }
-
-  .parle-chat__input-wrap .h-9.w-9,
-  .parle-chat-send-btn {
-    width: 2.75rem !important;
-    height: 2.75rem !important;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
   }
 
   .parle-chat-sidebar__history .group button,
@@ -739,5 +723,297 @@ body.body--parler-landing .pss-nav-logo__mark {
   .haven-quotes__main-title,
   .haven-journal h2.font-serif {
     font-size: 1.25rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Mobile UI fixes (max 767px only)
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* ——— FIX 1: Chat input bar ——— */
+
+  .parle-chat__input-wrap {
+    width: calc(100% - 32px);
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .parle-chat-empty-state__input .parle-chat__input-wrap {
+    width: calc(100% - 32px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .parle-chat-input__bar {
+    align-items: center;
+    min-height: 52px;
+    height: 52px;
+    padding: 0 16px;
+    border-radius: 26px;
+    background: #fffcf8;
+    border: 1px solid color-mix(in srgb, var(--hs-border, #e5ddd2) 90%, transparent);
+    box-shadow: none;
+    gap: 0.35rem;
+  }
+
+  .parle-chat-input__bar:has(textarea:not(:placeholder-shown)),
+  .parle-chat-input__bar:focus-within {
+    height: auto;
+    min-height: 52px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    align-items: flex-end;
+  }
+
+  .parle-chat-input__icon-btn {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    color: var(--hs-text-muted, #8a8178) !important;
+  }
+
+  .parle-chat-input__icon-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .parle-chat-input__mode-trigger {
+    background-color: color-mix(in srgb, var(--hs-accent, #c54b44) 15%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--hs-accent, #c54b44) 60%, transparent) !important;
+    color: var(--hs-accent, #c54b44) !important;
+    font-size: 13px !important;
+    font-weight: 500;
+    filter: none !important;
+    box-shadow: none !important;
+    max-width: 6.5rem;
+    padding: 5px 10px !important;
+  }
+
+  .parle-chat-input__mode-trigger .parle-mode-selector__chevron {
+    color: var(--hs-accent, #c54b44);
+    width: 12px;
+    height: 12px;
+    opacity: 1;
+  }
+
+  .parle-chat-input__send.parle-chat-send-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 10px;
+  }
+
+  .parle-chat-input__send.parle-chat-send-btn--active {
+    background: var(--hs-accent, #c54b44) !important;
+    color: #fff !important;
+  }
+
+  .parle-chat-input__send.parle-chat-send-btn--idle {
+    background: color-mix(in srgb, var(--hs-border, #e5ddd2) 55%, transparent) !important;
+    color: color-mix(in srgb, var(--hs-text-muted, #8a8178) 70%, transparent) !important;
+  }
+
+  .parle-chat-input__send svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .parle-chat-empty-state__quick-prompts {
+    justify-content: center;
+    gap: 8px;
+    max-width: calc(100% - 32px);
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0.75rem;
+  }
+
+  .parle-chat-empty-state__quick-prompt {
+    padding: 8px 16px;
+    font-size: 13px;
+    line-height: 1.35;
+    border: 1px solid color-mix(in srgb, var(--hs-accent, #c54b44) 45%, var(--hs-border, #e5ddd2));
+    background: transparent !important;
+    color: var(--hs-text-soft, #5c544d);
+    white-space: normal;
+    text-align: center;
+  }
+
+  .parle-chat-empty-state__quick-prompt:active:not(:disabled) {
+    background: color-mix(in srgb, var(--hs-accent, #c54b44) 8%, transparent) !important;
+  }
+
+  .parler-landing .pss-vtest-section .font-serif.text-4xl {
+    font-size: 1.75rem;
+    color: var(--foreground);
+  }
+
+  .parler-landing .pss-vtest-mobile__track .pss-vtest__card {
+    padding: 1.15rem;
+  }
+
+  .parler-landing .pss-vtest-mobile__track .pss-vtest__quote {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  /* ——— FIX 3: Logged-in app mobile chrome ——— */
+
+  .haven-shell--has-mobile-chrome .haven-shell__mobile-header {
+    display: grid;
+    grid-template-columns: 2.75rem 1fr 2.75rem;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 0.65rem 1rem;
+    background: color-mix(in oklch, var(--background) 88%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .haven-shell__mobile-header-spacer {
+    width: 2.75rem;
+  }
+
+  .haven-shell__mobile-wordmark {
+    justify-self: center;
+    font-size: 1.35rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+    text-decoration: none;
+  }
+
+  .haven-shell__mobile-menu-btn {
+    display: grid;
+    place-items: center;
+    justify-self: end;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: none;
+    background: transparent;
+    color: var(--hs-accent, #c54b44);
+    cursor: pointer;
+  }
+
+  .haven-shell--has-mobile-chrome .haven-shell__mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 38;
+    align-items: center;
+    justify-content: space-around;
+    gap: 0.25rem;
+    padding: 0.45rem 0.75rem max(0.45rem, env(safe-area-inset-bottom, 0px));
+    background: color-mix(in oklch, var(--background) 92%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+  }
+
+  .haven-shell__mobile-bottom-nav-item {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .haven-shell__mobile-bottom-nav-item--active {
+    color: var(--hs-accent, #c54b44);
+    background: color-mix(in srgb, var(--hs-accent, #c54b44) 10%, transparent);
+  }
+
+  .haven-shell--has-mobile-chrome .haven-shell__content {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .haven-mobile-menu__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 48;
+    border: none;
+    padding: 0;
+    background: rgba(61, 53, 48, 0.35);
+    cursor: pointer;
+  }
+
+  .haven-mobile-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 49;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    max-width: 100vw;
+    background: var(--background);
+    border-left: 1px solid var(--border);
+    box-shadow: -8px 0 32px rgba(61, 53, 48, 0.1);
+  }
+
+  .haven-mobile-menu__header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.85rem 1rem 0.5rem;
+  }
+
+  .haven-mobile-menu__close {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+  }
+
+  .haven-mobile-menu__links {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0 1.25rem;
+    overflow-y: auto;
+  }
+
+  .haven-mobile-menu__link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 16px;
+    border: none;
+    background: transparent;
+    font-family: var(--font-serif), Georgia, serif;
+    font-size: 15px;
+    line-height: 1.3;
+    color: var(--foreground);
+    text-decoration: none;
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .haven-mobile-menu__link--logout {
+    color: var(--hs-accent-strong, #a63f3a);
+  }
+
+  .haven-mobile-menu__divider {
+    height: 1px;
+    margin: 0.35rem 16px;
+    background: color-mix(in srgb, var(--border) 80%, transparent);
   }
 }

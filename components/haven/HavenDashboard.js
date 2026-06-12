@@ -120,26 +120,61 @@ export default function HavenDashboard({ user }) {
   const name = displayName(user)
 
   return (
-    <div className="space-y-12">
+    <div className="haven-dashboard space-y-12">
       <section className="rise">
-        <p className="text-[11px] uppercase tracking-[0.26em] text-muted-foreground min-h-[14px]">
+        <p className="haven-dashboard__date text-[11px] uppercase tracking-[0.26em] text-muted-foreground min-h-[14px]">
           {today || '\u00A0'}
         </p>
-        <h1 className="mt-3 text-4xl md:text-5xl text-foreground leading-[1.05]">
+        <h1 className="haven-dashboard__greeting mt-3 text-4xl md:text-5xl text-foreground leading-[1.05]">
           {timeGreeting()}, <span className="italic text-clay">{name}.</span>
         </h1>
-        <p className="mt-4 max-w-xl text-base text-muted-foreground leading-relaxed">
+        <p className="haven-dashboard__sub mt-4 max-w-xl text-base text-muted-foreground leading-relaxed">
           This is your room. No one else is here. Take your time.
         </p>
       </section>
 
+      <section className="haven-dashboard__quick rise rise-1">
+        <div className="haven-dashboard__quick-scroll md:hidden">
+          <Link href="/chat" className="haven-dashboard__quick-card ma-tap">
+            <MessageCircle size={18} strokeWidth={1.6} />
+            <span className="haven-dashboard__quick-label">talk it through</span>
+          </Link>
+          <Link href="/journal" className="haven-dashboard__quick-card ma-tap">
+            <BookHeart size={18} strokeWidth={1.6} />
+            <span className="haven-dashboard__quick-label">write it down</span>
+          </Link>
+          <Link href="/quotes" className="haven-dashboard__quick-card ma-tap">
+            <BookOpen size={18} strokeWidth={1.6} />
+            <span className="haven-dashboard__quick-label">find a line</span>
+          </Link>
+        </div>
+      </section>
+
       <section className="rise rise-1">
-        <SavedQuoteCard saved={saved} />
+        <div className="haven-dashboard__quote-card md:hidden">
+          <div className="haven-dashboard__quote-mark" aria-hidden>&ldquo;</div>
+          {saved ? (
+            <>
+              <p className="haven-dashboard__quote-text">{capitalizeQuoteText(saved.text)}</p>
+              <p className="haven-dashboard__quote-author">— {saved.author}</p>
+            </>
+          ) : (
+            <>
+              <p className="haven-dashboard__quote-text text-muted-foreground italic">No line kept yet.</p>
+              <Link href="/quotes" className="haven-dashboard__quote-author text-primary">
+                Browse quotes →
+              </Link>
+            </>
+          )}
+        </div>
+        <div className="hidden md:block">
+          <SavedQuoteCard saved={saved} />
+        </div>
       </section>
 
       <section>
         <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-4">Quick access</p>
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="hidden md:grid md:grid-cols-3 gap-5">
           <NoteCard
             href="/chat"
             icon={MessageCircle}

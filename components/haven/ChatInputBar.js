@@ -372,7 +372,7 @@ export default function ChatInputBar({
 
         <div
           className={cn(
-            'flex items-end gap-1.5 min-h-[52px] px-4 py-2.5 rounded-full',
+            'parle-chat-input__bar flex items-end gap-1.5 min-h-[52px] px-4 py-2.5 rounded-full',
             'bg-card border border-border/80',
             'shadow-[0_1px_6px_rgba(0,0,0,0.06)]',
             'focus-within:border-border transition',
@@ -382,7 +382,7 @@ export default function ChatInputBar({
             type="button"
             onClick={handleAttachClick}
             disabled={disabled || attachments.length >= MAX_IMAGES}
-            className="h-9 w-9 shrink-0 self-center text-muted-foreground hover:text-foreground grid place-items-center transition disabled:opacity-40 -ml-1"
+            className="parle-chat-input__icon-btn h-9 w-9 shrink-0 self-center text-muted-foreground hover:text-foreground grid place-items-center transition disabled:opacity-40 -ml-1"
             aria-label="Attach image"
           >
             <Plus size={22} strokeWidth={1.75} />
@@ -411,7 +411,10 @@ export default function ChatInputBar({
                 type="button"
                 onClick={() => setModeOpen((o) => !o)}
                 disabled={disabled}
-                className={getModePillClasses(modeId, { selected: true, compact: true, filled: true })}
+                className={cn(
+                  'parle-chat-input__mode-trigger',
+                  getModePillClasses(modeId, { selected: true, compact: true, filled: true }),
+                )}
                 style={{ backgroundColor: getModeColor(modeId) }}
                 aria-expanded={modeOpen}
                 aria-haspopup="listbox"
@@ -445,7 +448,7 @@ export default function ChatInputBar({
               onClick={toggleMic}
               disabled={disabled}
               className={cn(
-                'relative h-9 w-9 shrink-0 self-center grid place-items-center transition rounded-full',
+                'parle-chat-input__icon-btn relative h-9 w-9 shrink-0 self-center grid place-items-center transition rounded-full',
                 recording
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
@@ -465,7 +468,7 @@ export default function ChatInputBar({
           <button
             type="submit"
             className={cn(
-              'parle-chat-send-btn shrink-0 self-center -mr-0.5',
+              'parle-chat-input__send parle-chat-send-btn shrink-0 self-center -mr-0.5',
               loading || canSend ? 'parle-chat-send-btn--active' : 'parle-chat-send-btn--idle',
             )}
             disabled={loading || !canSend}
