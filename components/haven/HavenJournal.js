@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, ShieldCheck } from 'lucide-react'
+import { Check, Lock, ShieldCheck, X } from 'lucide-react'
 import HavenPageTopbar from './HavenPageTopbar'
 import HavenModal from './HavenModal'
 import LockedEntryPanel from './LockedEntryPanel'
@@ -29,6 +29,19 @@ function groupEntriesByDate(entries) {
 const MSG_PAST_LOCKED = "Past entries are kept as they were. You can only edit today's page."
 const MSG_FUTURE = "Tomorrow's page will open when it arrives."
 
+function formatJournalDate(dateKey) {
+  return new Date(`${dateKey}T12:00:00`).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function isMobileJournalViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(max-width: 767px)').matches
+}
+
 export default function HavenJournal() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +54,7 @@ export default function HavenJournal() {
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
   const [notice, setNotice] = useState('')
+  const [mobileSheetDate, setMobileSheetDate] = useState(null)
 
   async function fetchEntries() {
     setLoading(true)
@@ -177,6 +191,19 @@ export default function HavenJournal() {
     setNotice('')
   }
 
+  function syncMobileSheet(dateKey) {
+    if (!isMobileJournalViewport()) {
+      setMobileSheetDate(null)
+      return
+    }
+    setMobileSheetDate(dateKey)
+  }
+
+  function closeMobileSheet() {
+    setMobileSheetDate(null)
+    setViewing(null)
+  }
+
   function handleCalendarSelect(dateKey) {
     const currentToday = todayKey()
     if (today !== currentToday) setToday(currentToday)
@@ -187,6 +214,7 @@ export default function HavenJournal() {
     if (isFutureDate(dateKey, currentToday)) {
       setViewing(null)
       setNotice(MSG_FUTURE)
+      syncMobileSheet(null)
       return
     }
 
@@ -195,18 +223,26 @@ export default function HavenJournal() {
       const existing = entryMap.get(currentToday)
       setDraft(existing?.content ?? '')
       setTodayEntryId(existing?.id ?? null)
+      syncMobileSheet(dateKey)
       return
     }
 
     if (isPastDate(dateKey, currentToday)) {
       if (entryMap.has(dateKey)) {
         openPastEntry(dateKey)
+        syncMobileSheet(dateKey)
       } else {
         setViewing(null)
         setNotice(MSG_PAST_LOCKED)
+        syncMobileSheet(null)
       }
     }
   }
+
+  const mobileSheetIsToday = Boolean(
+    mobileSheetDate && today && isToday(mobileSheetDate, todayKey()),
+  )
+  const mobileSheetPastBody = mobileSheetDate ? entryMap.get(mobileSheetDate)?.content : null
 
   if (loading) {
     return null
@@ -216,7 +252,7 @@ export default function HavenJournal() {
     <div className="haven-journal space-y-7">
       <HavenPageTopbar label="Journal" />
 
-      <header className="rise">
+      <header className="haven-journal__intro rise">
         <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Journal</p>
         <h1 className="mt-2 text-3xl md:text-4xl text-foreground">
           A page for today, <span className="italic text-clay">only today.</span>
@@ -225,6 +261,10 @@ export default function HavenJournal() {
           Yesterday is kept. Tomorrow waits. This is the page you can write on.
         </p>
       </header>
+
+      <p className="haven-journal__mobile-hint text-sm text-muted-foreground leading-relaxed">
+        Tap a day to open your journal page.
+      </p>
 
       {error ? (
         <div className="paper p-4 text-sm text-destructive" role="alert">
@@ -239,28 +279,24 @@ export default function HavenJournal() {
       ) : null}
 
       <div className="haven-journal__layout grid md:grid-cols-[1fr_1.05fr] gap-6 items-start">
-        <div className="relative">
+        <div className="haven-journal__calendar relative">
           <WallCalendar today={today} entryMap={entryMap} onSelect={handleCalendarSelect} />
           {viewing ? (
-            <LockedEntryPanel
-              dateKey={viewing.date}
-              body={viewing.body}
-              onClose={() => setViewing(null)}
-            />
+            <div className="haven-journal__locked-desktop">
+              <LockedEntryPanel
+                dateKey={viewing.date}
+                body={viewing.body}
+                onClose={() => setViewing(null)}
+              />
+            </div>
           ) : null}
         </div>
 
-        <div className="paper rise rise-2 p-6 md:p-8 relative">
+        <div className="haven-journal__desktop-editor paper rise rise-2 p-6 md:p-8 relative">
           <div>
             <p className="text-[11px] uppercase tracking-[0.24em] text-clay">Today</p>
             <h2 className="font-serif text-2xl text-foreground mt-1">
-              {today
-                ? new Date(`${today}T12:00:00`).toLocaleDateString(undefined, {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : '\u00A0'}
+              {today ? formatJournalDate(today) : '\u00A0'}
             </h2>
           </div>
 
@@ -289,6 +325,70 @@ export default function HavenJournal() {
           </div>
         </div>
       </div>
+
+      {mobileSheetDate ? (
+        <div className="haven-journal__mobile-sheet">
+          <HavenModal onClose={closeMobileSheet}>
+            <div className="haven-journal__mobile-sheet-inner">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  {mobileSheetIsToday ? (
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-clay">Today</p>
+                  ) : (
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-clay flex items-center gap-2">
+                      <Lock size={11} strokeWidth={2} aria-hidden />
+                      Locked entry
+                    </p>
+                  )}
+                  <h2 className="font-serif text-2xl text-foreground mt-1">
+                    {formatJournalDate(mobileSheetDate)}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeMobileSheet}
+                  className="haven-journal__mobile-sheet-close h-9 w-9 shrink-0 grid place-items-center rounded-full text-muted-foreground"
+                  aria-label="Close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {mobileSheetIsToday ? (
+                <>
+                  <div className="mt-5 haven-journal-lines">
+                    <textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      placeholder="Start anywhere. A sentence is enough."
+                      className="haven-journal-lines__textarea"
+                      spellCheck
+                      aria-label="Today's journal entry"
+                    />
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[11px] text-muted-foreground">Private. Saved to your account.</p>
+                    <button
+                      type="button"
+                      onClick={saveToday}
+                      disabled={saving || !draft.trim()}
+                      className="inline-flex items-center justify-center gap-2 px-5 h-11 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm hover:opacity-90 active:scale-[0.98] transition disabled:opacity-50 w-full sm:w-auto"
+                    >
+                      {savedFlash ? <Check size={15} /> : null}
+                      {saving ? 'Saving…' : savedFlash ? 'Kept' : 'Save today\u2019s entry'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-5 text-[15px] leading-7 text-foreground whitespace-pre-wrap">
+                  {mobileSheetPastBody}
+                </p>
+              )}
+            </div>
+          </HavenModal>
+        </div>
+      ) : null}
 
       {showPrivacy && (
         <HavenModal onClose={dismissPrivacy} small>
