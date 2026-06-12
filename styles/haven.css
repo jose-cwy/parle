@@ -8,34 +8,34 @@ body.body--app {
 
   --radius: 1rem;
 
-  /* Parlé landing palette */
-  --cream: #fdfbf7;
-  --ivory: #ffffff;
-  --bone: #f5f0ea;
-  --beige: #f3f0eb;
-  --taupe: #666666;
-  --rose: #c1746b;
-  --clay: #c1746b;
+  /* Parlé palette — from theme-palette.css (light / dark) */
+  --cream: var(--parle-bg);
+  --ivory: var(--parle-bg-elevated);
+  --bone: var(--parle-bg-muted);
+  --beige: var(--parle-bg-muted);
+  --taupe: var(--parle-text-muted);
+  --rose: var(--parle-accent);
+  --clay: var(--parle-accent);
   --sage: #8a9a94;
-  --ink: #1a1a1a;
+  --ink: var(--parle-text);
 
-  --background: #fdfbf7;
-  --foreground: #1a1a1a;
-  --card: #ffffff;
-  --card-foreground: #1a1a1a;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #c1746b;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f0ea;
-  --secondary-foreground: #1a1a1a;
-  --muted: #f3f0eb;
-  --muted-foreground: #666666;
-  --accent: #f5e8e8;
-  --accent-foreground: #c1746b;
+  --background: var(--parle-bg);
+  --foreground: var(--parle-text);
+  --card: var(--parle-bg-elevated);
+  --card-foreground: var(--parle-text);
+  --popover: var(--parle-bg-elevated);
+  --popover-foreground: var(--parle-text);
+  --primary: var(--parle-accent);
+  --primary-foreground: var(--parle-on-accent);
+  --secondary: var(--parle-bg-muted);
+  --secondary-foreground: var(--parle-text);
+  --muted: var(--parle-bg-muted);
+  --muted-foreground: var(--parle-text-muted);
+  --accent: var(--parle-accent-soft);
+  --accent-foreground: var(--parle-accent);
   --destructive: #b85c55;
-  --border: #e8e4de;
-  --input: #e8e4de;
+  --border: var(--parle-border);
+  --input: var(--parle-border);
   --ring: rgba(193, 116, 107, 0.35);
 
   --shadow-paper: 0 1px 0 rgba(232, 228, 222, 0.8), 0 8px 24px -12px rgba(26, 26, 26, 0.08);

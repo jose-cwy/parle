@@ -4,7 +4,6 @@ import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
 import {
   getModeById,
-  getModeColor,
   getModePillClasses,
   getModeShortLabel,
   MODE_PILL_ORDER,
@@ -70,7 +69,6 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef, sheet = 
             aria-selected={active}
             onClick={() => onSelect(mode)}
             className={getModePillClasses(id, { selected: active, compact: true, filled: true })}
-            style={{ backgroundColor: getModeColor(id) }}
           >
             {getModeShortLabel(id)}
           </button>
@@ -420,7 +418,6 @@ export default function ChatInputBar({
                 'parle-chat-input__mode-trigger',
                 getModePillClasses(modeId, { selected: true, compact: true, filled: true }),
               )}
-              style={{ backgroundColor: getModeColor(modeId) }}
               aria-expanded={modeOpen}
               aria-haspopup="listbox"
               aria-label={`Conversation mode: ${getModeShortLabel(modeId)}`}

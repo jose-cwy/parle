@@ -1,4 +1,5 @@
 import '../styles/tokens.css'
+import '../styles/theme-palette.css'
 import '../styles/globals.css'
 import '../styles/typography.css'
 import '../styles/loading.css'
@@ -14,6 +15,8 @@ import '../styles/mobile-app.css'
 import { useEffect } from 'react'
 import TopProgressProvider from '../components/TopProgressProvider'
 import { ThemeProvider } from '../components/ThemeProvider'
+import AppShell from '../components/AppShell'
+import RequireAuth from '../components/RequireAuth'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Head from 'next/head'
@@ -21,7 +24,15 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/router'
 import { marketingPageTransition, pageTransition } from '../lib/motion'
 import { rememberChatReturnPath } from '../lib/parle/chatNavigation'
-import { isAppRoute, isFullBleedRoute, isLandingThemeRoute, isMarketingCreamRoute, isParlerMarketingPage } from '../lib/routes'
+import {
+  isAppRoute,
+  isChatRoute,
+  isFullBleedRoute,
+  isLandingThemeRoute,
+  isMarketingCreamRoute,
+  isParlerMarketingPage,
+  isProtectedAppRoute,
+} from '../lib/routes'
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -96,6 +107,17 @@ export default function App({ Component, pageProps }) {
     )
   }, [router])
 
+  useEffect(() => {
+    if (!appLayout) return undefined
+
+    function scrollAppToTop() {
+      window.scrollTo(0, 0)
+    }
+
+    router.events.on('routeChangeComplete', scrollAppToTop)
+    return () => router.events.off('routeChangeComplete', scrollAppToTop)
+  }, [router.events, appLayout])
+
   return (
     <ThemeProvider>
     <TopProgressProvider>
@@ -126,9 +148,11 @@ export default function App({ Component, pageProps }) {
           <Component {...pageProps} />
         </div>
       ) : appLayout ? (
-        <main className="flex-1 relative z-10 h-full min-h-[calc(100vh-0px)]">
-          <Component {...pageProps} key={router.asPath} />
-        </main>
+        <AppShell hideRail={isChatRoute(router.pathname)}>
+          <RequireAuth enabled={isProtectedAppRoute(router.pathname)}>
+            <Component {...pageProps} key={router.asPath} />
+          </RequireAuth>
+        </AppShell>
       ) : isAuthPage ? (
         <main className="flex-1 relative z-10 auth-page-main">
           <AnimatePresence mode="sync" initial={false}>

@@ -1,0 +1,110 @@
+/* ═══════════════════════════════════════════════════════════════
+   parlé — unified light / dark semantic palette
+   Toggle: html[data-theme="light" | "dark"] (see lib/theme.js)
+   ═══════════════════════════════════════════════════════════════ */
+
+:root,
+html[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --parle-bg: #fdfbf7;
+  --parle-bg-elevated: #ffffff;
+  --parle-bg-muted: #f5f0ea;
+  --parle-surface: #ffffff;
+  --parle-border: #e8e4de;
+
+  /* Text */
+  --parle-text: #1a1a1a;
+  --parle-text-soft: #444444;
+  --parle-text-muted: #666666;
+
+  /* Brand */
+  --parle-accent: #c1746b;
+  --parle-accent-hover: #ab655d;
+  --parle-accent-soft: #f5e8e8;
+  --parle-on-accent: #ffffff;
+
+  /* Mobile shell aliases */
+  --ma-bg: var(--parle-bg);
+  --ma-bg-card: var(--parle-bg-elevated);
+  --ma-bg-elevated: var(--parle-bg-muted);
+  --ma-text: var(--parle-text);
+  --ma-text-muted: var(--parle-text-muted);
+  --ma-text-subtle: color-mix(in srgb, var(--parle-text-muted) 72%, transparent);
+  --ma-accent: var(--parle-accent);
+  --ma-accent-soft: var(--parle-accent-soft);
+  --ma-border: var(--parle-border);
+  --ma-topbar: 56px;
+  --ma-bottomnav: 64px;
+
+  /* Conversation mode colours (filled pills) */
+  --mode-cross: #8e44ad;
+  --mode-emotional: #27ae60;
+  --mode-logical: #2980b9;
+  --mode-vent: #f1c40f;
+  --mode-stop_contact: #c0392b;
+  --mode-on-saturated: #ffffff;
+  --mode-vent-on: #1c1917;
+
+  /* Outline pill tints (unfilled) */
+  --mode-cross-muted: #6b2d8a;
+  --mode-cross-tint: #f3e8ff;
+  --mode-emotional-muted: #2e7d32;
+  --mode-emotional-tint: #e8f5e9;
+  --mode-logical-muted: #1e4a8a;
+  --mode-logical-tint: #dbeafe;
+  --mode-vent-muted: #92600a;
+  --mode-vent-tint: #fef3c7;
+  --mode-stop_contact-muted: #9f2d2d;
+  --mode-stop_contact-tint: #fee2e2;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --parle-bg: #12100e;
+  --parle-bg-elevated: #1f1c18;
+  --parle-bg-muted: #252119;
+  --parle-surface: #1f1c18;
+  --parle-border: #2e2a26;
+
+  --parle-text: #f0ebe4;
+  --parle-text-soft: #c9c2b8;
+  --parle-text-muted: #9a9288;
+
+  --parle-accent: #d4897f;
+  --parle-accent-hover: #e09a91;
+  --parle-accent-soft: #2a2220;
+  --parle-on-accent: #1a1210;
+
+  --ma-bg: var(--parle-bg);
+  --ma-bg-card: var(--parle-bg-elevated);
+  --ma-bg-elevated: var(--parle-bg-muted);
+  --ma-text: var(--parle-text);
+  --ma-text-muted: var(--parle-text-muted);
+  --ma-text-subtle: color-mix(in srgb, var(--parle-text-muted) 72%, transparent);
+  --ma-accent: var(--parle-accent);
+  --ma-accent-soft: var(--parle-accent-soft);
+  --ma-border: var(--parle-border);
+
+  /* Same saturated mode hues — labels stay high-contrast */
+  --mode-cross: #8e44ad;
+  --mode-emotional: #27ae60;
+  --mode-logical: #2980b9;
+  --mode-vent: #f1c40f;
+  --mode-stop_contact: #c0392b;
+  --mode-on-saturated: #ffffff;
+  --mode-vent-on: #1c1917;
+
+  --mode-cross-muted: #e9d5ff;
+  --mode-cross-tint: #3b2760;
+  --mode-emotional-muted: #bbf7d0;
+  --mode-emotional-tint: #1a3d24;
+  --mode-logical-muted: #bfdbfe;
+  --mode-logical-tint: #1e3a5f;
+  --mode-vent-muted: #fde68a;
+  --mode-vent-tint: #422006;
+  --mode-stop_contact-muted: #fecaca;
+  --mode-stop_contact-tint: #450a0a;
+}

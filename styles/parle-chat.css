@@ -817,93 +817,111 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-mode-pill--emotional {
-  border-color: color-mix(in srgb, #4caf50 42%, transparent);
-  color: #2e7d32;
+  border-color: color-mix(in srgb, var(--mode-emotional) 42%, transparent);
+  color: var(--mode-emotional-muted);
 }
 
 .parle-mode-pill--emotional:hover {
-  border-color: color-mix(in srgb, #4caf50 62%, transparent);
-  background: color-mix(in srgb, #e8f5e9 55%, transparent);
+  border-color: color-mix(in srgb, var(--mode-emotional) 62%, transparent);
+  background: color-mix(in srgb, var(--mode-emotional-tint) 55%, transparent);
 }
 
-.parle-mode-pill--emotional.parle-mode-pill--selected {
-  background: color-mix(in srgb, #e8f5e9 92%, transparent);
-  border-color: #4caf50;
-  color: #1b5e20;
+.parle-mode-pill--emotional.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: color-mix(in srgb, var(--mode-emotional-tint) 92%, transparent);
+  border-color: var(--mode-emotional);
+  color: var(--mode-emotional-muted);
 }
 
 .parle-mode-pill--logical {
-  border-color: color-mix(in srgb, #60a5fa 42%, transparent);
-  color: #1e4a8a;
+  border-color: color-mix(in srgb, var(--mode-logical) 42%, transparent);
+  color: var(--mode-logical-muted);
 }
 
 .parle-mode-pill--logical:hover {
-  border-color: color-mix(in srgb, #60a5fa 62%, transparent);
-  background: color-mix(in srgb, #dbeafe 50%, transparent);
+  border-color: color-mix(in srgb, var(--mode-logical) 62%, transparent);
+  background: color-mix(in srgb, var(--mode-logical-tint) 50%, transparent);
 }
 
-.parle-mode-pill--logical.parle-mode-pill--selected {
-  background: color-mix(in srgb, #dbeafe 92%, transparent);
-  border-color: #60a5fa;
-  color: #1d4ed8;
+.parle-mode-pill--logical.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: color-mix(in srgb, var(--mode-logical-tint) 92%, transparent);
+  border-color: var(--mode-logical);
+  color: var(--mode-logical-muted);
 }
 
 .parle-mode-pill--vent {
-  border-color: color-mix(in srgb, #fbbf24 48%, transparent);
-  color: #92600a;
+  border-color: color-mix(in srgb, var(--mode-vent) 48%, transparent);
+  color: var(--mode-vent-muted);
 }
 
 .parle-mode-pill--vent:hover {
-  border-color: color-mix(in srgb, #fbbf24 68%, transparent);
-  background: color-mix(in srgb, #fef3c7 55%, transparent);
+  border-color: color-mix(in srgb, var(--mode-vent) 68%, transparent);
+  background: color-mix(in srgb, var(--mode-vent-tint) 55%, transparent);
 }
 
-.parle-mode-pill--vent.parle-mode-pill--selected {
-  background: color-mix(in srgb, #fef3c7 92%, transparent);
-  border-color: #f59e0b;
-  color: #b45309;
+.parle-mode-pill--vent.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: color-mix(in srgb, var(--mode-vent-tint) 92%, transparent);
+  border-color: var(--mode-vent);
+  color: var(--mode-vent-muted);
 }
 
 .parle-mode-pill--stop_contact {
-  border-color: color-mix(in srgb, #f87171 42%, transparent);
-  color: #9f2d2d;
+  border-color: color-mix(in srgb, var(--mode-stop_contact) 42%, transparent);
+  color: var(--mode-stop_contact-muted);
 }
 
 .parle-mode-pill--stop_contact:hover {
-  border-color: color-mix(in srgb, #f87171 62%, transparent);
-  background: color-mix(in srgb, #fee2e2 50%, transparent);
+  border-color: color-mix(in srgb, var(--mode-stop_contact) 62%, transparent);
+  background: color-mix(in srgb, var(--mode-stop_contact-tint) 50%, transparent);
 }
 
-.parle-mode-pill--stop_contact.parle-mode-pill--selected {
-  background: color-mix(in srgb, #fee2e2 92%, transparent);
-  border-color: #ef4444;
-  color: #b91c1c;
+.parle-mode-pill--stop_contact.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: color-mix(in srgb, var(--mode-stop_contact-tint) 92%, transparent);
+  border-color: var(--mode-stop_contact);
+  color: var(--mode-stop_contact-muted);
 }
 
 .parle-mode-pill--cross {
-  border-color: color-mix(in srgb, #8e44ad 42%, transparent);
-  color: #6b2d8a;
+  border-color: color-mix(in srgb, var(--mode-cross) 42%, transparent);
+  color: var(--mode-cross-muted);
 }
 
 .parle-mode-pill--cross:hover {
-  border-color: color-mix(in srgb, #8e44ad 62%, transparent);
-  background: color-mix(in srgb, #f3e8ff 55%, transparent);
+  border-color: color-mix(in srgb, var(--mode-cross) 62%, transparent);
+  background: color-mix(in srgb, var(--mode-cross-tint) 55%, transparent);
 }
 
-.parle-mode-pill--cross.parle-mode-pill--selected {
-  background: color-mix(in srgb, #f3e8ff 92%, transparent);
-  border-color: #8e44ad;
-  color: #5b21a8;
+.parle-mode-pill--cross.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: color-mix(in srgb, var(--mode-cross-tint) 92%, transparent);
+  border-color: var(--mode-cross);
+  color: var(--mode-cross-muted);
 }
 
+/* Filled pills (mode menu + trigger) — always high contrast */
 .parle-mode-pill--filled {
   border-color: transparent;
-  color: #ffffff;
+  color: var(--mode-on-saturated);
   font-weight: 500;
 }
 
+.parle-mode-pill--filled.parle-mode-pill--cross {
+  background: var(--mode-cross);
+}
+
+.parle-mode-pill--filled.parle-mode-pill--emotional {
+  background: var(--mode-emotional);
+}
+
+.parle-mode-pill--filled.parle-mode-pill--logical {
+  background: var(--mode-logical);
+}
+
 .parle-mode-pill--filled.parle-mode-pill--vent {
-  color: #1c1917;
+  background: var(--mode-vent);
+  color: var(--mode-vent-on);
+}
+
+.parle-mode-pill--filled.parle-mode-pill--stop_contact {
+  background: var(--mode-stop_contact);
 }
 
 .parle-mode-pill--filled:hover {
@@ -911,7 +929,11 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-mode-pill--filled.parle-mode-pill--selected {
-  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 25%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mode-on-saturated) 25%, transparent);
+}
+
+.parle-mode-pill--filled.parle-mode-pill--vent.parle-mode-pill--selected {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mode-vent-on) 20%, transparent);
 }
 
 .parle-mode-selector {
@@ -937,6 +959,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .parle-mode-selector__chevron {
   flex-shrink: 0;
   opacity: 0.9;
+  color: currentColor;
   transition: transform 0.15s ease;
 }
 

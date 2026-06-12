@@ -1,20 +1,6 @@
 /* parlé — native mobile app UI (max-width 767px only) */
 
 @media (max-width: 767px) {
-  :root {
-    --ma-bg: #1a1412;
-    --ma-bg-card: #241e1b;
-    --ma-bg-elevated: #2c2420;
-    --ma-text: #faf7f4;
-    --ma-text-muted: rgba(250, 247, 244, 0.6);
-    --ma-text-subtle: rgba(250, 247, 244, 0.4);
-    --ma-accent: #c1746b;
-    --ma-accent-soft: rgba(193, 116, 107, 0.15);
-    --ma-border: rgba(255, 255, 255, 0.08);
-    --ma-topbar: 56px;
-    --ma-bottomnav: 64px;
-  }
-
   html {
     scroll-behavior: smooth;
   }
@@ -78,8 +64,8 @@
     z-index: 45;
     height: var(--ma-topbar);
     padding: env(safe-area-inset-top, 0px) 1rem 0;
-    background: transparent;
-    border-bottom: none;
+    background: color-mix(in srgb, var(--ma-bg) 94%, transparent);
+    border-bottom: 1px solid var(--ma-border);
   }
 
   body.body--app .haven-shell--no-rail .haven-shell__mobile-header {
@@ -190,9 +176,15 @@
     min-width: 44px;
     min-height: 44px;
     padding: 0.15rem 0.35rem;
+    border: none;
     border-radius: 0.75rem;
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
     color: var(--ma-text-muted);
     text-decoration: none;
+    -webkit-appearance: none;
+    appearance: none;
     transition:
       color 0.15s ease,
       background-color 0.15s ease,
@@ -364,7 +356,7 @@
 
   body.body--app .haven-journal-lines__textarea {
     font-size: 16px;
-    color: rgba(250, 247, 244, 0.85);
+    color: var(--ma-text-muted);
     background: transparent;
   }
 
@@ -490,8 +482,8 @@
     font-weight: 500;
     letter-spacing: normal;
     text-transform: none;
-    color: var(--primary);
-    background: #f5e8e8;
+    color: var(--parle-accent);
+    background: var(--parle-accent-soft);
     border: none;
     padding: 0.22rem 0.7rem;
   }
@@ -511,7 +503,7 @@
     display: block !important;
     font-size: 1.2rem;
     line-height: 1.6;
-    color: rgba(250, 247, 244, 0.85);
+    color: var(--ma-text-muted);
     max-width: 280px;
     margin: 0 auto;
     text-align: center;
@@ -737,7 +729,7 @@
   body.body--parler-landing .pss-terms-page__prose p {
     font-size: 15px;
     line-height: 1.8;
-    color: rgba(250, 247, 244, 0.7);
+    color: var(--ma-text-muted);
   }
 
   /* Tap scale utility */

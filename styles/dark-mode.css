@@ -57,61 +57,61 @@ html[data-theme='dark'] {
 /* ——— Logged-in app (haven.css tokens) ——— */
 
 html[data-theme='dark'] body.body--app {
-  --cream: #12100e;
-  --ivory: #1f1c18;
-  --bone: #181512;
-  --beige: #1c1916;
-  --taupe: #9a9288;
-  --rose: #d4897f;
-  --clay: #d4897f;
-  --ink: #f0ebe4;
+  --cream: var(--parle-bg);
+  --ivory: var(--parle-bg-elevated);
+  --bone: var(--parle-bg-muted);
+  --beige: var(--parle-bg-muted);
+  --taupe: var(--parle-text-muted);
+  --rose: var(--parle-accent);
+  --clay: var(--parle-accent);
+  --ink: var(--parle-text);
 
-  --background: #12100e;
-  --foreground: #f0ebe4;
-  --card: #1f1c18;
-  --card-foreground: #f0ebe4;
-  --popover: #1f1c18;
-  --popover-foreground: #f0ebe4;
-  --primary: #d4897f;
-  --primary-foreground: #1a1210;
-  --secondary: #252119;
-  --secondary-foreground: #f0ebe4;
-  --muted: #1c1916;
-  --muted-foreground: #9a9288;
-  --accent: #2a2220;
-  --accent-foreground: #d4897f;
+  --background: var(--parle-bg);
+  --foreground: var(--parle-text);
+  --card: var(--parle-bg-elevated);
+  --card-foreground: var(--parle-text);
+  --popover: var(--parle-bg-elevated);
+  --popover-foreground: var(--parle-text);
+  --primary: var(--parle-accent);
+  --primary-foreground: var(--parle-on-accent);
+  --secondary: var(--parle-bg-muted);
+  --secondary-foreground: var(--parle-text);
+  --muted: var(--parle-bg-muted);
+  --muted-foreground: var(--parle-text-muted);
+  --accent: var(--parle-accent-soft);
+  --accent-foreground: var(--parle-accent);
   --destructive: #c96a62;
-  --border: #2e2a26;
-  --input: #2e2a26;
+  --border: var(--parle-border);
+  --input: var(--parle-border);
   --ring: rgba(212, 137, 127, 0.35);
 
   --shadow-paper: 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.45);
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.2), 0 12px 32px -16px rgba(0, 0, 0, 0.35);
   --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.25), 0 24px 48px -20px rgba(0, 0, 0, 0.45);
 
-  --hs-bg: #12100e;
-  --hs-bg-warm: #181512;
-  --hs-bg-soft: #1c1916;
-  --hs-surface: #1f1c18;
-  --hs-surface-muted: #232019;
-  --hs-ivory: #12100e;
-  --hs-border: #2e2a26;
-  --hs-border-soft: #282420;
-  --hs-text: #f0ebe4;
-  --hs-text-soft: #c9c2b8;
-  --hs-text-muted: #9a9288;
-  --hs-accent: #d4897f;
-  --hs-accent-soft: #2a2220;
-  --hs-accent-blush: #2a2220;
-  --hs-accent-strong: #d4897f;
-  --hs-accent-strong-hover: #e09a91;
-  --hs-accent-clay: #d4897f;
-  --hs-cream: var(--hs-bg);
-  --hs-cream-deep: var(--hs-bg-warm);
-  --hs-ink: var(--hs-text);
-  --hs-card-bg: var(--hs-surface);
-  --hs-auth-red: #d4897f;
-  --hs-auth-red-hover: #e09a91;
+  --hs-bg: var(--parle-bg);
+  --hs-bg-warm: var(--parle-bg-muted);
+  --hs-bg-soft: var(--parle-bg-muted);
+  --hs-surface: var(--parle-bg-elevated);
+  --hs-surface-muted: var(--parle-bg-muted);
+  --hs-ivory: var(--parle-bg);
+  --hs-border: var(--parle-border);
+  --hs-border-soft: var(--parle-border);
+  --hs-text: var(--parle-text);
+  --hs-text-soft: var(--parle-text-soft);
+  --hs-text-muted: var(--parle-text-muted);
+  --hs-accent: var(--parle-accent);
+  --hs-accent-soft: var(--parle-accent-soft);
+  --hs-accent-blush: var(--parle-accent-soft);
+  --hs-accent-strong: var(--parle-accent);
+  --hs-accent-strong-hover: var(--parle-accent-hover);
+  --hs-accent-clay: var(--parle-accent);
+  --hs-cream: var(--parle-bg);
+  --hs-cream-deep: var(--parle-bg-muted);
+  --hs-ink: var(--parle-text);
+  --hs-card-bg: var(--parle-bg-elevated);
+  --hs-auth-red: var(--parle-accent);
+  --hs-auth-red-hover: var(--parle-accent-hover);
   --hs-auth-red-deep: #c07870;
   --hs-auth-red-focus: rgba(212, 137, 127, 0.32);
   --hs-auth-red-soft: rgba(212, 137, 127, 0.14);
@@ -125,19 +125,35 @@ html[data-theme='dark'] body.body--app .paper::after {
 /* ——— Landing / auth shell ——— */
 
 html[data-theme='dark'] body.body--parler-landing {
-  --background: #12100e;
-  --foreground: #f0ebe4;
-  --card: #1f1c18;
-  --card-foreground: #f0ebe4;
-  --primary: #d4897f;
-  --primary-foreground: #1a1210;
-  --secondary: #252119;
-  --secondary-foreground: #f0ebe4;
-  --muted: #1c1916;
-  --muted-foreground: #9a9288;
-  --accent: #2a2220;
-  --accent-foreground: #d4897f;
-  --border: #2e2a26;
+  --background: var(--parle-bg);
+  --foreground: var(--parle-text);
+  --card: var(--parle-bg-elevated);
+  --card-foreground: var(--parle-text);
+  --primary: var(--parle-accent);
+  --primary-foreground: var(--parle-on-accent);
+  --secondary: var(--parle-bg-muted);
+  --secondary-foreground: var(--parle-text);
+  --muted: var(--parle-bg-muted);
+  --muted-foreground: var(--parle-text-muted);
+  --accent: var(--parle-accent-soft);
+  --accent-foreground: var(--parle-accent);
+  --border: var(--parle-border);
+}
+
+html[data-theme='light'] body.body--parler-landing {
+  --background: var(--parle-bg);
+  --foreground: var(--parle-text);
+  --card: var(--parle-bg-elevated);
+  --card-foreground: var(--parle-text);
+  --primary: var(--parle-accent);
+  --primary-foreground: var(--parle-on-accent);
+  --secondary: var(--parle-bg-muted);
+  --secondary-foreground: var(--parle-text);
+  --muted: var(--parle-bg-muted);
+  --muted-foreground: var(--parle-text-muted);
+  --accent: var(--parle-accent-soft);
+  --accent-foreground: var(--parle-accent);
+  --border: var(--parle-border);
 }
 
 html[data-theme='dark'] .marketing-header,
@@ -262,19 +278,19 @@ html[data-theme='dark'] .parle-settings-popup__header {
 }
 
 /* Mode pills — filled colours with high-contrast labels in dark mode */
-html[data-theme='dark'] .parle-mode-pill--cross {
+html[data-theme='dark'] .parle-mode-pill--cross:not(.parle-mode-pill--filled) {
   background: #6b2d8a;
   border-color: #8e44ad;
   color: #f3e8ff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--cross:hover {
+html[data-theme='dark'] .parle-mode-pill--cross:not(.parle-mode-pill--filled):hover {
   background: #7c3aad;
   border-color: #a855f7;
   color: #ffffff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--cross.parle-mode-pill--selected {
+html[data-theme='dark'] .parle-mode-pill--cross.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
   background: #8e44ad;
   border-color: #c084fc;
   color: #ffffff;
@@ -286,8 +302,10 @@ html[data-theme='dark'] .parle-mode-pill--filled {
   color: #ffffff;
 }
 
+/* Vent — amber (not bright yellow) + white label, like other filled modes in dark */
 html[data-theme='dark'] .parle-mode-pill--filled.parle-mode-pill--vent {
-  color: #1c1917;
+  background: #d97706;
+  color: #ffffff;
 }
 
 html[data-theme='dark'] .parle-mode-selector__menu {
@@ -296,76 +314,76 @@ html[data-theme='dark'] .parle-mode-selector__menu {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme='dark'] .parle-mode-pill--emotional {
+html[data-theme='dark'] .parle-mode-pill--emotional:not(.parle-mode-pill--filled) {
   background: #2e7d32;
   border-color: #4caf50;
   color: #f1f8f2;
 }
 
-html[data-theme='dark'] .parle-mode-pill--emotional:hover {
+html[data-theme='dark'] .parle-mode-pill--emotional:not(.parle-mode-pill--filled):hover {
   background: #388e3c;
   border-color: #66bb6a;
   color: #ffffff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--emotional.parle-mode-pill--selected {
+html[data-theme='dark'] .parle-mode-pill--emotional.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
   background: #43a047;
   border-color: #81c784;
   color: #ffffff;
   box-shadow: 0 0 0 2px rgba(129, 199, 132, 0.45);
 }
 
-html[data-theme='dark'] .parle-mode-pill--logical {
+html[data-theme='dark'] .parle-mode-pill--logical:not(.parle-mode-pill--filled) {
   background: #1d4ed8;
   border-color: #3b82f6;
   color: #eff6ff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--logical:hover {
+html[data-theme='dark'] .parle-mode-pill--logical:not(.parle-mode-pill--filled):hover {
   background: #2563eb;
   border-color: #60a5fa;
   color: #ffffff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--logical.parle-mode-pill--selected {
+html[data-theme='dark'] .parle-mode-pill--logical.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
   background: #3b82f6;
   border-color: #93c5fd;
   color: #ffffff;
   box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.45);
 }
 
-html[data-theme='dark'] .parle-mode-pill--vent {
+html[data-theme='dark'] .parle-mode-pill--vent:not(.parle-mode-pill--filled) {
   background: #b45309;
   border-color: #f59e0b;
   color: #fffbeb;
 }
 
-html[data-theme='dark'] .parle-mode-pill--vent:hover {
+html[data-theme='dark'] .parle-mode-pill--vent:not(.parle-mode-pill--filled):hover {
   background: #d97706;
   border-color: #fbbf24;
   color: #ffffff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--vent.parle-mode-pill--selected {
+html[data-theme='dark'] .parle-mode-pill--vent.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
   background: #f59e0b;
   border-color: #fcd34d;
-  color: #1c1917;
+  color: #ffffff;
   box-shadow: 0 0 0 2px rgba(252, 211, 77, 0.45);
 }
 
-html[data-theme='dark'] .parle-mode-pill--stop_contact {
+html[data-theme='dark'] .parle-mode-pill--stop_contact:not(.parle-mode-pill--filled) {
   background: #b91c1c;
   border-color: #ef4444;
   color: #fef2f2;
 }
 
-html[data-theme='dark'] .parle-mode-pill--stop_contact:hover {
+html[data-theme='dark'] .parle-mode-pill--stop_contact:not(.parle-mode-pill--filled):hover {
   background: #dc2626;
   border-color: #f87171;
   color: #ffffff;
 }
 
-html[data-theme='dark'] .parle-mode-pill--stop_contact.parle-mode-pill--selected {
+html[data-theme='dark'] .parle-mode-pill--stop_contact.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
   background: #ef4444;
   border-color: #fca5a5;
   color: #ffffff;
