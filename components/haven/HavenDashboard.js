@@ -4,6 +4,7 @@ import { MessageCircle, BookHeart, BookOpen, Bookmark } from 'lucide-react'
 import { useSavedQuote } from '../../lib/hooks/useSavedQuote'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { displayName, timeGreeting } from '../../lib/haven/dates'
+import { capitalizeQuoteText } from '../../lib/haven/bookQuotesUi'
 
 function SavedQuoteCard({ saved }) {
   return (
@@ -35,15 +36,11 @@ function SavedQuoteCard({ saved }) {
             <>
               <blockquote className="mt-6 font-serif text-2xl md:text-[34px] leading-[1.25] text-foreground max-w-2xl">
                 <span className="font-serif text-clay/40 text-4xl align-[-0.2em] mr-1">&ldquo;</span>
-                {saved.text}
+                {capitalizeQuoteText(saved.text)}
                 <span className="font-serif text-clay/40 text-4xl align-[-0.4em] ml-1">&rdquo;</span>
               </blockquote>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="h-px w-10 bg-clay/60 shrink-0" />
-                <p className="text-xs tracking-wide text-muted-foreground">— {saved.author}</p>
-              </div>
-              <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                {saved.chapter}
+              <p className="mt-6 text-xs tracking-wide text-muted-foreground">
+                — {saved.author}
               </p>
             </>
           ) : (

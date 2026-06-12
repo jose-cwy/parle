@@ -1,15 +1,13 @@
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 import db from '../../../lib/db'
 import { normalizePreferredName } from '../../../lib/user'
+import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const token = getTokenFromReq(req)
-  if (!token) return res.status(401).json({ error: 'Not signed in' })
-
-  const payload = verifyToken(token)
-  if (!payload?.id) return res.status(401).json({ error: 'Not signed in' })
+  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'auth' })
+  if (guard.handled) return
+  const payload = guard.payload
 
   const preferredName = normalizePreferredName(req.body?.preferred_name)
   if (!preferredName) {
@@ -34,7 +32,6 @@ export default async function handler(req, res) {
         error: 'Database schema is missing preferred_name. Re-apply database/schema.sql.',
       })
     }
-    console.error('preferred_name_error', error)
-    return res.status(500).json({ error: 'Unable to save your name right now. Please try again.' })
+    return handleApiError(res, error, 'preferred_name')
   }
 }

@@ -1,4 +1,5 @@
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
+import { runApiPipeline } from '../../../lib/security/pipeline'
+import { sanitizeJournalContent } from '../../../lib/security/sanitize'
 import { getClientTodayFromReq } from '../../../lib/journalClientDate'
 import {
   createJournalEntry,
@@ -21,9 +22,9 @@ function dbErrorResponse(res, error, context) {
 }
 
 export default async function handler(req, res) {
-  const token = getTokenFromReq(req)
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' })
+  const guard = runApiPipeline(req, res, { requireAuth: true })
+  if (guard.handled) return
+  const payload = guard.payload
 
   const clientToday = getClientTodayFromReq(req)
 
@@ -34,8 +35,8 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { content } = req.body || {}
-      if (!content || !String(content).trim()) {
+      const content = sanitizeJournalContent(req.body?.content)
+      if (!content) {
         return res.status(400).json({ error: 'Write something before saving your entry.' })
       }
 

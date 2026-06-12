@@ -1,5 +1,7 @@
 import { openaiChatComplete } from '../../../lib/openai'
 import { SESSION_TITLE_PROMPT } from '../../../lib/parle/prompts'
+import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { sanitizeChatMessage } from '../../../lib/security/sanitize'
 
 const GENERIC_TITLES = /^new chat$|^heartbreak$|^venting$|^need help$|^chat$|^conversation$/i
 
@@ -15,6 +17,9 @@ function cleanTitle(raw) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
+  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  if (guard.handled) return
+
   const { messages } = req.body || {}
   if (!Array.isArray(messages) || !messages.length) {
     return res.status(400).json({ error: 'Missing messages' })
@@ -23,7 +28,7 @@ export default async function handler(req, res) {
   const transcript = messages
     .filter((m) => m?.role === 'user' || m?.role === 'assistant')
     .slice(0, 6)
-    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${String(m.text || '').slice(0, 500)}`)
+    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${sanitizeChatMessage(m.text).slice(0, 500)}`)
     .join('\n')
 
   if (!transcript.includes('User:')) {
@@ -46,7 +51,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ title })
   } catch (error) {
-    console.error('session_title_error', error)
-    return res.status(500).json({ error: 'Unable to generate title' })
+    return handleApiError(res, error, 'session_title')
   }
 }

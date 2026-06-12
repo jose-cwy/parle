@@ -121,6 +121,8 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
               <PrimaryMenuItem href="/quotes" icon={BookOpen} label="Quotes" onClick={close} />
               <PrimaryMenuItem href="/journal" icon={BookHeart} label="Journal" onClick={close} />
 
+              <DrawerDivider />
+
               {user ? (
                 <div className="pss-nav-drawer__auth-user">
                   <span className="pss-nav-drawer__avatar" aria-hidden="true">

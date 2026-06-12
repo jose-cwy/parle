@@ -319,6 +319,63 @@ body.body--app .haven-shell__content {
   background-image: none;
 }
 
+/* Haven app pages — shared top bar (quotes, journal, …) */
+.haven-page-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.haven-page-topbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  justify-self: start;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.haven-page-topbar__back:hover {
+  color: var(--foreground);
+}
+
+.haven-page-topbar__wordmark {
+  justify-self: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.haven-page-topbar__wordmark:hover {
+  opacity: 0.8;
+}
+
+.haven-page-topbar__label {
+  justify-self: end;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.haven-shell__content:has(> .haven-journal) {
+  max-width: 76rem;
+  padding-top: 1.5rem;
+}
+
 /* Journal page — ruled lines aligned to textarea text */
 .haven-journal-lines {
   --haven-journal-line: 28px;

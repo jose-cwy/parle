@@ -1,28 +1,29 @@
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 import { openaiChatComplete } from '../../../lib/openai'
 import { RECAP_PROMPT } from '../../../lib/parle/prompts'
 import { getModeLabel } from '../../../lib/parle/modes'
+import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { sanitizeTranscript } from '../../../lib/security/sanitize'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { transcript, modeId } = req.body || {}
-  if (!transcript) return res.status(400).json({ error: 'Missing transcript' })
-
-  const token = getTokenFromReq(req)
-  const payload = token ? verifyToken(token) : null
-  if (token && !payload) return res.status(401).json({ error: 'Unauthorized' })
-
-  const modeLabel = getModeLabel(modeId || 'cross')
+  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  if (guard.handled) return
 
   try {
+    const { transcript, modeId } = req.body || {}
+    const safeTranscript = sanitizeTranscript(transcript)
+    if (!safeTranscript) return res.status(400).json({ error: 'Missing transcript' })
+
+    const modeLabel = getModeLabel(modeId || 'cross')
+
     const raw = await openaiChatComplete({
       messages: [
         {
           role: 'system',
           content: `${RECAP_PROMPT}\nCurrent mode label: ${modeLabel}`,
         },
-        { role: 'user', content: String(transcript).slice(0, 3000) },
+        { role: 'user', content: safeTranscript },
       ],
       temperature: 0.2,
     })
@@ -53,7 +54,6 @@ export default async function handler(req, res) {
       },
     })
   } catch (error) {
-    console.error('recap_error', error)
-    return res.status(500).json({ error: 'Unable to generate recap' })
+    return handleApiError(res, error, 'chat_recap')
   }
 }

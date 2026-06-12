@@ -1,10 +1,10 @@
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 import db from '../../../lib/db'
+import { runApiPipeline } from '../../../lib/security/pipeline'
 
 export default async function handler(req,res){
-  const token = getTokenFromReq(req)
-  if(!token) return res.status(200).json({user:null})
-  const payload = verifyToken(token)
+  const guard = runApiPipeline(req, res, { tier: 'auth' })
+  if (guard.handled) return
+  const payload = guard.payload
   if(!payload) return res.status(200).json({user:null})
 
   try{

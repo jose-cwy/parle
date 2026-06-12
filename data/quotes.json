@@ -29,6 +29,62 @@
       "chapter": "Heartbreak",
       "text": "Some love too much, others not enough.",
       "author": "Oscar Wilde"
+    },
+    {
+      "id": 26,
+      "chapter": "Heartbreak",
+      "text": "some people leave and take a version of you with them.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 27,
+      "chapter": "Heartbreak",
+      "text": "you don't miss them. you miss who you were when you were with them.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 28,
+      "chapter": "Heartbreak",
+      "text": "the worst part isn't that it ended. it's that it felt so real while it lasted.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 29,
+      "chapter": "Heartbreak",
+      "text": "loving someone who doesn't choose you back is its own kind of exhausting.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 30,
+      "chapter": "Heartbreak",
+      "text": "you can know it's over and still grieve it. those aren't contradictions.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 31,
+      "chapter": "Heartbreak",
+      "text": "the silence after them is louder than anything they ever said.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 32,
+      "chapter": "Heartbreak",
+      "text": "it wasn't nothing. even if it ended like it was.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 33,
+      "chapter": "Heartbreak",
+      "text": "being left without an explanation is a specific kind of hurt.",
+      "author": "parlé",
+      "public_domain": true
     }
   ],
   "Healing": [
@@ -61,6 +117,62 @@
       "chapter": "Healing",
       "text": "Keep love in your heart. A life without it is like a sunless garden when the flowers are dead.",
       "author": "Oscar Wilde"
+    },
+    {
+      "id": 34,
+      "chapter": "Healing",
+      "text": "healing isn't linear. some days you're fine. some days a song destroys you.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 35,
+      "chapter": "Healing",
+      "text": "you're allowed to be sad about something you chose to walk away from.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 36,
+      "chapter": "Healing",
+      "text": "getting better doesn't mean forgetting. it means carrying it differently.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 37,
+      "chapter": "Healing",
+      "text": "one okay day doesn't mean you're healed. it just means today was okay.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 38,
+      "chapter": "Healing",
+      "text": "you don't have to be over it to be moving through it.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 39,
+      "chapter": "Healing",
+      "text": "rest is part of it. you don't have to be productive with your pain.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 40,
+      "chapter": "Healing",
+      "text": "some days the most you can do is get through the day. that counts.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 41,
+      "chapter": "Healing",
+      "text": "healing quietly is still healing.",
+      "author": "parlé",
+      "public_domain": true
     }
   ],
   "Self-Worth": [
@@ -93,6 +205,62 @@
       "chapter": "Self-Worth",
       "text": "Selfishness is not living as one wishes to live, it is asking others to live as one wishes to live.",
       "author": "Oscar Wilde"
+    },
+    {
+      "id": 42,
+      "chapter": "Self-Worth",
+      "text": "you were enough before them and you're enough after.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 43,
+      "chapter": "Self-Worth",
+      "text": "someone not seeing your value doesn't change what you're worth.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 44,
+      "chapter": "Self-Worth",
+      "text": "you don't need to shrink yourself to fit somewhere you're not wanted.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 45,
+      "chapter": "Self-Worth",
+      "text": "being chosen inconsistently is still being unchosen.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 46,
+      "chapter": "Self-Worth",
+      "text": "you stopped being yourself trying to keep them. that's the real loss.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 47,
+      "chapter": "Self-Worth",
+      "text": "you deserved someone who didn't make you question if you were too much.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 48,
+      "chapter": "Self-Worth",
+      "text": "the way they treated you was about them. not about what you're worth.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 49,
+      "chapter": "Self-Worth",
+      "text": "you don't have to earn love. that's not how it's supposed to work.",
+      "author": "parlé",
+      "public_domain": true
     }
   ],
   "Letting Go": [
@@ -125,6 +293,62 @@
       "chapter": "Letting Go",
       "text": "Nothing that one ignores is ever wholly lost to one.",
       "author": "Oscar Wilde"
+    },
+    {
+      "id": 50,
+      "chapter": "Letting Go",
+      "text": "letting go doesn't mean you stop caring. it means you stop waiting.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 51,
+      "chapter": "Letting Go",
+      "text": "you can love someone and still accept that they're not for you.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 52,
+      "chapter": "Letting Go",
+      "text": "releasing them doesn't mean what you had wasn't real.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 53,
+      "chapter": "Letting Go",
+      "text": "some chapters end without closure. you write the ending yourself.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 54,
+      "chapter": "Letting Go",
+      "text": "holding on was an act of love. letting go is too.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 55,
+      "chapter": "Letting Go",
+      "text": "you can miss someone and still know you're better without them.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 56,
+      "chapter": "Letting Go",
+      "text": "it's okay to grieve something that wasn't good for you.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 57,
+      "chapter": "Letting Go",
+      "text": "the door closing doesn't mean you were wrong to have opened it.",
+      "author": "parlé",
+      "public_domain": true
     }
   ],
   "Moving On": [
@@ -157,6 +381,62 @@
       "chapter": "Moving On",
       "text": "We live in an age when unnecessary things are our only necessities.",
       "author": "Oscar Wilde"
+    },
+    {
+      "id": 58,
+      "chapter": "Moving On",
+      "text": "moving on doesn't mean you're over it. it means you're choosing yourself.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 59,
+      "chapter": "Moving On",
+      "text": "one day you'll tell this story without it breaking your voice.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 60,
+      "chapter": "Moving On",
+      "text": "you won't always feel this way. that's not a promise. it's just true.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 61,
+      "chapter": "Moving On",
+      "text": "the next version of you was built partly from this.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 62,
+      "chapter": "Moving On",
+      "text": "starting over isn't failure. it's just a different beginning.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 63,
+      "chapter": "Moving On",
+      "text": "you'll love again. differently. maybe better.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 64,
+      "chapter": "Moving On",
+      "text": "the fact that you're still here means something.",
+      "author": "parlé",
+      "public_domain": true
+    },
+    {
+      "id": 65,
+      "chapter": "Moving On",
+      "text": "one day this will just be something that happened. not everything that defines you.",
+      "author": "parlé",
+      "public_domain": true
     }
   ]
 }

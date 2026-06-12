@@ -1,5 +1,5 @@
 import db from '../../../lib/db'
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
+import { runApiPipeline } from '../../../lib/security/pipeline'
 import { openaiChatComplete } from '../../../lib/openai'
 import { SESSION_SUMMARY_PROMPT } from '../../../lib/parle/prompts'
 import { updateProfileAfterSession } from '../../../lib/parle/preferences'
@@ -7,9 +7,9 @@ import { updateProfileAfterSession } from '../../../lib/parle/preferences'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const token = getTokenFromReq(req)
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' })
+  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  if (guard.handled) return
+  const payload = guard.payload
 
   const {
     sessionId,

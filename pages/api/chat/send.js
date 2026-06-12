@@ -1,11 +1,13 @@
-import db from '../../../lib/db'
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSafety'
+import { insertChatMessage, getRecentChatMessages } from '../../../lib/chatMemoryDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getUserChatSettings } from '../../../lib/parle/preferences'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
+import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { sanitizeChatMessage } from '../../../lib/security/sanitize'
+import { validateImageDataUrls } from '../../../lib/security/images'
 
 export const config = {
   api: {
@@ -15,9 +17,12 @@ export const config = {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-  const token = getTokenFromReq(req)
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' })
+
+  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  if (guard.handled) return
+  const payload = guard.payload
+
+  try {
 
   const {
     text,
@@ -34,21 +39,21 @@ export default async function handler(req, res) {
     messages: clientMessages,
   } = req.body || {}
 
-  if (!text && !(Array.isArray(images) && images.length)) {
+  const imageCheck = validateImageDataUrls(images)
+  if (!imageCheck.ok) {
+    return res.status(400).json({ error: 'Invalid image attachment' })
+  }
+  const safeImages = imageCheck.images
+
+  if (!text && !safeImages.length) {
     return res.status(400).json({ error: 'Missing text' })
   }
 
-  const userText = String(text || '').trim() || '(See attached image)'
+  const userText = sanitizeChatMessage(text) || '(See attached image)'
 
   if (containsCrisisLanguage(userText)) {
-    await db.query(
-      'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
-      [payload.id, 'user', userText, new Date()],
-    )
-    await db.query(
-      'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
-      [payload.id, 'assistant', CRISIS_SAFETY_REPLY, new Date()],
-    )
+    await insertChatMessage(payload.id, 'user', userText)
+    await insertChatMessage(payload.id, 'assistant', CRISIS_SAFETY_REPLY)
     return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
   }
 
@@ -56,10 +61,7 @@ export default async function handler(req, res) {
     await truncateChatMemory(payload.id, dbKeepCount)
   }
 
-  await db.query(
-    'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
-    [payload.id, 'user', userText, new Date()],
-  )
+  await insertChatMessage(payload.id, 'user', userText)
 
   const settings = await getUserChatSettings(payload.id)
   const crossSummary =
@@ -75,12 +77,8 @@ export default async function handler(req, res) {
         text: m.text,
       }))
   } else {
-    const history = await db.query(
-      'SELECT role,text FROM chat_memory WHERE user_id=$1 ORDER BY created_at DESC LIMIT 14',
-      [payload.id],
-    )
-    recent = (history.rows || [])
-      .reverse()
+    const history = await getRecentChatMessages(payload.id, 14)
+    recent = history
       .slice(0, -1)
       .map((m) => ({
         role: m.role === 'user' ? 'user' : 'assistant',
@@ -100,7 +98,7 @@ export default async function handler(req, res) {
     hiddenInjections,
     conversationHistory: recent,
     userText,
-    images,
+    images: safeImages,
   })
 
   const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
@@ -111,8 +109,8 @@ export default async function handler(req, res) {
     fallbackReply,
   })
 
-  await db.query(
-    'INSERT INTO chat_memory (user_id,role,text,created_at) VALUES ($1,$2,$3,$4)',
-    [payload.id, 'assistant', reply, new Date()],
-  )
+  await insertChatMessage(payload.id, 'assistant', reply)
+  } catch (error) {
+    return handleApiError(res, error, 'chat_send')
+  }
 }

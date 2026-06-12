@@ -1,10 +1,10 @@
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
 import { resetProfile } from '../../../lib/parle/preferences'
+import { runApiPipeline } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
-  const token = getTokenFromReq(req)
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' })
+  const guard = runApiPipeline(req, res, { requireAuth: true })
+  if (guard.handled) return
+  const payload = guard.payload
 
   if (req.method === 'POST' && req.body?.action === 'reset-preferences') {
     try {

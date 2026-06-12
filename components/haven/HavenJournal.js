@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, ShieldCheck } from 'lucide-react'
+import HavenPageTopbar from './HavenPageTopbar'
 import HavenModal from './HavenModal'
 import LockedEntryPanel from './LockedEntryPanel'
 import { todayKey, isToday, isPastDate, isFutureDate } from '../../lib/haven/dates'
@@ -212,7 +213,9 @@ export default function HavenJournal() {
   }
 
   return (
-    <div className="space-y-7">
+    <div className="haven-journal space-y-7">
+      <HavenPageTopbar label="Journal" />
+
       <header className="rise">
         <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Journal</p>
         <h1 className="mt-2 text-3xl md:text-4xl text-foreground">

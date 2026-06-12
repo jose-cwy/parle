@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import db from '../../../lib/db'
+import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import {
   TERMS_VERSION,
   clearTermsAcceptanceCookie,
@@ -11,6 +12,10 @@ import { sendVerificationEmail } from '../../../utils/resend'
 
 export default async function handler(req,res){
   if(req.method !== 'POST') return res.status(405).end()
+
+  const guard = runApiPipeline(req, res, { tier: 'auth' })
+  if (guard.handled) return
+
   const { email, password } = req.body
   if(!email || !password) return res.status(400).json({error:'Missing fields'})
   if(password.length < 8) return res.status(400).json({error:'Password must be at least 8 characters'})
@@ -24,7 +29,7 @@ export default async function handler(req,res){
     const exists = await db.query('SELECT id FROM users WHERE email=$1',[email])
     if(exists.rows.length) return res.status(400).json({error:'Email already exists'})
 
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, 12)
     const now = new Date()
     const result = await db.query(
       `INSERT INTO users (email,password,accepted_terms_at,accepted_terms_version,created_at,updated_at)
@@ -44,7 +49,6 @@ export default async function handler(req,res){
     if (error?.code === '23505') return res.status(400).json({error:'Email already exists'})
     if (error?.code === '42P01') return res.status(500).json({error:'Database schema is not installed. Apply database/schema.sql.'})
     if (error?.code === '42703') return res.status(500).json({error:'Database schema is missing the new terms columns. Re-apply database/schema.sql.'})
-    console.error('register_error', error)
-    return res.status(500).json({error:'Unable to create account right now. Please try again.'})
+    return handleApiError(res, error, 'register')
   }
 }

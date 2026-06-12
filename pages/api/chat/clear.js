@@ -1,12 +1,12 @@
 import db from '../../../lib/db'
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
+import { runApiPipeline } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).end()
 
-  const token = getTokenFromReq(req)
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' })
+  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  if (guard.handled) return
+  const payload = guard.payload
 
   try {
     await db.query('DELETE FROM chat_memory WHERE user_id=$1', [payload.id])

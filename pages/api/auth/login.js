@@ -1,9 +1,15 @@
 import bcrypt from 'bcryptjs'
 import db from '../../../lib/db'
 import { signToken, setSessionCookie } from '../../../lib/auth'
+import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 
 export default async function handler(req,res){
   if(req.method !== 'POST') return res.status(405).end()
+
+  const guard = runApiPipeline(req, res, { tier: 'auth' })
+  if (guard.handled) return
+
+  try {
   const { email, password } = req.body
   const user = await db.query('SELECT id,email,password FROM users WHERE email=$1',[email])
   if(!user.rows.length) return res.status(401).json({error:'Invalid'})
@@ -25,4 +31,7 @@ export default async function handler(req,res){
   } catch (_) { /* table may not exist in older schemas — ignore */ }
 
   res.status(200).json({ ok: true, firstTime })
+  } catch (error) {
+    return handleApiError(res, error, 'login')
+  }
 }

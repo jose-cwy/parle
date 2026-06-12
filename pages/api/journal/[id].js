@@ -1,4 +1,5 @@
-import { getTokenFromReq, verifyToken } from '../../../lib/auth'
+import { runApiPipeline } from '../../../lib/security/pipeline'
+import { sanitizeJournalContent } from '../../../lib/security/sanitize'
 import { isRowEditableOnClient } from '../../../lib/journal'
 import { getClientTodayFromReq } from '../../../lib/journalClientDate'
 import {
@@ -16,9 +17,9 @@ function dbErrorResponse(res, error, context) {
 }
 
 export default async function handler(req, res) {
-  const token = getTokenFromReq(req)
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Unauthorized' })
+  const guard = runApiPipeline(req, res, { requireAuth: true })
+  if (guard.handled) return
+  const payload = guard.payload
 
   const { id } = req.query
   if (!id) return res.status(400).json({ error: 'Missing entry id' })
@@ -39,17 +40,17 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const { content } = req.body || {}
-      if (!content || !String(content).trim()) {
+      const content = sanitizeJournalContent(req.body?.content)
+      if (!content) {
         return res.status(400).json({ error: 'Write something before saving your entry.' })
       }
 
-      const updated = await updateJournalEntry(id, content, clientToday)
+      const updated = await updateJournalEntry(id, payload.id, content, clientToday)
       return res.status(200).json(updated)
     }
 
     if (req.method === 'DELETE') {
-      await deleteJournalEntry(id)
+      await deleteJournalEntry(id, payload.id)
       return res.status(200).json({ ok: true })
     }
 
