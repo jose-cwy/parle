@@ -1805,15 +1805,45 @@ body.body--parler-landing .pss-contact-page__site-mark {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   body.body--parler-landing .pss-contact-page__email-row {
     flex-direction: column;
     align-items: stretch;
   }
 
+  body.body--parler-landing .pss-contact-page__email-block {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border-radius: 0.85rem;
+  }
+
+  body.body--parler-landing .pss-contact-page__email-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  body.body--parler-landing .pss-contact-page__email-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  body.body--parler-landing .pss-contact-page__email-label {
+    font-size: 0.75rem;
+  }
+
+  body.body--parler-landing .pss-contact-page__email {
+    margin-top: 0.1rem;
+    font-size: 0.875rem;
+  }
+
   body.body--parler-landing .pss-contact-page__email-typed {
     white-space: normal;
     word-break: break-all;
+    min-height: 1.2em;
   }
 
   body.body--parler-landing .pss-contact-page__actions {

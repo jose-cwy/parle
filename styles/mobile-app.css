@@ -716,6 +716,11 @@
 
   /* ——— Terms ——— */
 
+  body.body--parler-landing.body--terms-page .pss-nav {
+    background: var(--background);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  }
+
   body.body--parler-landing .pss-terms-page {
     background: var(--ma-bg);
     color: var(--ma-text);
