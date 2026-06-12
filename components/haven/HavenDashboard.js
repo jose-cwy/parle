@@ -134,6 +134,7 @@ export default function HavenDashboard({ user }) {
       </section>
 
       <section className="haven-dashboard__quick rise rise-1">
+        <p className="haven-dashboard__features-heading md:hidden">Features</p>
         <div className="haven-dashboard__quick-scroll md:hidden">
           <Link href="/chat" className="haven-dashboard__quick-card ma-tap">
             <MessageCircle size={18} strokeWidth={1.6} />
@@ -173,7 +174,7 @@ export default function HavenDashboard({ user }) {
       </section>
 
       <section>
-        <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-4">Quick access</p>
+        <p className="hidden md:block text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-4">Quick access</p>
         <div className="hidden md:grid md:grid-cols-3 gap-5">
           <NoteCard
             href="/chat"

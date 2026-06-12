@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import {
   ChevronLeft,
-  History,
   Lock,
   Menu,
   PanelLeftClose,
@@ -143,10 +142,13 @@ export default function ParleChatSidebar({
             <div className="parle-chat-sidebar__brand-actions">
               <button
                 type="button"
-                className="parle-chat-sidebar__collapse-btn parle-desktop-only"
-                aria-label="Collapse sidebar"
-                title="Collapse sidebar"
-                onClick={onToggleCollapse}
+                className="parle-chat-sidebar__collapse-btn"
+                aria-label={mobileOpen ? 'Close sidebar' : 'Collapse sidebar'}
+                title={mobileOpen ? 'Close sidebar' : 'Collapse sidebar'}
+                onClick={() => {
+                  if (mobileOpen) onCloseMobile?.()
+                  else onToggleCollapse()
+                }}
               >
                 <PanelLeftClose size={17} strokeWidth={1.75} />
               </button>
@@ -159,7 +161,7 @@ export default function ParleChatSidebar({
               onNewChat()
               onCloseMobile?.()
             }}
-            className="mt-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/80 text-[11px] text-foreground/90 hover:bg-black/[0.03] transition"
+            className="parle-chat-sidebar__new-chat mt-4 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/80 text-[11px] text-foreground/90 hover:bg-black/[0.03] transition"
           >
             <SquarePen size={15} strokeWidth={1.75} className="shrink-0 opacity-70" />
             <span>New Chat</span>
@@ -351,24 +353,16 @@ export function ParleChatMobileMenuButton({ onClick }) {
   )
 }
 
-export function ParleChatMobileToolbar({ onBack, onOpenHistory }) {
+export function ParleChatMobileToolbar({ onOpenHistory }) {
   return (
     <div className="parle-chat-mobile-toolbar parle-mobile-only">
       <button
         type="button"
-        onClick={onBack}
-        className="parle-chat-mobile-toolbar__btn"
-        aria-label="Back to home"
-      >
-        <ChevronLeft size={20} strokeWidth={2} aria-hidden />
-      </button>
-      <button
-        type="button"
         onClick={onOpenHistory}
-        className="parle-chat-mobile-toolbar__btn"
-        aria-label="Chat history"
+        className="parle-chat-mobile-toolbar__btn parle-chat-sidebar-toggle parle-chat-sidebar-toggle--open"
+        aria-label="Open sidebar"
       >
-        <History size={18} strokeWidth={1.75} aria-hidden />
+        <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden />
       </button>
     </div>
   )

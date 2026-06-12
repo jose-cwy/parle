@@ -122,8 +122,11 @@ export default function ChatInputBar({
   const recordingRef = useRef(false)
   const preRecordingTextRef = useRef('')
 
-  const SpeechRecognition = getSpeechRecognition()
-  const showMic = Boolean(SpeechRecognition)
+  const [micAvailable, setMicAvailable] = useState(false)
+
+  useEffect(() => {
+    setMicAvailable(Boolean(getSpeechRecognition()))
+  }, [])
 
   useEffect(() => {
     if (isAuthed) {
@@ -241,7 +244,8 @@ export default function ChatInputBar({
   }, [])
 
   const startRecording = useCallback(async () => {
-    if (!SpeechRecognition) return
+    const SpeechRecognitionCtor = getSpeechRecognition()
+    if (!SpeechRecognitionCtor) return
 
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -250,7 +254,7 @@ export default function ChatInputBar({
       return
     }
 
-    const recognition = new SpeechRecognition()
+    const recognition = new SpeechRecognitionCtor()
     recognition.lang = 'en-US'
     recognition.interimResults = true
     recognition.continuous = true
@@ -299,7 +303,7 @@ export default function ChatInputBar({
       stopRecording()
       setMicDenied(true)
     }
-  }, [SpeechRecognition, text, onTextChange, stopRecording])
+  }, [text, onTextChange, stopRecording])
 
   const toggleMic = useCallback(() => {
     if (recording) stopRecording()
@@ -372,7 +376,8 @@ export default function ChatInputBar({
 
         <div
           className={cn(
-            'parle-chat-input__bar flex items-end gap-1.5 min-h-[52px] px-4 py-2.5 rounded-full',
+            'parle-chat-input__bar',
+            !micAvailable && 'parle-chat-input__bar--no-mic',
             'bg-card border border-border/80',
             'shadow-[0_1px_6px_rgba(0,0,0,0.06)]',
             'focus-within:border-border transition',
@@ -382,7 +387,7 @@ export default function ChatInputBar({
             type="button"
             onClick={handleAttachClick}
             disabled={disabled || attachments.length >= MAX_IMAGES}
-            className="parle-chat-input__icon-btn h-9 w-9 shrink-0 self-center text-muted-foreground hover:text-foreground grid place-items-center transition disabled:opacity-40 -ml-1"
+            className="parle-chat-input__attach parle-chat-input__icon-btn h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground grid place-items-center transition disabled:opacity-40"
             aria-label="Attach image"
           >
             <Plus size={22} strokeWidth={1.75} />
@@ -401,54 +406,54 @@ export default function ChatInputBar({
             rows={1}
             placeholder="say what's on your mind..."
             style={{ maxHeight: TEXTAREA_MAX_HEIGHT }}
-            className="flex-1 resize-none bg-transparent border-0 outline-none text-[13px] sm:text-[13px] leading-relaxed placeholder:text-muted-foreground/50 min-w-0 self-center py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden parle-chat-input__textarea"
+            className="parle-chat-input__textarea resize-none bg-transparent border-0 outline-none leading-relaxed placeholder:text-muted-foreground/50 min-w-0 py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             disabled={disabled}
           />
 
-          <div className="relative shrink-0 self-center parle-mode-selector">
-              <button
-                ref={modeButtonRef}
-                type="button"
-                onClick={() => setModeOpen((o) => !o)}
-                disabled={disabled}
-                className={cn(
-                  'parle-chat-input__mode-trigger',
-                  getModePillClasses(modeId, { selected: true, compact: true, filled: true }),
-                )}
-                style={{ backgroundColor: getModeColor(modeId) }}
-                aria-expanded={modeOpen}
-                aria-haspopup="listbox"
-                aria-label={`Conversation mode: ${getModeShortLabel(modeId)}`}
-              >
-                <span className="parle-mode-selector__label">{getModeShortLabel(modeId)}</span>
-                <ChevronDown
-                  size={14}
-                  strokeWidth={2}
-                  className={cn('parle-mode-selector__chevron', modeOpen && 'parle-mode-selector__chevron--open')}
-                  aria-hidden
-                />
-              </button>
-              {modeOpen && (
-                <ModePillSelector
-                  activeModeId={modeId}
-                  anchorRef={modeButtonRef}
-                  sheet={isMobileSheet}
-                  onClose={() => setModeOpen(false)}
-                  onSelect={(mode) => {
-                    setModeOpen(false)
-                    onModeChange(mode)
-                  }}
-                />
+          <div className="relative shrink-0 parle-mode-selector parle-chat-input__mode">
+            <button
+              ref={modeButtonRef}
+              type="button"
+              onClick={() => setModeOpen((o) => !o)}
+              disabled={disabled}
+              className={cn(
+                'parle-chat-input__mode-trigger',
+                getModePillClasses(modeId, { selected: true, compact: true, filled: true }),
               )}
-            </div>
+              style={{ backgroundColor: getModeColor(modeId) }}
+              aria-expanded={modeOpen}
+              aria-haspopup="listbox"
+              aria-label={`Conversation mode: ${getModeShortLabel(modeId)}`}
+            >
+              <span className="parle-mode-selector__label">{getModeShortLabel(modeId)}</span>
+              <ChevronDown
+                size={14}
+                strokeWidth={2}
+                className={cn('parle-mode-selector__chevron', modeOpen && 'parle-mode-selector__chevron--open')}
+                aria-hidden
+              />
+            </button>
+            {modeOpen && (
+              <ModePillSelector
+                activeModeId={modeId}
+                anchorRef={modeButtonRef}
+                sheet={isMobileSheet}
+                onClose={() => setModeOpen(false)}
+                onSelect={(mode) => {
+                  setModeOpen(false)
+                  onModeChange(mode)
+                }}
+              />
+            )}
+          </div>
 
-          {showMic && (
+          {micAvailable ? (
             <button
               type="button"
               onClick={toggleMic}
               disabled={disabled}
               className={cn(
-                'parle-chat-input__icon-btn relative h-9 w-9 shrink-0 self-center grid place-items-center transition rounded-full',
+                'parle-chat-input__mic parle-chat-input__icon-btn relative h-9 w-9 shrink-0 grid place-items-center transition rounded-full',
                 recording
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
@@ -463,12 +468,14 @@ export default function ChatInputBar({
               )}
               <Mic size={20} strokeWidth={1.75} className="relative z-[1]" />
             </button>
+          ) : (
+            <span className="parle-chat-input__mic parle-chat-input__mic--placeholder" aria-hidden />
           )}
 
           <button
             type="submit"
             className={cn(
-              'parle-chat-input__send parle-chat-send-btn shrink-0 self-center -mr-0.5',
+              'parle-chat-input__send parle-chat-send-btn shrink-0',
               loading || canSend ? 'parle-chat-send-btn--active' : 'parle-chat-send-btn--idle',
             )}
             disabled={loading || !canSend}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Check, ChevronLeft, ChevronRight, Copy, Lock, Pencil, RotateCcw, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, CloudRain, Copy, Heart, Lock, MessageCircle, Pencil, RotateCcw, X } from 'lucide-react'
 import { fetchAuthUser } from '../../lib/authSession'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
@@ -40,9 +40,9 @@ const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
 const LIVE_SESSION_TITLE = 'New Chat'
 
 const EMPTY_STATE_QUICK_PROMPTS = [
-  'I miss them',
-  "I can't move on",
-  'It really hurts right now',
+  { text: 'I miss them', icon: Heart },
+  { text: "I can't move on", icon: MessageCircle },
+  { text: 'It really hurts right now', icon: CloudRain },
 ]
 
 const MODE_ACK_TEXTS = new Set(
@@ -481,15 +481,18 @@ function EmptyStateQuickPrompts({ onSelect, disabled, exiting }) {
       role="group"
       aria-label="Quick prompts"
     >
-      {EMPTY_STATE_QUICK_PROMPTS.map((prompt) => (
+      {EMPTY_STATE_QUICK_PROMPTS.map(({ text, icon: Icon }) => (
         <button
-          key={prompt}
+          key={text}
           type="button"
           disabled={disabled}
-          onClick={() => onSelect(prompt)}
+          onClick={() => onSelect(text)}
           className="parle-chat-empty-state__quick-prompt"
         >
-          {prompt}
+          <span className="parle-chat-empty-state__quick-icon" aria-hidden>
+            <Icon size={20} strokeWidth={1.6} />
+          </span>
+          <span className="parle-chat-empty-state__quick-label">{text}</span>
         </button>
       ))}
     </div>
@@ -1573,6 +1576,7 @@ export default function HavenChat() {
       className={cn(
         'parle-chat-layout',
         sidebarCollapsed && 'parle-chat-layout--sidebar-collapsed',
+        showEmptyUI && 'parle-chat-layout--empty',
       )}
     >
       <ParleChatSidebar
@@ -1590,10 +1594,7 @@ export default function HavenChat() {
       />
 
       <div className="parle-chat-main">
-        <ParleChatMobileToolbar
-          onBack={() => navigateAwayFromChat(router, getChatReturnPath('/'))}
-          onOpenHistory={() => setMobileSidebarOpen(true)}
-        />
+        <ParleChatMobileToolbar onOpenHistory={() => setMobileSidebarOpen(true)} />
         {sidebarCollapsed ? (
           <ParleChatSidebarExpandButton onClick={expandSidebar} />
         ) : null}
@@ -1652,7 +1653,7 @@ export default function HavenChat() {
               {emptyGreeting}
             </h1>
 
-            <div className="parle-chat-empty-state__input">
+            <div className="parle-chat-empty-state__input parle-chat-empty-state__input--center">
               <ChatInputBar
                 text={text}
                 onTextChange={setText}
@@ -1706,7 +1707,12 @@ export default function HavenChat() {
               </p>
             )}
 
-            {!showEmptyUI && (
+            <div
+              className={cn(
+                'parle-chat-main__bottom-input',
+                showEmptyUI && 'parle-chat-main__bottom-input--empty-mobile',
+              )}
+            >
               <ChatInputBar
                 text={text}
                 onTextChange={setText}
@@ -1718,7 +1724,7 @@ export default function HavenChat() {
                 isAuthed={isAuthed}
                 imageConsentFromServer={imageAttachConsent}
               />
-            )}
+            </div>
 
             <p className="parle-chat__disclaimer">
               <Lock size={11} strokeWidth={2} aria-hidden />
