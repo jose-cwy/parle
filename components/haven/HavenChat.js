@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { Check, ChevronLeft, ChevronRight, Copy, Lock, Pencil, RotateCcw, X } from 'lucide-react'
 import { fetchAuthUser } from '../../lib/authSession'
 import { cn } from '../../lib/cn'
@@ -7,8 +8,12 @@ import { pulseWarmth } from '../../lib/warmthPulse'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
 import ChatInputBar from './ChatInputBar'
+import {
+  getChatReturnPath,
+  navigateAwayFromChat,
+} from '../../lib/parle/chatNavigation'
 import ParleChatSidebar, {
-  ParleChatMobileMenuButton,
+  ParleChatMobileToolbar,
   ParleChatSidebarExpandButton,
 } from './ParleChatSidebar'
 import {
@@ -509,6 +514,7 @@ function createSessionState() {
 }
 
 export default function HavenChat() {
+  const router = useRouter()
   const [messages, setMessages] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
   const [text, setText] = useState('')
@@ -1563,7 +1569,10 @@ export default function HavenChat() {
       />
 
       <div className="parle-chat-main">
-        <ParleChatMobileMenuButton onClick={() => setMobileSidebarOpen(true)} />
+        <ParleChatMobileToolbar
+          onBack={() => navigateAwayFromChat(router, getChatReturnPath('/'))}
+          onOpenHistory={() => setMobileSidebarOpen(true)}
+        />
         {sidebarCollapsed ? (
           <ParleChatSidebarExpandButton onClick={expandSidebar} />
         ) : null}

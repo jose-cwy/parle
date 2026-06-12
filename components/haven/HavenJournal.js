@@ -238,7 +238,7 @@ export default function HavenJournal() {
         </div>
       ) : null}
 
-      <div className="grid md:grid-cols-[1fr_1.05fr] gap-6 items-start">
+      <div className="haven-journal__layout grid md:grid-cols-[1fr_1.05fr] gap-6 items-start">
         <div className="relative">
           <WallCalendar today={today} entryMap={entryMap} onSelect={handleCalendarSelect} />
           {viewing ? (

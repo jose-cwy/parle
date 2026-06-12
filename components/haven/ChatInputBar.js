@@ -21,7 +21,21 @@ function getSpeechRecognition() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null
 }
 
-function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef }) {
+function useIsMobileSheet() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  return isMobile
+}
+
+function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef, sheet = false }) {
   const menuRef = useRef(null)
 
   useEffect(() => {
@@ -38,10 +52,10 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef }) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose, anchorRef])
 
-  return (
+  const menu = (
     <div
       ref={menuRef}
-      className="parle-mode-selector__menu"
+      className={cn('parle-mode-selector__menu', sheet && 'parle-mode-selector__menu--sheet')}
       role="listbox"
       aria-label="Conversation mode"
     >
@@ -63,6 +77,20 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef }) {
         )
       })}
     </div>
+  )
+
+  if (!sheet) return menu
+
+  return (
+    <>
+      <button
+        type="button"
+        className="parle-mode-selector__backdrop"
+        aria-label="Close mode selector"
+        onClick={onClose}
+      />
+      {menu}
+    </>
   )
 }
 
@@ -86,6 +114,7 @@ export default function ChatInputBar({
   const [showConsentModal, setShowConsentModal] = useState(false)
   const [imageConsent, setImageConsent] = useState(false)
 
+  const isMobileSheet = useIsMobileSheet()
   const modeButtonRef = useRef(null)
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
@@ -372,7 +401,7 @@ export default function ChatInputBar({
             rows={1}
             placeholder="say what's on your mind..."
             style={{ maxHeight: TEXTAREA_MAX_HEIGHT }}
-            className="flex-1 resize-none bg-transparent border-0 outline-none text-[13px] leading-relaxed placeholder:text-muted-foreground/50 min-w-0 self-center py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="flex-1 resize-none bg-transparent border-0 outline-none text-[13px] sm:text-[13px] leading-relaxed placeholder:text-muted-foreground/50 min-w-0 self-center py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden parle-chat-input__textarea"
             disabled={disabled}
           />
 
@@ -400,6 +429,7 @@ export default function ChatInputBar({
                 <ModePillSelector
                   activeModeId={modeId}
                   anchorRef={modeButtonRef}
+                  sheet={isMobileSheet}
                   onClose={() => setModeOpen(false)}
                   onSelect={(mode) => {
                     setModeOpen(false)

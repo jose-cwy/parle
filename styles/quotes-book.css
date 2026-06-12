@@ -40,7 +40,7 @@
   align-items: start;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
   .haven-quotes__layout {
     grid-template-columns: 11.5rem minmax(0, 1fr);
     gap: 2.25rem;
@@ -55,7 +55,7 @@
   gap: 1.25rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
   .haven-quotes__sidebar {
     position: sticky;
     top: 1.5rem;
@@ -87,7 +87,7 @@
   display: none;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
   .haven-quotes__chapter-list {
     flex-direction: column;
     gap: 0.15rem;
@@ -152,7 +152,7 @@
     background 0.18s ease;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
   .haven-quotes__saved-btn {
     margin-top: 0.5rem;
     padding-top: 0.75rem;

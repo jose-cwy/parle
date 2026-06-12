@@ -50,7 +50,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   overflow: hidden;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1025px) {
   .parle-chat-layout--sidebar-collapsed {
     --parle-sidebar-width: 0px;
   }
@@ -342,8 +342,8 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
     top: 0;
     left: 0;
     bottom: 0;
-    width: min(85vw, 280px);
-    max-width: 280px;
+    width: 100vw;
+    max-width: 100vw;
     transform: translateX(-100%);
     transition: transform 0.22s ease;
     box-shadow: 4px 0 24px rgba(61, 53, 48, 0.08);
@@ -352,6 +352,15 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 
   .parle-chat-sidebar--open {
     transform: translateX(0);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .parle-chat-sidebar {
+    position: relative;
+    transform: none;
+    width: 260px;
+    flex-shrink: 0;
   }
 }
 
@@ -410,6 +419,10 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   .parle-chat-layout:not(.parle-chat-layout--sidebar-collapsed) .parle-chat-main__scroll {
     padding-top: 24px;
   }
+}
+
+.parle-chat-mobile-toolbar {
+  display: none;
 }
 
 .parle-chat-main__scroll-inner {

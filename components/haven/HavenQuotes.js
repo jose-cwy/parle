@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Bookmark, BookmarkCheck, Search } from 'lucide-react'
+import { Bookmark, BookmarkCheck, PanelLeft, Search } from 'lucide-react'
 import HavenPageTopbar from './HavenPageTopbar'
 import { cn } from '../../lib/cn'
 import { QuoteTextContent, quoteSizeClass } from '../../lib/haven/bookQuotesUi'
@@ -70,6 +70,7 @@ export default function HavenQuotes() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [chapterDrawerOpen, setChapterDrawerOpen] = useState(false)
   const { saved, toggleQuote } = useSavedQuote()
 
   useTopProgress(loading)
@@ -103,6 +104,7 @@ export default function HavenQuotes() {
       setView('chapter')
       setActive(chapter)
       setSearch('')
+      setChapterDrawerOpen(false)
       markRead()
     },
     [active, view, markRead],
@@ -111,6 +113,7 @@ export default function HavenQuotes() {
   const pickSaved = useCallback(() => {
     setView('saved')
     setSearch('')
+    setChapterDrawerOpen(false)
   }, [])
 
   const quotes = chapters?.[active] || []
@@ -166,7 +169,45 @@ export default function HavenQuotes() {
       </section>
 
       <div className="haven-quotes__layout">
-        <aside className="haven-quotes__sidebar">
+        {chapterDrawerOpen ? (
+          <button
+            type="button"
+            className="haven-quotes__sidebar-backdrop haven-quotes__sidebar-backdrop--visible"
+            aria-label="Close chapters"
+            onClick={() => setChapterDrawerOpen(false)}
+          />
+        ) : null}
+
+        <button
+          type="button"
+          className="haven-quotes__drawer-toggle parle-tablet-only"
+          aria-label="Open chapters"
+          onClick={() => setChapterDrawerOpen(true)}
+        >
+          <PanelLeft size={18} strokeWidth={1.75} aria-hidden />
+        </button>
+
+        <button
+          type="button"
+          className={cn(
+            'haven-quotes__saved-btn haven-quotes__saved-mobile',
+            view === 'saved' && 'haven-quotes__saved-btn--active',
+          )}
+          onClick={pickSaved}
+        >
+          <Bookmark size={15} strokeWidth={1.75} aria-hidden />
+          <span>Saved</span>
+          <span className="haven-quotes__saved-count" aria-label={`${savedCount} saved`}>
+            {savedCount}
+          </span>
+        </button>
+
+        <aside
+          className={cn(
+            'haven-quotes__sidebar',
+            chapterDrawerOpen && 'haven-quotes__sidebar--open',
+          )}
+        >
           <nav className="haven-quotes__chapter-nav" aria-label="Chapters">
             <p className="haven-quotes__nav-label">Chapters</p>
             <ul className="haven-quotes__chapter-list">

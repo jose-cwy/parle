@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import {
   ChevronLeft,
+  History,
   Lock,
   Menu,
   PanelLeftClose,
@@ -108,7 +109,7 @@ export default function ParleChatSidebar({
       {mobileOpen && (
         <button
           type="button"
-          className="parle-chat-sidebar__backdrop md:hidden"
+          className="parle-chat-sidebar__backdrop parle-mobile-only"
           aria-label="Close sidebar"
           onClick={onCloseMobile}
         />
@@ -142,7 +143,7 @@ export default function ParleChatSidebar({
             <div className="parle-chat-sidebar__brand-actions">
               <button
                 type="button"
-                className="parle-chat-sidebar__collapse-btn hidden md:grid"
+                className="parle-chat-sidebar__collapse-btn parle-desktop-only"
                 aria-label="Collapse sidebar"
                 title="Collapse sidebar"
                 onClick={onToggleCollapse}
@@ -342,11 +343,34 @@ export function ParleChatMobileMenuButton({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="parle-chat-sidebar-toggle parle-chat-sidebar-toggle--mobile md:hidden"
+      className="parle-chat-sidebar-toggle parle-chat-sidebar-toggle--mobile parle-mobile-only"
       aria-label="Open chat menu"
     >
       <Menu size={20} strokeWidth={1.75} />
     </button>
+  )
+}
+
+export function ParleChatMobileToolbar({ onBack, onOpenHistory }) {
+  return (
+    <div className="parle-chat-mobile-toolbar parle-mobile-only">
+      <button
+        type="button"
+        onClick={onBack}
+        className="parle-chat-mobile-toolbar__btn"
+        aria-label="Back to home"
+      >
+        <ChevronLeft size={20} strokeWidth={2} aria-hidden />
+      </button>
+      <button
+        type="button"
+        onClick={onOpenHistory}
+        className="parle-chat-mobile-toolbar__btn"
+        aria-label="Chat history"
+      >
+        <History size={18} strokeWidth={1.75} aria-hidden />
+      </button>
+    </div>
   )
 }
 
@@ -355,7 +379,7 @@ export function ParleChatSidebarExpandButton({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="parle-chat-sidebar-toggle parle-chat-sidebar-toggle--desktop hidden md:grid"
+      className="parle-chat-sidebar-toggle parle-chat-sidebar-toggle--desktop parle-desktop-only"
       aria-label="Expand sidebar"
       title="Expand sidebar"
     >

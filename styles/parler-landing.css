@@ -662,7 +662,7 @@ body.body--parler-landing .terms-agreement-modal__btn--accept:hover:not(:disable
 .parler-landing .pss-hero-ctas { opacity: 0; animation: pss-fade-in-up 0.7s ease-out 0.85s forwards; }
 .parler-landing .pss-hero-footnote { opacity: 0; animation: pss-fade-in 0.6s ease-out 1.05s forwards; }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   .parler-landing .pss-hero-btn {
     width: 100%;
   }
