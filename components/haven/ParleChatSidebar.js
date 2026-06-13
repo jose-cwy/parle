@@ -75,6 +75,11 @@ export default function ParleChatSidebar({
     navigateFromSidebar('/')
   }
 
+  function prefetchSidebarDestination(path) {
+    const target = path || getChatReturnPath('/')
+    void router.prefetch(target)
+  }
+
   function handleLoginClick() {
     navigateFromSidebar('/login')
   }
@@ -126,6 +131,8 @@ export default function ParleChatSidebar({
             <button
               type="button"
               onClick={handleBack}
+              onMouseEnter={() => prefetchSidebarDestination(getChatReturnPath('/'))}
+              onFocus={() => prefetchSidebarDestination(getChatReturnPath('/'))}
               className="parle-chat-sidebar__back-btn"
               aria-label="Go back"
               title="Go back"
@@ -135,6 +142,8 @@ export default function ParleChatSidebar({
             <button
               type="button"
               onClick={handleLogoClick}
+              onMouseEnter={() => prefetchSidebarDestination('/')}
+              onFocus={() => prefetchSidebarDestination('/')}
               className="parle-chat-sidebar__wordmark parle-chat-sidebar__wordmark-link font-serif text-[1.2125rem] leading-none text-foreground tracking-tight"
             >
               parlé

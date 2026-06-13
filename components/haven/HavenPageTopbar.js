@@ -1,26 +1,16 @@
-import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
 export default function HavenPageTopbar({ label }) {
-  const router = useRouter()
-
   return (
     <header className="haven-page-topbar">
-      <button
-        type="button"
-        className="haven-page-topbar__back"
-        onClick={() => router.push('/dashboard')}
-      >
+      <Link href="/dashboard" prefetch className="haven-page-topbar__back">
         <ChevronLeft size={16} strokeWidth={2} aria-hidden />
         <span>back</span>
-      </button>
-      <button
-        type="button"
-        className="haven-page-topbar__wordmark font-serif"
-        onClick={() => router.push('/dashboard')}
-      >
+      </Link>
+      <Link href="/dashboard" prefetch className="haven-page-topbar__wordmark font-serif">
         parlé
-      </button>
+      </Link>
       <span className="haven-page-topbar__label">{label}</span>
     </header>
   )

@@ -124,9 +124,11 @@ body.body--app .lift {
   transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 320ms ease;
 }
 
-body.body--app .lift:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lift);
+@media (hover: hover) and (pointer: fine) {
+  body.body--app .lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
 }
 
 @keyframes haven-draw {
@@ -328,6 +330,7 @@ body.body--app .haven-shell__content {
   background: none;
   border: none;
   cursor: pointer;
+  text-decoration: none;
   transition: color 0.18s ease;
 }
 
@@ -344,6 +347,7 @@ body.body--app .haven-shell__content {
   background: none;
   border: none;
   cursor: pointer;
+  text-decoration: none;
   transition: opacity 0.18s ease;
 }
 

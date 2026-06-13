@@ -278,23 +278,23 @@ export default function AppShell({ children, hideRail = false }) {
               const active = isActive(router.pathname, item)
               const Icon = item.mobileIcon || item.icon
               return (
-                <button
+                <Link
                   key={item.href}
-                  type="button"
+                  href={item.href}
+                  prefetch
                   className={cn(
                     'haven-shell__mobile-bottom-nav-item',
                     active && 'haven-shell__mobile-bottom-nav-item--active',
                   )}
                   aria-label={item.mobileLabel}
                   aria-current={active ? 'page' : undefined}
-                  onClick={() => {
-                    if (active) return
-                    router.push(item.href)
+                  onClick={(e) => {
+                    if (active) e.preventDefault()
                   }}
                 >
                   <Icon size={22} strokeWidth={active ? 2.25 : 1.6} fill={active ? 'currentColor' : 'none'} />
                   <span className="haven-shell__mobile-bottom-nav-label">{item.mobileLabel}</span>
-                </button>
+                </Link>
               )
             })}
           </nav>

@@ -191,7 +191,6 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .group:focus-within .parle-chat-sidebar__session-actions,
 .parle-chat-sidebar__session-actions--visible {
   opacity: 1;
-  pointer-events: auto;
 }
 
 .parle-chat-sidebar__session-action {
@@ -204,7 +203,14 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
+  pointer-events: none;
   transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.group:hover .parle-chat-sidebar__session-action,
+.parle-chat-sidebar__session-actions--visible .parle-chat-sidebar__session-action,
+.parle-chat-sidebar__session-action:focus-visible {
+  pointer-events: auto;
 }
 
 .parle-chat-sidebar__session-action:hover {
