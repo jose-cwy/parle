@@ -377,6 +377,30 @@ html[data-theme='dark'] .parle-mode-pill--stop_contact:not(.parle-mode-pill--fil
   color: #fef2f2;
 }
 
+html[data-theme='dark'] .parle-mode-pill--talk:not(.parle-mode-pill--filled) {
+  background: #475569;
+  border-color: rgb(99, 120, 155);
+  color: #e2e8f0;
+}
+
+html[data-theme='dark'] .parle-mode-pill--talk:not(.parle-mode-pill--filled):hover {
+  background: #526480;
+  border-color: #94a3b8;
+  color: #ffffff;
+}
+
+html[data-theme='dark'] .parle-mode-pill--talk.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: rgb(99, 120, 155);
+  border-color: #cbd5e1;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.45);
+}
+
+html[data-theme='dark'] .parle-mode-pill--filled.parle-mode-pill--talk {
+  background: rgb(99, 120, 155);
+  color: #ffffff;
+}
+
 html[data-theme='dark'] .parle-mode-pill--stop_contact:not(.parle-mode-pill--filled):hover {
   background: #dc2626;
   border-color: #f87171;

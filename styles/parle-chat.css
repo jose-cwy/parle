@@ -183,6 +183,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   align-items: center;
   gap: 0.125rem;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.15s ease;
 }
 
@@ -190,6 +191,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .group:focus-within .parle-chat-sidebar__session-actions,
 .parle-chat-sidebar__session-actions--visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .parle-chat-sidebar__session-action {
@@ -880,6 +882,22 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   color: var(--mode-stop_contact-muted);
 }
 
+.parle-mode-pill--talk {
+  border-color: rgba(99, 120, 155, 0.7);
+  color: rgb(99, 120, 155);
+}
+
+.parle-mode-pill--talk:hover {
+  border-color: rgba(99, 120, 155, 0.85);
+  background: rgba(99, 120, 155, 0.12);
+}
+
+.parle-mode-pill--talk.parle-mode-pill--selected:not(.parle-mode-pill--filled) {
+  background: rgba(99, 120, 155, 0.2);
+  border-color: rgba(99, 120, 155, 0.7);
+  color: rgb(99, 120, 155);
+}
+
 .parle-mode-pill--cross {
   border-color: color-mix(in srgb, var(--mode-cross) 42%, transparent);
   color: var(--mode-cross-muted);
@@ -922,6 +940,10 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 
 .parle-mode-pill--filled.parle-mode-pill--stop_contact {
   background: var(--mode-stop_contact);
+}
+
+.parle-mode-pill--filled.parle-mode-pill--talk {
+  background: var(--mode-talk);
 }
 
 .parle-mode-pill--filled:hover {

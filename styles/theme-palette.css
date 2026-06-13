@@ -44,6 +44,7 @@ html[data-theme='light'] {
   --mode-logical: #2980b9;
   --mode-vent: #f1c40f;
   --mode-stop_contact: #c0392b;
+  --mode-talk: #63789b;
   --mode-on-saturated: #ffffff;
   --mode-vent-on: #1c1917;
 
@@ -58,6 +59,8 @@ html[data-theme='light'] {
   --mode-vent-tint: #fef3c7;
   --mode-stop_contact-muted: #9f2d2d;
   --mode-stop_contact-tint: #fee2e2;
+  --mode-talk-muted: rgb(99, 120, 155);
+  --mode-talk-tint: rgba(99, 120, 155, 0.2);
 }
 
 html[data-theme='dark'] {
@@ -94,6 +97,7 @@ html[data-theme='dark'] {
   --mode-logical: #2980b9;
   --mode-vent: #f1c40f;
   --mode-stop_contact: #c0392b;
+  --mode-talk: #63789b;
   --mode-on-saturated: #ffffff;
   --mode-vent-on: #1c1917;
 
@@ -107,4 +111,6 @@ html[data-theme='dark'] {
   --mode-vent-tint: #422006;
   --mode-stop_contact-muted: #fecaca;
   --mode-stop_contact-tint: #450a0a;
+  --mode-talk-muted: #cbd5e1;
+  --mode-talk-tint: #1e293b;
 }

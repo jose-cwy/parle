@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
 import {
   getModeById,
+  getModeLabel,
   getModePillClasses,
   getModeShortLabel,
   MODE_PILL_ORDER,
@@ -70,7 +71,7 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef, sheet = 
             onClick={() => onSelect(mode)}
             className={getModePillClasses(id, { selected: active, compact: true, filled: true })}
           >
-            {getModeShortLabel(id)}
+            {getModeLabel(id)}
           </button>
         )
       })}
