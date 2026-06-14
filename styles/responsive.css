@@ -30,7 +30,12 @@ html {
   .haven-shell__content,
   .haven-journal,
   .parler-landing .pss-hero-section,
-  .parler-landing .pss-compare,
+  .parler-landing .pss-what-section,
+  .parler-landing .pss-why-section,
+  .parler-landing .pss-features-section,
+  .parler-landing .pss-companion-section,
+  .parler-landing .pss-vtest-section,
+  .parler-landing .pss-section-cta,
   body.body--auth .auth-page__inner,
   body.body--marketing .terms-page {
     padding-left: 16px;
@@ -65,6 +70,7 @@ html {
   .haven-page-topbar__wordmark,
   body.body--parler-landing .pss-nav__menu-btn,
   body.body--parler-landing .pss-nav-drawer__close,
+  .parler-landing .pss-companion-mode,
   .haven-shell__mobile-header a,
   .haven-shell__mobile-header button {
     min-width: 44px;

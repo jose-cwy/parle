@@ -1,21 +1,36 @@
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Heart,
   MessageCircle,
-  Brain,
+  Sparkles,
   BookOpen,
   Quote,
   Check,
   X,
   Lock,
+  Brain,
+  Coffee,
+  PhoneOff,
+  GitBranch,
+  Volume2,
+  ShieldOff,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import VerticalTestimonialsSpin from './VerticalTestimonialsSpin'
 import MarketingNav from './MarketingNav'
 
+function SectionEyebrow({ children }) {
+  return (
+    <p className="pss-section-eyebrow text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">
+      {children}
+    </p>
+  )
+}
+
 function DictionaryHero() {
   return (
-    <section id="what" className="pss-hero-section">
+    <section id="hero" className="pss-hero-section">
       <div className="pss-hero-inner">
         <div className="pss-hero-block">
           <div className="pss-hero-word">
@@ -41,7 +56,7 @@ function DictionaryHero() {
               <span className="pss-hero-btn-label--desktop">Start talking</span>
               <span className="pss-hero-btn-label--mobile">just start talking</span>
             </Link>
-            <a href="#how" className="pss-hero-btn pss-hero-btn--secondary">
+            <a href="#what" className="pss-hero-btn pss-hero-btn--secondary">
               See how it works
             </a>
           </div>
@@ -65,146 +80,54 @@ function DictionaryHero() {
   )
 }
 
-function ChatMock() {
-  return (
-    <div className="bg-card rounded-3xl p-6 shadow-2xl pss-shadow-card border border-border/50">
-      <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-        <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
-          <Heart className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <div className="font-medium">parlé</div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Always here for you
-          </div>
-        </div>
-      </div>
-      <div className="space-y-3 py-5">
-        <div className="bg-secondary rounded-2xl px-4 py-3 text-sm max-w-[85%]">
-          Hey there. I can tell you&apos;re going through something difficult. Want to talk about it?
-        </div>
-        <div className="bg-primary text-primary-foreground rounded-2xl px-4 py-3 text-sm max-w-[85%] ml-auto">
-          I just can&apos;t stop thinking about them...
-        </div>
-        <div className="bg-secondary rounded-2xl px-4 py-3 text-sm max-w-[85%]">
-          That&apos;s completely normal. Missing someone doesn&apos;t follow a timeline. I&apos;m here to listen.
-        </div>
-      </div>
-      <div className="bg-muted rounded-full px-4 py-3 text-sm text-muted-foreground flex items-center gap-2">
-        <MessageCircle className="w-4 h-4" /> Share what&apos;s on your mind...
-      </div>
-    </div>
-  )
-}
-
-function Nights() {
-  return (
-    <section className="px-6 md:px-12 py-20 md:py-28 pss-section-nights border-y border-border/40">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-14 items-center">
-        <div>
-          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-6">Why parlé exists</p>
-          <h2 className="font-serif text-5xl md:text-6xl leading-[1.05] tracking-tight">
-            For the nights when you miss them{' '}
-            <span className="text-primary italic">and your friends are asleep.</span>
-          </h2>
-          <p className="mt-6 text-lg text-muted-foreground max-w-md">
-            A heartbreak support space. Comfort first. Advice only when you&apos;re ready.
-          </p>
-        </div>
-        <ChatMock />
-      </div>
-    </section>
-  )
-}
-
-const LANDING_FEATURES = [
+const WHAT_CARDS = [
+  {
+    icon: Heart,
+    title: 'What it is',
+    description:
+      "A small, private corner of the internet built for one thing — the messy middle of a breakup. Not a journal app with a chatbot bolted on. Not a generic AI told to be nice. Something made for this.",
+  },
   {
     icon: MessageCircle,
-    title: 'Talk it through',
-    description: 'Chat with an AI that listens without judgment — free to start, no account required.',
-    href: '/chat',
-    cta: 'Start talking',
+    title: "What it's for",
+    description:
+      "The 2am spiral. The unsent text. The thought you can't say to friends without it becoming a Whole Thing. Talk it out, write it down, or save the line that finally made sense.",
   },
   {
-    icon: BookOpen,
-    title: 'Private journal',
-    description: 'Write what you cannot say out loud. Your entries stay yours, not on any feed.',
-    href: '/register',
-    cta: 'Start writing',
-  },
-  {
-    icon: Quote,
-    title: 'Quotes book',
-    description: 'Find words when yours feel too heavy — curated lines for late nights and hard days.',
-    href: '/register',
-    cta: 'Explore quotes',
+    icon: Sparkles,
+    title: 'Why use it',
+    description:
+      "Because heartbreak doesn't keep office hours, and you shouldn't have to perform okay-ness to get heard. parlé sits with you exactly as you are — no audience, no judgment, no advice you didn't ask for.",
   },
 ]
 
-function FeatureCard({ icon: Icon, title, description, href, cta }) {
+function WhatIsParle() {
   return (
-    <Link href={href} className="pss-features-card__link">
-      <span className="pss-features-card__icon" aria-hidden="true">
-        <Icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
-      </span>
-      <h3 className="pss-features-card__title font-serif">{title}</h3>
-      <p className="pss-features-card__desc">{description}</p>
-      <span className="pss-features-card__cta">{cta} →</span>
-    </Link>
-  )
-}
+    <section id="what" className="pss-what-section px-6 md:px-12 py-20 md:py-28">
+      <div className="max-w-6xl mx-auto text-center">
+        <SectionEyebrow>What is parlé</SectionEyebrow>
+        <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.08]">
+          A quiet place for the <span className="italic text-primary">loud</span> feelings.
+        </h2>
+        <p className="mt-5 text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+          parlé is a heartbreak companion — built to listen, not to fix you.
+        </p>
 
-function FeatureStackItem({ icon: Icon, title, description, href }) {
-  return (
-    <li className="pss-features-stack__item">
-      <Link href={href} className="pss-features-stack__link">
-        <span className="pss-features-stack__icon" aria-hidden="true">
-          <Icon className="w-5 h-5 text-primary" strokeWidth={1.75} />
-        </span>
-        <div className="pss-features-stack__body">
-          <h3 className="pss-features-stack__title font-serif">{title}</h3>
-          <p className="pss-features-stack__desc">{description}</p>
-        </div>
-      </Link>
-    </li>
-  )
-}
-
-function Features() {
-  return (
-    <section id="features" className="pss-features-section px-6 md:px-12 py-20 md:py-28">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto">
-          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">Features</p>
-          <h2 className="font-serif text-4xl md:text-5xl tracking-tight">Everything in your private space</h2>
-          <p className="mt-4 text-muted-foreground text-lg">
-            Tools built for heartbreak — comfort first, pressure never.
-          </p>
-        </div>
-
-        <ul className="pss-features-stack">
-          {LANDING_FEATURES.map(({ icon, title, description, href }) => (
-            <FeatureStackItem
-              key={title}
-              icon={icon}
-              title={title}
-              description={description}
-              href={href}
-            />
-          ))}
-        </ul>
-
-        <ul className="pss-features-grid pss-features-grid--desktop">
-          {LANDING_FEATURES.map(({ icon: Icon, title, description, href, cta }, index) => (
+        <ul className="pss-what-grid mt-12 md:mt-16">
+          {WHAT_CARDS.map(({ icon: Icon, title, description }, index) => (
             <motion.li
               key={title}
-              className="pss-features-card"
-              initial={{ opacity: 0, y: 24 }}
+              className="pss-what-card"
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              <FeatureCard icon={Icon} title={title} description={description} href={href} cta={cta} />
+              <span className="pss-what-card__icon" aria-hidden>
+                <Icon className="w-5 h-5 text-primary" strokeWidth={1.75} />
+              </span>
+              <h3 className="pss-what-card__title font-serif">{title}</h3>
+              <p className="pss-what-card__desc">{description}</p>
             </motion.li>
           ))}
         </ul>
@@ -213,99 +136,405 @@ function Features() {
   )
 }
 
-function CompareItem({ title, description, variant = 'yes' }) {
+const PARLE_PROMISE = [
+  {
+    title: 'Built for heartbreak, not everything',
+    description:
+      "Tones, prompts, and pacing tuned for grief — not a general assistant told to be kind.",
+  },
+  {
+    title: 'Private by design',
+    description:
+      'Encrypted at rest. Memory off by default. Never sold, never used to train AI.',
+  },
+  {
+    title: 'There at 3am',
+    description:
+      "When friends are asleep and you don't want to make it a Whole Thing.",
+  },
+  {
+    title: 'Sits with you',
+    description:
+      'No rushed advice, no "just move on." It listens first.',
+  },
+]
+
+const GENERIC_AI = [
+  {
+    title: 'Generic chatbot tone',
+    description: 'Same script for every kind of pain.',
+  },
+  {
+    title: 'You become the product',
+    description: 'Your words become training data and ad signal.',
+  },
+  {
+    title: 'Profiled across every session',
+    description: "Always-on memory you can't really turn off.",
+  },
+  {
+    title: '"Have you tried meditation?"',
+    description: 'Solutions when you just wanted to be heard.',
+  },
+]
+
+const PRIVACY_PILLARS = [
+  {
+    icon: Lock,
+    title: 'Encrypted at rest',
+    description:
+      'Your journal and signed-in chats are encrypted before they ever hit the database.',
+  },
+  {
+    icon: ShieldOff,
+    title: 'Memory off by default',
+    description:
+      'Cross-session memory is opt-in. Toggle it on or off whenever you want.',
+  },
+  {
+    icon: X,
+    title: 'Never sold, never trained on',
+    description:
+      "Your words aren't a product. We don't sell data, and we don't feed it to AI training.",
+  },
+]
+
+function CompareListItem({ title, description, variant = 'yes' }) {
   const isYes = variant === 'yes'
   return (
-    <div className={isYes ? 'pss-compare__item' : 'pss-compare__item pss-compare__item--muted'}>
-      <span className={isYes ? 'pss-compare__icon pss-compare__icon--yes' : 'pss-compare__icon pss-compare__icon--no'}>
+    <div className={`pss-why-compare__item${isYes ? '' : ' pss-why-compare__item--muted'}`}>
+      <span className={isYes ? 'pss-why-compare__icon pss-why-compare__icon--yes' : 'pss-why-compare__icon pss-why-compare__icon--no'}>
         {isYes ? (
           <Check className="w-4 h-4 text-primary-foreground" />
         ) : (
           <X className="w-4 h-4 text-muted-foreground" />
         )}
       </span>
-      <div className="pss-compare__copy">
-        <div className="font-semibold">{title}</div>
-        <div className="text-sm text-muted-foreground">{description}</div>
+      <div className="pss-why-compare__copy">
+        <div className="pss-why-compare__item-title">{title}</div>
+        <div className="pss-why-compare__item-desc">{description}</div>
       </div>
     </div>
   )
 }
 
-function Compare() {
-  const yes = [
-    ['Private & safe', 'Encrypted, never shared'],
-    ['Remembers your story', 'Context-aware support'],
-    ['Available 24/7', 'When friends are asleep'],
-    ['No rush to heal', 'Your pace, your journey'],
-  ]
-  const no = [
-    ['Generic responses', 'No personal context'],
-    ['Data sold for ads', 'Privacy concerns'],
-    ['Friends need sleep', 'Limited availability'],
-    ['"Just move on"', 'Rushed healing'],
-  ]
+function WhyParle() {
+  return (
+    <section id="why" className="pss-why-section px-6 md:px-12 py-20 md:py-28">
+      <div className="max-w-6xl mx-auto text-center">
+        <SectionEyebrow>Why parlé</SectionEyebrow>
+        <h2 className="font-serif text-4xl md:text-5xl tracking-tight">
+          Why <span className="italic">parlé</span>, not them
+        </h2>
+        <p className="mt-4 text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+          Generic AI wasn&apos;t built for this. And it definitely wasn&apos;t built to keep what you said to itself.
+        </p>
 
-  const pairs = yes.map((entry, index) => ({
-    parle: { title: entry[0], description: entry[1] },
-    other: { title: no[index][0], description: no[index][1] },
-  }))
+        <div className="pss-why-compare mt-12 md:mt-16">
+          <div className="pss-why-compare__panel pss-why-compare__panel--parle">
+            <div className="pss-why-compare__panel-head">
+              <h3 className="pss-why-compare__panel-title font-serif">parlé</h3>
+              <span className="pss-why-compare__badge">our promise</span>
+            </div>
+            <div className="pss-why-compare__list">
+              {PARLE_PROMISE.map(({ title, description }) => (
+                <CompareListItem key={title} title={title} description={description} variant="yes" />
+              ))}
+            </div>
+          </div>
+
+          <div className="pss-why-compare__panel pss-why-compare__panel--other">
+            <h3 className="pss-why-compare__panel-title font-serif pss-why-compare__panel-title--muted">
+              Generic AI tools
+            </h3>
+            <div className="pss-why-compare__list">
+              {GENERIC_AI.map(({ title, description }) => (
+                <CompareListItem key={title} title={title} description={description} variant="no" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <ul className="pss-why-privacy mt-10 md:mt-14">
+          {PRIVACY_PILLARS.map(({ icon: Icon, title, description }) => (
+            <li key={title} className="pss-why-privacy__item">
+              <span className="pss-why-privacy__icon" aria-hidden>
+                <Icon className="w-4 h-4 text-primary" strokeWidth={1.75} />
+              </span>
+              <div>
+                <p className="pss-why-privacy__title">{title}</p>
+                <p className="pss-why-privacy__desc">{description}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-8 text-sm text-muted-foreground">
+          The full breakdown lives in{' '}
+          <Link href="/terms" className="text-primary hover:underline underline-offset-2">
+            Privacy &amp; Terms &amp; Safety
+          </Link>
+        </p>
+      </div>
+    </section>
+  )
+}
+
+const LANDING_FEATURES = [
+  {
+    id: 'chat',
+    icon: MessageCircle,
+    title: 'The chatbot',
+    description:
+      'An AI companion with six modes — emotional, logical, venting, just talking, stop-me-from-texting-them, and cross-mode. Pick the tone that fits the moment, or let it read you and switch.',
+    href: '/chat',
+    cta: 'Start a chat',
+    primary: true,
+  },
+  {
+    id: 'journal',
+    icon: BookOpen,
+    title: 'Private journal',
+    description:
+      'Write entries for yourself. A blank page when you need to get something out of your head and onto something quieter than a notes app.',
+    href: '/register',
+    cta: 'Start writing',
+    primary: false,
+  },
+  {
+    id: 'quotes',
+    icon: Quote,
+    title: 'Quotes book',
+    description:
+      'A small library of lines for hard days. Browse, save the ones that hit, and come back when you need the words you couldn\'t find.',
+    href: '/register',
+    cta: 'Browse quotes',
+    primary: false,
+  },
+]
+
+function FeaturesBentoCard({ icon: Icon, title, description, href, cta, primary = false }) {
+  return (
+    <Link
+      href={href}
+      className={`pss-features-bento__card${primary ? ' pss-features-bento__card--primary' : ''}`}
+    >
+      <span className="pss-features-bento__icon" aria-hidden>
+        <Icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
+      </span>
+      <h3 className="pss-features-bento__title font-serif">{title}</h3>
+      <p className="pss-features-bento__desc">{description}</p>
+      <span className="pss-features-bento__cta">{cta} →</span>
+    </Link>
+  )
+}
+
+function Features() {
+  const [primary, ...secondary] = LANDING_FEATURES
 
   return (
-    <div className="pss-compare">
-      <h3 className="pss-compare__title font-serif text-2xl md:text-3xl">parlé vs other support</h3>
+    <section id="features" className="pss-features-section px-6 md:px-12 py-20 md:py-28">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <SectionEyebrow>Features</SectionEyebrow>
+          <h2 className="font-serif text-4xl md:text-5xl tracking-tight">
+            Everything in your <span className="italic">private space</span>
+          </h2>
+          <p className="mt-4 text-muted-foreground text-base md:text-lg">
+            Tools built for heartbreak — comfort first, pressure never.
+          </p>
+        </div>
 
-      <div className="pss-compare__pairs md:hidden">
-        {pairs.map(({ parle, other }) => (
-          <div key={parle.title} className="pss-compare__pair">
-            <p className="pss-compare__pair-label">parlé</p>
-            <CompareItem title={parle.title} description={parle.description} variant="yes" />
-            <p className="pss-compare__pair-label pss-compare__pair-label--muted">other AI</p>
-            <CompareItem title={other.title} description={other.description} variant="no" />
+        <div className="pss-features-bento mt-12 md:mt-16">
+          <FeaturesBentoCard {...primary} />
+          <div className="pss-features-bento__row">
+            {secondary.map((feature) => (
+              <FeaturesBentoCard key={feature.id} {...feature} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const COMPANION_MODES = [
+  {
+    id: 'emotional',
+    label: 'Emotional',
+    icon: Heart,
+    blurb: 'Hold-me-while-I-cry mode. Pure comfort, no fixing.',
+    modeTag: 'Emotional mode',
+    messages: [
+      { role: 'assistant', text: "Hey. Whatever brought you here — I'm glad you came. What's weighing on you?" },
+      { role: 'user', text: "I can't stop crying and I don't even know why anymore." },
+      { role: 'assistant', text: "You don't need a reason. Some grief doesn't have words yet — and that's okay. I'm right here." },
+    ],
+  },
+  {
+    id: 'logical',
+    label: 'Logical',
+    icon: Brain,
+    blurb: 'Help me see this clearly. Patterns, perspective, truth.',
+    modeTag: 'Logical mode',
+    messages: [
+      { role: 'assistant', text: "Tell me what happened — the version you haven't edited for anyone else." },
+      { role: 'user', text: 'They said they needed space but they were already halfway out the door.' },
+      { role: 'assistant', text: "That's a hard thing to sit with. What part of that feels most true to you right now?" },
+    ],
+  },
+  {
+    id: 'vent',
+    label: 'Venting',
+    icon: Volume2,
+    blurb: 'Unfiltered. I just listen. No advice, no judgment.',
+    modeTag: 'Vent mode',
+    messages: [
+      { role: 'user', text: "I'm so angry I could scream and I hate that I still miss them." },
+      { role: 'assistant', text: "Both can be true at once. You don't have to pick one feeling to be valid." },
+    ],
+  },
+  {
+    id: 'talk',
+    label: 'Just talking',
+    icon: Coffee,
+    blurb: 'Casual company when the silence gets too loud.',
+    modeTag: 'Just talking',
+    messages: [
+      { role: 'assistant', text: 'the thing about rewatching comfort shows after a breakup is they hit different every time.' },
+      { role: 'user', text: 'yeah i put on the same movie three nights in a row' },
+      { role: 'assistant', text: "some nights you need the plot you already know. what did you put on?" },
+    ],
+  },
+  {
+    id: 'stop_contact',
+    label: 'Stop me from texting them',
+    icon: PhoneOff,
+    blurb: "Hand me your phone. I'll talk you off the ledge.",
+    modeTag: 'Stop-contact mode',
+    messages: [
+      { role: 'assistant', text: 'Good call coming here first. What were you going to say to them?' },
+      { role: 'user', text: 'I just wanted to know if they think about me at all.' },
+      { role: 'assistant', text: "What do you think you'd feel if they answered — honestly?" },
+    ],
+  },
+  {
+    id: 'cross',
+    label: 'Cross-mode',
+    icon: GitBranch,
+    blurb: 'I read the room and switch as you do. No picking required.',
+    modeTag: 'Cross-mode',
+    messages: [
+      { role: 'user', text: "Part of me knows it's over. Part of me still hopes they'll come back." },
+      { role: 'assistant', text: "Both parts deserve airtime. You don't have to resolve that tonight — just notice which one is louder right now." },
+    ],
+  },
+]
+
+function CompanionPreview({ mode }) {
+  return (
+    <div className="pss-companion-preview">
+      <div className="pss-companion-preview__header">
+        <div className="pss-companion-preview__brand">
+          <span className="pss-companion-preview__avatar" aria-hidden>
+            <Heart className="w-4 h-4 text-primary" />
+          </span>
+          <div>
+            <div className="pss-companion-preview__name">parlé</div>
+            <div className="pss-companion-preview__status">
+              <span className="pss-companion-preview__dot" aria-hidden />
+              {mode.modeTag} · Always here for you
+            </div>
+          </div>
+        </div>
+        <div className="pss-companion-preview__lock">
+          <Lock className="w-3 h-3" strokeWidth={2} aria-hidden />
+          <span>Encrypted at rest</span>
+        </div>
+      </div>
+
+      <div className="pss-companion-preview__thread">
+        {mode.messages.map((msg, index) => (
+          <div
+            key={`${mode.id}-${index}`}
+            className={
+              msg.role === 'user'
+                ? 'pss-companion-preview__bubble pss-companion-preview__bubble--user'
+                : 'pss-companion-preview__bubble pss-companion-preview__bubble--ai'
+            }
+          >
+            {msg.text}
           </div>
         ))}
       </div>
 
-      <div className="pss-compare__grid pss-compare__grid--desktop">
-        <div className="pss-compare__col">
-          {yes.map(([t, d]) => (
-            <CompareItem key={t} title={t} description={d} variant="yes" />
-          ))}
-        </div>
-        <div className="pss-compare__col">
-          {no.map(([t, d]) => (
-            <CompareItem key={t} title={t} description={d} variant="no" />
-          ))}
-        </div>
+      <div className="pss-companion-preview__input" aria-hidden>
+        <MessageCircle className="w-4 h-4 text-muted-foreground" />
+        <span>Share what&apos;s on your mind...</span>
+      </div>
+
+      <div className="pss-companion-preview__footer">
+        <span>Memory off</span>
+        <span className="pss-companion-preview__footer-sep" aria-hidden>·</span>
+        <span>Guest · Device-only</span>
       </div>
     </div>
   )
 }
 
-function How() {
-  const items = [
-    { icon: MessageCircle, title: 'Share freely', desc: 'Talk as much as you need. No pressure, no judgment.' },
-    { icon: Brain, title: 'We remember', desc: 'Your story matters. Context-aware support that understands.' },
-    { icon: Lock, title: '100% private', desc: 'Private by default. Never sold or analyzed.' },
-  ]
+function Companion() {
+  const [activeId, setActiveId] = useState('emotional')
+  const activeMode = COMPANION_MODES.find((m) => m.id === activeId) || COMPANION_MODES[0]
 
   return (
-    <section id="how" className="px-6 md:px-12 py-24">
-      <div className="max-w-6xl mx-auto text-center">
-        <h2 className="font-serif text-4xl md:text-5xl">How parlé works for you</h2>
-        <p className="mt-4 text-muted-foreground">Support when you need it. Privacy always.</p>
-        <div className="mt-16 grid md:grid-cols-3 gap-10">
-          {items.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mb-5">
-                <Icon className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="font-serif text-2xl">{title}</h3>
-              <p className="mt-3 text-muted-foreground max-w-xs">{desc}</p>
-            </div>
-          ))}
+    <section id="companion" className="pss-companion-section px-6 md:px-12 py-20 md:py-28">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <SectionEyebrow>The companion</SectionEyebrow>
+          <h2 className="font-serif text-4xl md:text-5xl tracking-tight">
+            One chatbot. <span className="italic text-primary">Six ways</span> to show up for you.
+          </h2>
+          <p className="mt-4 text-muted-foreground text-base md:text-lg">
+            Heartbreak isn&apos;t one feeling. Pick the mode that matches the moment — or let it read you and adapt.
+          </p>
         </div>
-        <Compare />
+
+        <div className="pss-companion-layout mt-12 md:mt-16">
+          <div className="pss-companion-modes" role="tablist" aria-label="Chat modes">
+            {COMPANION_MODES.map((mode) => {
+              const Icon = mode.icon
+              const active = mode.id === activeId
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={`pss-companion-mode${active ? ' pss-companion-mode--active' : ''}`}
+                  onClick={() => setActiveId(mode.id)}
+                >
+                  <span className="pss-companion-mode__icon" aria-hidden>
+                    <Icon className="w-4 h-4" strokeWidth={1.75} />
+                  </span>
+                  <span className="pss-companion-mode__body">
+                    <span className="pss-companion-mode__label">{mode.label}</span>
+                    <span className="pss-companion-mode__blurb">{mode.blurb}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="pss-companion-preview-wrap" role="tabpanel" aria-label={`${activeMode.label} preview`}>
+            <CompanionPreview mode={activeMode} />
+          </div>
+        </div>
+
+        <p className="pss-companion-cta text-center mt-10">
+          <Link href="/chat" className="pss-hero-btn pss-hero-btn--primary">
+            Start talking
+          </Link>
+        </p>
       </div>
     </section>
   )
@@ -359,9 +588,10 @@ export default function ParlerLandingPage({ signupDeclined = false }) {
         </div>
       ) : null}
       <DictionaryHero />
-      <Nights />
+      <WhatIsParle />
+      <WhyParle />
       <Features />
-      <How />
+      <Companion />
       <VerticalTestimonialsSpin />
       <CTA />
       <footer className="pss-landing-footer px-6 md:px-12 py-10 text-center text-sm text-muted-foreground">
