@@ -2372,6 +2372,209 @@ body.body--parler-landing .pss-contact-page__site-mark {
   opacity: 0.5;
 }
 
+/* ——— Scroll-swap (mobile What / Features) ——— */
+
+.parler-landing .pss-scroll-swap {
+  position: relative;
+  margin-top: 2rem;
+}
+
+@media (max-width: 767px) {
+  .parler-landing .pss-scroll-swap {
+    touch-action: none;
+  }
+}
+
+.parler-landing .pss-scroll-swap__sticky {
+  position: sticky;
+  top: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - 5.5rem);
+  padding: 1rem 0 2rem;
+  z-index: 2;
+}
+
+.parler-landing .pss-scroll-swap__stage {
+  position: relative;
+  width: 100%;
+  min-height: 14rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.parler-landing .pss-scroll-swap__panel {
+  width: 100%;
+  will-change: transform, opacity;
+}
+
+.parler-landing .pss-scroll-swap__panel .pss-what-card,
+.parler-landing .pss-scroll-swap__panel .pss-features-bento__card {
+  width: 100%;
+}
+
+.parler-landing .pss-scroll-swap__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 1.25rem;
+}
+
+.parler-landing .pss-scroll-swap__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.parler-landing .pss-scroll-swap__dot--active {
+  background: var(--primary);
+  transform: scale(1.25);
+}
+
+/* ——— Mobile Why parlé paired compare ——— */
+
+.parler-landing .pss-why-compare-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  text-align: left;
+}
+
+.parler-landing .pss-why-compare-mobile__pair {
+  padding: 1.75rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+}
+
+.parler-landing .pss-why-compare-mobile__pair:last-child {
+  border-bottom: none;
+}
+
+.parler-landing .pss-why-compare-mobile__headline {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  color: var(--foreground);
+}
+
+.parler-landing .pss-why-compare-mobile__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.parler-landing .pss-why-compare-mobile__label--muted {
+  margin-top: 1.15rem;
+  color: var(--muted-foreground);
+}
+
+.parler-landing .pss-why-compare-mobile__pair .pss-why-compare__item:not(.pss-why-compare__item--muted) {
+  padding: 0.85rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent) 50%, var(--card));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.parler-landing .pss-why-compare-mobile__pair .pss-why-compare__item--muted {
+  opacity: 0.55;
+}
+
+/* ——— Mobile Companion slide-in modes ——— */
+
+.parler-landing .pss-companion-mobile {
+  margin-top: 2rem;
+}
+
+.parler-landing .pss-companion-mobile__preview {
+  margin-bottom: 1.5rem;
+}
+
+.parler-landing .pss-companion-mobile__modes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.parler-landing .pss-companion-mode--static {
+  cursor: default;
+  pointer-events: none;
+  width: 100%;
+}
+
+/* ——— Desktop / mobile visibility toggles ——— */
+
+.parler-landing .pss-what-grid--desktop,
+.parler-landing .pss-why-compare--desktop,
+.parler-landing .pss-features-bento--desktop,
+.parler-landing .pss-companion-layout--desktop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .parler-landing .pss-scroll-swap,
+  .parler-landing .pss-why-compare-mobile,
+  .parler-landing .pss-companion-mobile {
+    display: none;
+  }
+
+  .parler-landing .pss-what-grid--desktop {
+    display: grid;
+    margin-top: 3.75rem;
+  }
+
+  .parler-landing .pss-why-compare--desktop {
+    display: grid;
+  }
+
+  .parler-landing .pss-features-bento--desktop {
+    display: flex;
+    margin-top: 3rem;
+  }
+
+  .parler-landing .pss-what-section__intro {
+    margin-bottom: 0.25rem;
+  }
+
+  .parler-landing .pss-why-privacy {
+    margin-top: 4.5rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .parler-landing .pss-companion-layout--desktop {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .parler-landing .pss-companion-preview-wrap {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .parler-landing .pss-companion-preview {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 100%;
+  }
+
+  .parler-landing .pss-companion-preview__thread {
+    flex: 1 1 auto;
+    min-height: 12rem;
+  }
+}
+
 @media (max-width: 767px) {
   .parler-landing .pss-what-section,
   .parler-landing .pss-why-section,
@@ -2381,10 +2584,8 @@ body.body--parler-landing .pss-contact-page__site-mark {
     padding-bottom: 3.5rem;
   }
 
-  .parler-landing .pss-companion-modes {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
+  .parler-landing .pss-why-privacy {
+    margin-top: 2.5rem;
   }
 
   .parler-landing .pss-companion-preview__header {

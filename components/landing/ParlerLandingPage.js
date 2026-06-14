@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Heart,
@@ -16,7 +16,7 @@ import {
   Volume2,
   ShieldOff,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import VerticalTestimonialsSpin from './VerticalTestimonialsSpin'
 import MarketingNav from './MarketingNav'
 
@@ -25,6 +25,291 @@ function SectionEyebrow({ children }) {
     <p className="pss-section-eyebrow text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">
       {children}
     </p>
+  )
+}
+
+const SCROLL_SWAP_SLIDE = {
+  enter: (direction) => ({
+    opacity: 0,
+    x: direction * 72,
+    filter: 'blur(4px)',
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    filter: 'blur(0px)',
+  },
+  exit: (direction) => ({
+    opacity: 0,
+    x: direction * -56,
+    filter: 'blur(3px)',
+  }),
+}
+
+const SCROLL_SWAP_SWIPE_THRESHOLD = 52
+const SCROLL_SWAP_GESTURE_COOLDOWN_MS = 420
+
+/** Mobile-only: pin scroll in-section; gestures swap cards until the last is shown */
+function MobileScrollSwap({ items, renderItem, trackClassName = '' }) {
+  const trackRef = useRef(null)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const activeIndexRef = useRef(0)
+  const directionRef = useRef(1)
+  const scrollPinYRef = useRef(null)
+  const sectionActiveRef = useRef(false)
+  const sectionReleasedRef = useRef(false)
+  const gestureLockRef = useRef(false)
+  const touchStartYRef = useRef(0)
+  const touchDeltaRef = useRef(0)
+  const reduceMotion = useReducedMotion()
+
+  useLayoutEffect(() => {
+    activeIndexRef.current = activeIndex
+  }, [activeIndex])
+
+  useLayoutEffect(() => {
+    const track = trackRef.current
+    if (!track) return undefined
+
+    const mq = window.matchMedia('(max-width: 767px)')
+    const stickyTopPx = 72
+
+    function scrollInstant(y) {
+      const root = document.documentElement
+      const previous = root.style.scrollBehavior
+      root.style.scrollBehavior = 'auto'
+      window.scrollTo(0, y)
+      root.style.scrollBehavior = previous
+    }
+
+    function isTrackEngaged() {
+      const rect = track.getBoundingClientRect()
+      return rect.top <= stickyTopPx + 8 && rect.bottom > stickyTopPx + 120
+    }
+
+    function isPinned() {
+      return sectionActiveRef.current && !sectionReleasedRef.current
+    }
+
+    function pinScrollPosition() {
+      if (!isPinned() || scrollPinYRef.current == null) return
+      if (Math.abs(window.scrollY - scrollPinYRef.current) > 1) {
+        scrollInstant(scrollPinYRef.current)
+      }
+    }
+
+    function activateSection() {
+      if (sectionActiveRef.current || sectionReleasedRef.current || !isTrackEngaged()) return
+
+      sectionActiveRef.current = true
+      scrollPinYRef.current = window.scrollY
+      touchDeltaRef.current = 0
+      activeIndexRef.current = 0
+      setActiveIndex(0)
+    }
+
+    function releaseSection() {
+      if (sectionReleasedRef.current) return
+
+      sectionReleasedRef.current = true
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+      const releaseY = (scrollPinYRef.current ?? window.scrollY) + viewportHeight * 0.4
+      scrollPinYRef.current = null
+      scrollInstant(releaseY)
+    }
+
+    function setCardIndex(next, direction) {
+      if (next === activeIndexRef.current) return
+      directionRef.current = direction
+      activeIndexRef.current = next
+      setActiveIndex(next)
+    }
+
+    function runGestureCooldown() {
+      gestureLockRef.current = true
+      window.setTimeout(() => {
+        gestureLockRef.current = false
+      }, SCROLL_SWAP_GESTURE_COOLDOWN_MS)
+    }
+
+    function handleScrollIntent(direction) {
+      if (!mq.matches || !isPinned() || gestureLockRef.current) return
+
+      const current = activeIndexRef.current
+
+      if (direction > 0) {
+        if (current >= items.length - 1) {
+          runGestureCooldown()
+          releaseSection()
+          return
+        }
+        runGestureCooldown()
+        setCardIndex(current + 1, 1)
+        return
+      }
+
+      if (direction < 0 && current > 0) {
+        runGestureCooldown()
+        setCardIndex(current - 1, -1)
+      }
+    }
+
+    function pullBackIfSkipped() {
+      if (sectionReleasedRef.current || sectionActiveRef.current) return
+
+      const rect = track.getBoundingClientRect()
+      if (rect.bottom >= stickyTopPx) return
+
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+      const entryY = Math.max(0, window.scrollY + rect.top - stickyTopPx)
+      scrollInstant(entryY)
+      activateSection()
+    }
+
+    function onScroll() {
+      if (!mq.matches) return
+
+      pullBackIfSkipped()
+      activateSection()
+      pinScrollPosition()
+    }
+
+    function onWheel(event) {
+      if (!isPinned()) return
+
+      event.preventDefault()
+      pinScrollPosition()
+
+      if (Math.abs(event.deltaY) < 6) return
+      handleScrollIntent(event.deltaY > 0 ? 1 : -1)
+    }
+
+    function onTouchStart(event) {
+      if (!isPinned()) return
+      touchStartYRef.current = event.touches[0]?.clientY ?? 0
+      touchDeltaRef.current = 0
+    }
+
+    function onTouchMove(event) {
+      if (!isPinned()) return
+
+      event.preventDefault()
+      pinScrollPosition()
+
+      const y = event.touches[0]?.clientY ?? touchStartYRef.current
+      touchDeltaRef.current = touchStartYRef.current - y
+    }
+
+    function onTouchEnd() {
+      if (!isPinned()) return
+
+      pinScrollPosition()
+
+      if (Math.abs(touchDeltaRef.current) < SCROLL_SWAP_SWIPE_THRESHOLD) return
+      handleScrollIntent(touchDeltaRef.current > 0 ? 1 : -1)
+      touchDeltaRef.current = 0
+    }
+
+    function resetSection() {
+      sectionActiveRef.current = false
+      sectionReleasedRef.current = false
+      scrollPinYRef.current = null
+      gestureLockRef.current = false
+      activeIndexRef.current = 0
+      setActiveIndex(0)
+    }
+
+    function onMediaChange() {
+      if (!mq.matches) {
+        resetSection()
+        return
+      }
+      onScroll()
+    }
+
+    onScroll()
+
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    window.visualViewport?.addEventListener('scroll', onScroll)
+    window.visualViewport?.addEventListener('resize', onScroll)
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true })
+    track.addEventListener('touchstart', onTouchStart, { passive: true })
+    track.addEventListener('touchmove', onTouchMove, { passive: false })
+    track.addEventListener('touchend', onTouchEnd, { passive: true })
+    window.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true, capture: true })
+    mq.addEventListener('change', onMediaChange)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll, true)
+      document.removeEventListener('scroll', onScroll, true)
+      window.visualViewport?.removeEventListener('scroll', onScroll)
+      window.visualViewport?.removeEventListener('resize', onScroll)
+      window.removeEventListener('wheel', onWheel, true)
+      track.removeEventListener('touchstart', onTouchStart)
+      track.removeEventListener('touchmove', onTouchMove)
+      track.removeEventListener('touchend', onTouchEnd)
+      window.removeEventListener('touchstart', onTouchStart, true)
+      window.removeEventListener('touchmove', onTouchMove, true)
+      window.removeEventListener('touchend', onTouchEnd, true)
+      mq.removeEventListener('change', onMediaChange)
+    }
+  }, [items.length])
+
+  const activeItem = items[activeIndex] || items[0]
+  const activeKey = activeItem?.id || activeItem?.title || activeIndex
+
+  return (
+    <div
+      ref={trackRef}
+      className={`pss-scroll-swap ${trackClassName}`}
+      style={{ '--swap-steps': items.length }}
+    >
+      <div className="pss-scroll-swap__sticky">
+        <div className="pss-scroll-swap__stage">
+          <AnimatePresence mode="wait" initial={false} custom={directionRef.current}>
+            <motion.div
+              key={activeKey}
+              className="pss-scroll-swap__panel"
+              custom={directionRef.current}
+              variants={reduceMotion ? undefined : SCROLL_SWAP_SLIDE}
+              initial={reduceMotion ? false : 'enter'}
+              animate="center"
+              exit={reduceMotion ? undefined : 'exit'}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', stiffness: 220, damping: 28, mass: 0.95, opacity: { duration: 0.35 } }
+              }
+            >
+              {renderItem(activeItem, activeIndex)}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <div className="pss-scroll-swap__dots" aria-hidden>
+          {items.map((item, index) => (
+            <span
+              key={`dot-${item.id || item.title || index}`}
+              className={`pss-scroll-swap__dot${index === activeIndex ? ' pss-scroll-swap__dot--active' : ''}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WhatCardContent({ icon: Icon, title, description }) {
+  return (
+    <>
+      <span className="pss-what-card__icon" aria-hidden>
+        <Icon className="w-5 h-5 text-primary" strokeWidth={1.75} />
+      </span>
+      <h3 className="pss-what-card__title font-serif">{title}</h3>
+      <p className="pss-what-card__desc">{description}</p>
+    </>
   )
 }
 
@@ -109,12 +394,22 @@ function WhatIsParle() {
         <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.08]">
           A quiet place for the <span className="italic text-primary">loud</span> feelings.
         </h2>
-        <p className="mt-5 text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+        <p className="pss-what-section__intro mt-5 text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
           parlé is a heartbreak companion — built to listen, not to fix you.
         </p>
 
-        <ul className="pss-what-grid mt-12 md:mt-16">
-          {WHAT_CARDS.map(({ icon: Icon, title, description }, index) => (
+        <MobileScrollSwap
+          items={WHAT_CARDS}
+          trackClassName="pss-scroll-swap--what"
+          renderItem={(card) => (
+            <article className="pss-what-card pss-what-card--swap">
+              <WhatCardContent {...card} />
+            </article>
+          )}
+        />
+
+        <ul className="pss-what-grid pss-what-grid--desktop">
+          {WHAT_CARDS.map(({ icon, title, description }, index) => (
             <motion.li
               key={title}
               className="pss-what-card"
@@ -123,11 +418,7 @@ function WhatIsParle() {
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              <span className="pss-what-card__icon" aria-hidden>
-                <Icon className="w-5 h-5 text-primary" strokeWidth={1.75} />
-              </span>
-              <h3 className="pss-what-card__title font-serif">{title}</h3>
-              <p className="pss-what-card__desc">{description}</p>
+              <WhatCardContent icon={icon} title={title} description={description} />
             </motion.li>
           ))}
         </ul>
@@ -219,6 +510,12 @@ function CompareListItem({ title, description, variant = 'yes' }) {
 }
 
 function WhyParle() {
+  const comparePairs = PARLE_PROMISE.map((parle, index) => ({
+    headline: parle.title,
+    parle,
+    other: GENERIC_AI[index],
+  }))
+
   return (
     <section id="why" className="pss-why-section px-6 md:px-12 py-20 md:py-28">
       <div className="max-w-6xl mx-auto text-center">
@@ -230,7 +527,7 @@ function WhyParle() {
           Generic AI wasn&apos;t built for this. And it definitely wasn&apos;t built to keep what you said to itself.
         </p>
 
-        <div className="pss-why-compare mt-12 md:mt-16">
+        <div className="pss-why-compare pss-why-compare--desktop mt-12 md:mt-16">
           <div className="pss-why-compare__panel pss-why-compare__panel--parle">
             <div className="pss-why-compare__panel-head">
               <h3 className="pss-why-compare__panel-title font-serif">parlé</h3>
@@ -255,7 +552,21 @@ function WhyParle() {
           </div>
         </div>
 
-        <ul className="pss-why-privacy mt-10 md:mt-14">
+        <div className="pss-why-compare-mobile mt-10">
+          {comparePairs.map(({ headline, parle, other }) => (
+            <article key={headline} className="pss-why-compare-mobile__pair">
+              <h3 className="pss-why-compare-mobile__headline font-serif">{headline}</h3>
+              <p className="pss-why-compare-mobile__label">parlé</p>
+              <CompareListItem title={parle.title} description={parle.description} variant="yes" />
+              <p className="pss-why-compare-mobile__label pss-why-compare-mobile__label--muted">
+                Generic AI tools
+              </p>
+              <CompareListItem title={other.title} description={other.description} variant="no" />
+            </article>
+          ))}
+        </div>
+
+        <ul className="pss-why-privacy">
           {PRIVACY_PILLARS.map(({ icon: Icon, title, description }) => (
             <li key={title} className="pss-why-privacy__item">
               <span className="pss-why-privacy__icon" aria-hidden>
@@ -340,12 +651,20 @@ function Features() {
           <h2 className="font-serif text-4xl md:text-5xl tracking-tight">
             Everything in your <span className="italic">private space</span>
           </h2>
-          <p className="mt-4 text-muted-foreground text-base md:text-lg">
+          <p className="pss-features-section__intro mt-4 text-muted-foreground text-base md:text-lg">
             Tools built for heartbreak — comfort first, pressure never.
           </p>
         </div>
 
-        <div className="pss-features-bento mt-12 md:mt-16">
+        <MobileScrollSwap
+          items={LANDING_FEATURES}
+          trackClassName="pss-scroll-swap--features"
+          renderItem={(feature) => (
+            <FeaturesBentoCard {...feature} />
+          )}
+        />
+
+        <div className="pss-features-bento pss-features-bento--desktop">
           <FeaturesBentoCard {...primary} />
           <div className="pss-features-bento__row">
             {secondary.map((feature) => (
@@ -431,6 +750,65 @@ const COMPANION_MODES = [
   },
 ]
 
+function CompanionModeCard({ mode, active, onSelect, as = 'button' }) {
+  const Icon = mode.icon
+  const className = `pss-companion-mode${active ? ' pss-companion-mode--active' : ''}`
+
+  const inner = (
+    <>
+      <span className="pss-companion-mode__icon" aria-hidden>
+        <Icon className="w-4 h-4" strokeWidth={1.75} />
+      </span>
+      <span className="pss-companion-mode__body">
+        <span className="pss-companion-mode__label">{mode.label}</span>
+        <span className="pss-companion-mode__blurb">{mode.blurb}</span>
+      </span>
+    </>
+  )
+
+  if (as === 'div') {
+    return <div className={`${className} pss-companion-mode--static`}>{inner}</div>
+  }
+
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      className={className}
+      onClick={onSelect}
+    >
+      {inner}
+    </button>
+  )
+}
+
+function CompanionMobileModes() {
+  const reduceMotion = useReducedMotion()
+
+  return (
+    <div className="pss-companion-mobile">
+      <div className="pss-companion-mobile__preview">
+        <CompanionPreview mode={COMPANION_MODES[0]} />
+      </div>
+      <div className="pss-companion-mobile__modes">
+        {COMPANION_MODES.map((mode, index) => (
+          <motion.div
+            key={mode.id}
+            className="pss-companion-mobile__mode-wrap"
+            initial={reduceMotion ? false : { opacity: 0, x: index % 2 === 0 ? -56 : 56 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.35, margin: '-40px' }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <CompanionModeCard mode={mode} active={index === 0} as="div" />
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function CompanionPreview({ mode }) {
   return (
     <div className="pss-companion-preview">
@@ -499,36 +877,24 @@ function Companion() {
           </p>
         </div>
 
-        <div className="pss-companion-layout mt-12 md:mt-16">
+        <div className="pss-companion-layout pss-companion-layout--desktop mt-12 md:mt-16">
           <div className="pss-companion-modes" role="tablist" aria-label="Chat modes">
-            {COMPANION_MODES.map((mode) => {
-              const Icon = mode.icon
-              const active = mode.id === activeId
-              return (
-                <button
-                  key={mode.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  className={`pss-companion-mode${active ? ' pss-companion-mode--active' : ''}`}
-                  onClick={() => setActiveId(mode.id)}
-                >
-                  <span className="pss-companion-mode__icon" aria-hidden>
-                    <Icon className="w-4 h-4" strokeWidth={1.75} />
-                  </span>
-                  <span className="pss-companion-mode__body">
-                    <span className="pss-companion-mode__label">{mode.label}</span>
-                    <span className="pss-companion-mode__blurb">{mode.blurb}</span>
-                  </span>
-                </button>
-              )
-            })}
+            {COMPANION_MODES.map((mode) => (
+              <CompanionModeCard
+                key={mode.id}
+                mode={mode}
+                active={mode.id === activeId}
+                onSelect={() => setActiveId(mode.id)}
+              />
+            ))}
           </div>
 
           <div className="pss-companion-preview-wrap" role="tabpanel" aria-label={`${activeMode.label} preview`}>
             <CompanionPreview mode={activeMode} />
           </div>
         </div>
+
+        <CompanionMobileModes />
 
         <p className="pss-companion-cta text-center mt-10">
           <Link href="/chat" className="pss-hero-btn pss-hero-btn--primary">
