@@ -5,7 +5,7 @@ import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
 import TermsAgreementModal from '../components/TermsAgreementModal'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
-import { getTermsAcceptanceFromReq, TERMS_VERSION } from '../lib/auth'
+import { TERMS_VERSION } from '../lib/termsVersion'
 
 export default function Register({ acceptedTermsInitially }) {
   const [email, setEmail] = useState('')
@@ -130,6 +130,7 @@ export default function Register({ acceptedTermsInitially }) {
 }
 
 export async function getServerSideProps({ req }) {
+  const { getTermsAcceptanceFromReq } = await import('../lib/auth')
   const acceptedTermsInitially = Boolean(getTermsAcceptanceFromReq(req))
   return { props: { acceptedTermsInitially } }
 }

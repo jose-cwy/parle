@@ -1,6 +1,6 @@
 /**
  * Terms & Safety Agreement — shown before signup.
- * Bump TERMS_VERSION in lib/auth.js when this content changes materially.
+ * Bump TERMS_VERSION in lib/termsVersion.js when this content changes materially.
  */
 
 export const SAFETY_AGREEMENT_INTRO = {

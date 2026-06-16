@@ -5,7 +5,6 @@ import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../compon
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { setCachedAuthUser } from '../lib/authSession'
 import { safeNextPath } from '../lib/routes'
-import { getSessionPayload } from '../lib/auth'
 import { hasPreferredName } from '../lib/user'
 
 export default function Login() {
@@ -83,6 +82,7 @@ export default function Login() {
 }
 
 export async function getServerSideProps({ req, query }) {
+  const { getSessionPayload } = await import('../lib/auth')
   if (getSessionPayload(req)) {
     return {
       redirect: {
