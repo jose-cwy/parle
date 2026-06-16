@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
+// OneDrive on Windows can break the default `.next` folder (readlink EINVAL).
+// Keep the alternate distDir for local Windows dev only; Vercel must use `.next`.
+const useWindowsCacheDistDir =
+  process.platform === 'win32' && !process.env.VERCEL
+
 const nextConfig = {
   reactStrictMode: true,
-  // Avoid OneDrive readlink EINVAL on Windows (legacy .next folder)
-  distDir: '.cache/next',
+  ...(useWindowsCacheDistDir ? { distDir: '.cache/next' } : {}),
   async headers() {
     return [
       {
