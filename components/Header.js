@@ -6,6 +6,7 @@ import {
   fetchAuthUser,
   getCachedAuthUser,
   isAuthCacheReady,
+  subscribeAuthUser,
 } from '../lib/authSession'
 import MarketingNav from './landing/MarketingNav'
 
@@ -16,7 +17,7 @@ export default function Header() {
 
   useEffect(() => {
     let active = true
-    fetchAuthUser()
+    fetchAuthUser({ force: !isAuthCacheReady() })
       .then((authUser) => {
         if (!active) return
         setUser(authUser)
@@ -25,8 +26,13 @@ export default function Header() {
       .catch(() => {
         if (active) setReady(true)
       })
+    const unsubscribe = subscribeAuthUser((authUser) => {
+      setUser(authUser)
+      setReady(true)
+    })
     return () => {
       active = false
+      unsubscribe()
     }
   }, [])
 

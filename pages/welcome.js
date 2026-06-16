@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton } from '../components/auth/AuthCard'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
+import { fetchAuthUser, getCachedAuthUser, setCachedAuthUser } from '../lib/authSession'
 import { hasPreferredName } from '../lib/user'
 
 export default function Welcome() {
@@ -14,15 +15,14 @@ export default function Welcome() {
   useEffect(() => {
     let active = true
 
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((payload) => {
+    fetchAuthUser({ force: true })
+      .then((user) => {
         if (!active) return
-        if (!payload?.user) {
+        if (!user) {
           router.replace('/login?next=/welcome')
           return
         }
-        if (hasPreferredName(payload.user)) {
+        if (hasPreferredName(user)) {
           router.replace('/dashboard')
           return
         }
@@ -50,6 +50,12 @@ export default function Welcome() {
     })
 
     if (res.ok) {
+      const payload = await res.json().catch(() => null)
+      if (payload?.user) {
+        setCachedAuthUser(payload.user)
+      } else {
+        await fetchAuthUser({ force: true })
+      }
       router.push('/dashboard')
       return
     }

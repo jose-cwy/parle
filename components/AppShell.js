@@ -16,6 +16,7 @@ import {
   fetchAuthUser,
   getCachedAuthUser,
   isAuthCacheReady,
+  subscribeAuthUser,
 } from '../lib/authSession'
 import { cn } from '../lib/cn'
 import HavenMark from './haven/HavenMark'
@@ -65,7 +66,7 @@ export default function AppShell({ children, hideRail = false }) {
 
   useEffect(() => {
     let active = true
-    fetchAuthUser()
+    fetchAuthUser({ force: !isAuthCacheReady() })
       .then((authUser) => {
         if (!active) return
         setUser(authUser)
@@ -73,13 +74,20 @@ export default function AppShell({ children, hideRail = false }) {
       })
       .catch(() => {
         if (active) {
-          setUser(null)
+          setUser(getCachedAuthUser())
           setAuthReady(true)
         }
       })
     return () => {
       active = false
     }
+  }, [])
+
+  useEffect(() => {
+    return subscribeAuthUser((authUser) => {
+      setUser(authUser)
+      setAuthReady(true)
+    })
   }, [])
 
   useEffect(() => {

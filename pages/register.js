@@ -6,6 +6,7 @@ import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../compon
 import TermsAgreementModal from '../components/TermsAgreementModal'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { TERMS_VERSION } from '../lib/termsVersion'
+import { setCachedAuthUser } from '../lib/authSession'
 
 export default function Register({ acceptedTermsInitially }) {
   const [email, setEmail] = useState('')
@@ -27,8 +28,11 @@ export default function Register({ acceptedTermsInitially }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
-    if (res.ok) router.push('/welcome')
-    else {
+    if (res.ok) {
+      const payload = await res.json().catch(() => null)
+      if (payload?.user) setCachedAuthUser(payload.user)
+      router.push('/welcome')
+    } else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Registration failed')
     }

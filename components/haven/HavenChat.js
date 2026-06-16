@@ -812,7 +812,7 @@ export default function HavenChat() {
 
     async function init() {
       try {
-        const authUser = await fetchAuthUser()
+        const authUser = await fetchAuthUser({ force: true })
         if (!active) return
 
         const authed = Boolean(authUser)

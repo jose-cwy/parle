@@ -17,9 +17,7 @@ function canAccessApp(user) {
 }
 
 export default function RequireAuth({ children, enabled = true }) {
-  const [ready, setReady] = useState(
-    () => !enabled || canAccessApp(getCachedAuthUser()),
-  )
+  const [ready, setReady] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -28,22 +26,19 @@ export default function RequireAuth({ children, enabled = true }) {
       return undefined
     }
 
-    if (canAccessApp(getCachedAuthUser())) {
-      setReady(true)
-    }
-
     let active = true
 
     async function verify() {
-      const user = await fetchAuthUser()
+      setReady(false)
+      const user = await fetchAuthUser({ force: true })
       if (!active) return
 
       if (!user) {
-        router.push(`/login?next=${encodeURIComponent(router.asPath)}`)
+        router.replace(`/login?next=${encodeURIComponent(router.asPath)}`)
         return
       }
       if (!hasPreferredName(user)) {
-        router.push('/welcome')
+        router.replace('/welcome')
         return
       }
       setReady(true)

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
-import { setCachedAuthUser } from '../lib/authSession'
+import { fetchAuthUser } from '../lib/authSession'
 import { safeNextPath } from '../lib/routes'
 import { hasPreferredName } from '../lib/user'
 
@@ -25,10 +25,8 @@ export default function Login() {
     })
 
     if (res.ok) {
-      const meRes = await fetch('/api/auth/me')
-      const mePayload = meRes.ok ? await meRes.json().catch(() => null) : null
-      if (mePayload?.user) setCachedAuthUser(mePayload.user)
-      const destination = !hasPreferredName(mePayload?.user)
+      const authUser = await fetchAuthUser({ force: true })
+      const destination = !hasPreferredName(authUser)
         ? '/welcome'
         : router.query.next
           ? safeNextPath(router.query.next)
