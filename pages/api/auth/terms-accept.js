@@ -7,7 +7,15 @@ export default function handler(req,res){
   const guard = runApiPipeline(req, res, { tier: 'auth' })
   if (guard.handled) return
 
-  // The cookie is our server-side proof that the user completed the T&C flow.
-  setTermsAcceptanceCookie(res)
-  return res.status(200).json({ ok: true })
+  try {
+    setTermsAcceptanceCookie(res)
+    return res.status(200).json({ ok: true })
+  } catch (error) {
+    if (error?.code === 'CONFIG_JWT_SECRET') {
+      console.error('terms_accept_config_error', error.message)
+      return res.status(503).json({ error: 'Unable to record acceptance. Server configuration is incomplete.' })
+    }
+    console.error('terms_accept_error', error)
+    return res.status(500).json({ error: 'Something went wrong' })
+  }
 }

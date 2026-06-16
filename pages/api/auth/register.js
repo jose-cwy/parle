@@ -46,9 +46,19 @@ export default async function handler(req,res){
 
     return res.status(201).json({user: result.rows[0]})
   } catch (error) {
-    if (error?.code === '23505') return res.status(400).json({error:'Email already exists'})
-    if (error?.code === '42P01') return res.status(500).json({error:'Database schema is not installed. Apply database/schema.sql.'})
-    if (error?.code === '42703') return res.status(500).json({error:'Database schema is missing the new terms columns. Re-apply database/schema.sql.'})
+    if (error?.code === '23505') return res.status(400).json({ error: 'Email already exists' })
+    if (error?.code === '42P01') {
+      return res.status(500).json({ error: 'Database schema is not installed. Apply database/schema.sql.' })
+    }
+    if (error?.code === '42703') {
+      return res.status(500).json({
+        error: 'Database schema is missing the new terms columns. Re-apply database/schema.sql.',
+      })
+    }
+    if (error?.code === 'CONFIG_JWT_SECRET') {
+      console.error('register_config_error', error.message)
+      return res.status(503).json({ error: 'Signup is temporarily unavailable. Server configuration is incomplete.' })
+    }
     return handleApiError(res, error, 'register')
   }
 }
