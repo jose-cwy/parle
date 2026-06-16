@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
@@ -6,17 +6,48 @@ import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../compon
 import TermsAgreementModal from '../components/TermsAgreementModal'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { TERMS_VERSION } from '../lib/termsVersion'
-import { setCachedAuthUser } from '../lib/authSession'
+import { fetchAuthUser, setCachedAuthUser } from '../lib/authSession'
+import { hasPreferredName } from '../lib/user'
 
-export default function Register({ acceptedTermsInitially }) {
+export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [acceptingTerms, setAcceptingTerms] = useState(false)
-  const [acceptedTerms, setAcceptedTerms] = useState(acceptedTermsInitially)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [checking, setChecking] = useState(true)
   const router = useRouter()
 
-  useTopProgress(loading || acceptingTerms)
+  useTopProgress(loading || acceptingTerms || checking)
+
+  useEffect(() => {
+    let active = true
+
+    async function init() {
+      try {
+        const user = await fetchAuthUser({ force: true })
+        if (!active) return
+        if (user) {
+          router.replace(hasPreferredName(user) ? '/dashboard' : '/welcome')
+          return
+        }
+
+        const termsRes = await fetch('/api/auth/terms-status', { credentials: 'same-origin' })
+        const termsPayload = termsRes.ok ? await termsRes.json().catch(() => null) : null
+        if (!active) return
+        setAcceptedTerms(Boolean(termsPayload?.accepted))
+      } catch {
+        if (active) setAcceptedTerms(false)
+      } finally {
+        if (active) setChecking(false)
+      }
+    }
+
+    void init()
+    return () => {
+      active = false
+    }
+  }, [router])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -52,7 +83,7 @@ export default function Register({ acceptedTermsInitially }) {
           JSON.stringify({ version: TERMS_VERSION, at: new Date().toISOString() }),
         )
       } catch {
-        /* cookie + DB on register are authoritative */
+        /* cookie is authoritative */
       }
       setAcceptedTerms(true)
       setAcceptingTerms(false)
@@ -62,6 +93,8 @@ export default function Register({ acceptedTermsInitially }) {
     setAcceptingTerms(false)
     alert('Unable to record your acceptance right now. Please try again.')
   }
+
+  if (checking) return null
 
   return (
     <AuthPageShell>
@@ -131,10 +164,4 @@ export default function Register({ acceptedTermsInitially }) {
       </AnimatePresence>
     </AuthPageShell>
   )
-}
-
-export async function getServerSideProps({ req }) {
-  const { getTermsAcceptanceFromReq } = await import('../lib/auth')
-  const acceptedTermsInitially = Boolean(getTermsAcceptanceFromReq(req))
-  return { props: { acceptedTermsInitially } }
 }
