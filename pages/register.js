@@ -9,16 +9,35 @@ import { TERMS_VERSION } from '../lib/termsVersion'
 import { fetchAuthUser, setCachedAuthUser } from '../lib/authSession'
 import { hasPreferredName } from '../lib/user'
 
+const REGISTER_TERMS_SESSION_KEY = 'parle_register_terms_ok'
+
+function hasAcceptedTermsThisSession() {
+  if (typeof window === 'undefined') return false
+  try {
+    return sessionStorage.getItem(REGISTER_TERMS_SESSION_KEY) === TERMS_VERSION
+  } catch {
+    return false
+  }
+}
+
+function markTermsAcceptedThisSession() {
+  try {
+    sessionStorage.setItem(REGISTER_TERMS_SESSION_KEY, TERMS_VERSION)
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [acceptingTerms, setAcceptingTerms] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const [checking, setChecking] = useState(true)
+  const [redirecting, setRedirecting] = useState(false)
   const router = useRouter()
 
-  useTopProgress(loading || acceptingTerms || checking)
+  useTopProgress(loading || acceptingTerms || redirecting)
 
   useEffect(() => {
     let active = true
@@ -28,18 +47,21 @@ export default function Register() {
         const user = await fetchAuthUser({ force: true })
         if (!active) return
         if (user) {
+          setRedirecting(true)
           router.replace(hasPreferredName(user) ? '/dashboard' : '/welcome')
           return
         }
 
-        const termsRes = await fetch('/api/auth/terms-status', { credentials: 'same-origin' })
-        const termsPayload = termsRes.ok ? await termsRes.json().catch(() => null) : null
-        if (!active) return
-        setAcceptedTerms(Boolean(termsPayload?.accepted))
+        if (hasAcceptedTermsThisSession()) {
+          const termsRes = await fetch('/api/auth/terms-status', { credentials: 'same-origin' })
+          const termsPayload = termsRes.ok ? await termsRes.json().catch(() => null) : null
+          if (!active) return
+          if (termsPayload?.accepted) {
+            setAcceptedTerms(true)
+          }
+        }
       } catch {
         if (active) setAcceptedTerms(false)
-      } finally {
-        if (active) setChecking(false)
       }
     }
 
@@ -77,6 +99,7 @@ export default function Register() {
     const res = await fetch('/api/auth/terms-accept', { method: 'POST' })
 
     if (res.ok) {
+      markTermsAcceptedThisSession()
       try {
         localStorage.setItem(
           'hs_safety_agreement_accepted',
@@ -94,7 +117,9 @@ export default function Register() {
     alert('Unable to record your acceptance right now. Please try again.')
   }
 
-  if (checking) return null
+  if (redirecting) return null
+
+  const showTermsModal = !acceptedTerms
 
   return (
     <AuthPageShell>
@@ -155,8 +180,9 @@ export default function Register() {
       </AuthCard>
 
       <AnimatePresence>
-        {!acceptedTerms ? (
+        {showTermsModal ? (
           <TermsAgreementModal
+            key="register-terms"
             accepting={acceptingTerms}
             onAccept={handleAcceptTerms}
           />
