@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Moon, Sun, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import {
+  DEFAULT_SETTINGS_CACHE,
+  readSettingsCache,
+  writeSettingsCache,
+} from '../../lib/parle/settingsCache'
 import { THEMES } from '../../lib/theme'
 import { useTheme } from '../ThemeProvider'
 import HavenModal from './HavenModal'
@@ -55,45 +60,197 @@ function AppearanceToggle({ compact }) {
   )
 }
 
-function useParleSettings() {
-  const [memoryEnabled, setMemoryEnabled] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+function PrivacyToggle({ label, description, checked, disabled, onToggle }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-t border-border/70 mt-5 pt-4 first:mt-0 first:pt-0 first:border-t-0">
+      <div className="min-w-0">
+        <p className="text-[12px] font-medium text-foreground">{label}</p>
+        <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        disabled={disabled}
+        onClick={onToggle}
+        className={cn(
+          'relative shrink-0 h-7 w-12 rounded-full transition-colors duration-200',
+          checked ? 'bg-clay' : 'bg-border',
+          disabled && 'opacity-50',
+        )}
+      >
+        <span
+          className={cn(
+            'absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform duration-200',
+            checked && 'translate-x-5',
+          )}
+        />
+      </button>
+    </div>
+  )
+}
+
+function PrivacyToggleSkeleton() {
+  return (
+    <div
+      className="flex items-start justify-between gap-4 border-t border-border/70 mt-5 pt-4 first:mt-0 first:pt-0 first:border-t-0"
+      aria-hidden
+    >
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="h-3 w-36 max-w-full rounded bg-border/70 animate-pulse" />
+        <div className="h-2 w-full rounded bg-border/50 animate-pulse" />
+        <div className="h-2 w-[88%] rounded bg-border/50 animate-pulse" />
+      </div>
+      <div className="h-7 w-12 shrink-0 rounded-full bg-border/70 animate-pulse" />
+    </div>
+  )
+}
+
+function applySettings(setters, settings) {
+  setters.setMemoryEnabled(Boolean(settings.memory_enabled))
+  setters.setPersonalisationEnabled(Boolean(settings.personalisation_enabled))
+}
+
+export function useParleSettings(isAuthed = true) {
+  const cached = readSettingsCache()
+  const [memoryEnabled, setMemoryEnabled] = useState(
+    () => cached?.memory_enabled ?? DEFAULT_SETTINGS_CACHE.memory_enabled,
+  )
+  const [personalisationEnabled, setPersonalisationEnabled] = useState(
+    () => cached?.personalisation_enabled ?? DEFAULT_SETTINGS_CACHE.personalisation_enabled,
+  )
+  const [hydrating, setHydrating] = useState(() => isAuthed && !cached)
+  const [hasCache, setHasCache] = useState(() => Boolean(cached))
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [status, setStatus] = useState('')
+  const [statusVisible, setStatusVisible] = useState(false)
+  const statusTimerRef = useRef(null)
+  const fetchAbortRef = useRef(null)
+
+  const setters = {
+    setMemoryEnabled,
+    setPersonalisationEnabled,
+  }
+
+  function showStatus(message) {
+    setStatus(message)
+    setStatusVisible(true)
+    if (statusTimerRef.current) clearTimeout(statusTimerRef.current)
+    statusTimerRef.current = setTimeout(() => {
+      setStatusVisible(false)
+      statusTimerRef.current = setTimeout(() => setStatus(''), 300)
+    }, 2200)
+  }
+
+  const syncFromServer = useCallback(async () => {
+    if (!isAuthed) {
+      setHydrating(false)
+      return null
+    }
+
+    if (fetchAbortRef.current) fetchAbortRef.current.abort()
+    const controller = new AbortController()
+    fetchAbortRef.current = controller
+
+    try {
+      const res = await fetch('/api/user/settings', { signal: controller.signal })
+      if (!res.ok) return null
+      const data = await res.json()
+      if (!data || controller.signal.aborted) return null
+
+      applySettings(setters, data)
+      writeSettingsCache(data)
+      setHasCache(true)
+      return data
+    } catch (error) {
+      if (error?.name === 'AbortError') return null
+      return null
+    } finally {
+      if (!controller.signal.aborted) {
+        setHydrating(false)
+      }
+    }
+  }, [isAuthed])
 
   useEffect(() => {
-    fetch('/api/chat/context')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) setMemoryEnabled(Boolean(data.memory_enabled))
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+    if (!isAuthed) {
+      setHydrating(false)
+      return undefined
+    }
 
-  async function toggleMemory() {
-    const next = !memoryEnabled
-    setSaving(true)
+    const cachedOnMount = readSettingsCache()
+    if (cachedOnMount) {
+      applySettings(setters, cachedOnMount)
+      setHasCache(true)
+      setHydrating(false)
+    } else {
+      setHydrating(true)
+    }
+
+    void syncFromServer()
+
+    return () => {
+      if (fetchAbortRef.current) fetchAbortRef.current.abort()
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current)
+    }
+  }, [isAuthed, syncFromServer])
+
+  async function patchSetting(field, next, successMessage, revert) {
     setStatus('')
     try {
-      const res = await fetch('/api/chat/context', {
+      const res = await fetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memory_enabled: next }),
+        body: JSON.stringify({ [field]: next }),
       })
-      if (res.ok) {
-        setMemoryEnabled(next)
-        setStatus(next ? 'Memory turned on.' : 'Memory turned off.')
-      } else {
-        setStatus('Could not update right now.')
+
+      if (!res.ok) {
+        revert()
+        showStatus("couldn't save, try again")
+        return false
       }
+
+      const data = await res.json()
+      applySettings(setters, data)
+      writeSettingsCache(data)
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[parle settings] saved ${field}: ${next}`)
+      }
+
+      showStatus(successMessage)
+      return true
     } catch {
-      setStatus('Could not update right now.')
-    } finally {
-      setSaving(false)
+      revert()
+      showStatus("couldn't save, try again")
+      return false
     }
+  }
+
+  async function toggleMemory() {
+    const prev = memoryEnabled
+    const next = !prev
+    setMemoryEnabled(next)
+    await patchSetting(
+      'memory_enabled',
+      next,
+      next ? 'Conversation memory turned on.' : 'Conversation memory turned off.',
+      () => setMemoryEnabled(prev),
+    )
+  }
+
+  async function togglePersonalisation() {
+    const prev = personalisationEnabled
+    const next = !prev
+    setPersonalisationEnabled(next)
+    await patchSetting(
+      'personalisation_enabled',
+      next,
+      next ? 'Personalisation turned on.' : 'Personalisation turned off.',
+      () => setPersonalisationEnabled(prev),
+    )
   }
 
   async function resetPreferences() {
@@ -106,13 +263,13 @@ function useParleSettings() {
         body: JSON.stringify({ action: 'reset-preferences' }),
       })
       if (res.ok) {
-        setStatus('Preferences reset.')
+        showStatus('Preferences reset.')
         setConfirmReset(false)
       } else {
-        setStatus('Could not reset right now.')
+        showStatus("couldn't save, try again")
       }
     } catch {
-      setStatus('Could not reset right now.')
+      showStatus("couldn't save, try again")
     } finally {
       setResetting(false)
     }
@@ -120,29 +277,45 @@ function useParleSettings() {
 
   return {
     memoryEnabled,
-    loading,
-    saving,
+    personalisationEnabled,
+    hydrating,
+    hasCache,
+    togglesReady: hasCache || !hydrating,
     confirmReset,
     setConfirmReset,
     resetting,
     status,
+    statusVisible,
     toggleMemory,
+    togglePersonalisation,
     resetPreferences,
+    refreshSettings: syncFromServer,
   }
 }
 
-export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
+export function ParleSettingsPanel({
+  compact = false,
+  isAuthed = true,
+  settings: settingsProp,
+}) {
+  const internalSettings = useParleSettings(isAuthed && !settingsProp)
+  const settings = settingsProp || internalSettings
   const {
     memoryEnabled,
-    loading,
-    saving,
+    personalisationEnabled,
+    hydrating,
+    togglesReady,
     confirmReset,
     setConfirmReset,
     resetting,
     status,
+    statusVisible,
     toggleMemory,
+    togglePersonalisation,
     resetPreferences,
-  } = useParleSettings()
+  } = settings
+
+  const showSkeleton = hydrating && !togglesReady
 
   if (!isAuthed) {
     return (
@@ -178,33 +351,30 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
 
       <AppearanceToggle compact={compact} />
 
-      <div className={cn('flex items-start justify-between gap-4 border-t border-border/70', compact ? 'mt-5 pt-4' : 'mt-6 pt-5')}>
-        <div className="min-w-0">
-          <p className="text-[12px] font-medium text-foreground">Remember my conversations</p>
-          <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
-            When on, parlé picks up where you left off next time you start a chat.
-          </p>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={memoryEnabled}
-          aria-label="Remember my conversations"
-          disabled={loading || saving}
-          onClick={toggleMemory}
-          className={cn(
-            'relative shrink-0 h-7 w-12 rounded-full transition-colors duration-200',
-            memoryEnabled ? 'bg-clay' : 'bg-border',
-            (loading || saving) && 'opacity-50',
-          )}
-        >
-          <span
-            className={cn(
-              'absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow transition-transform duration-200',
-              memoryEnabled && 'translate-x-5',
-            )}
-          />
-        </button>
+      <div className={cn(compact ? 'mt-5' : 'mt-6')}>
+        {showSkeleton ? (
+          <>
+            <PrivacyToggleSkeleton />
+            <PrivacyToggleSkeleton />
+          </>
+        ) : (
+          <>
+            <PrivacyToggle
+              label="Remember my conversations"
+              description="parlé will remember what you talked about last time and open with a personalised message when you return. Only you can see this. Off by default."
+              checked={memoryEnabled}
+              disabled={!togglesReady}
+              onToggle={toggleMemory}
+            />
+            <PrivacyToggle
+              label="Personalise my experience"
+              description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. This data never leaves parlé and is never shared. Off by default."
+              checked={personalisationEnabled}
+              disabled={!togglesReady}
+              onToggle={togglePersonalisation}
+            />
+          </>
+        )}
       </div>
 
       <div className={cn('border-t border-border/70', compact ? 'mt-5 pt-4' : 'mt-6 pt-5')}>
@@ -242,12 +412,25 @@ export function ParleSettingsPanel({ compact = false, isAuthed = true }) {
         )}
       </div>
 
-      {status ? <p className="mt-3 text-[10px] text-muted-foreground">{status}</p> : null}
+      {status ? (
+        <p
+          className={cn(
+            'mt-3 text-[10px] text-muted-foreground parle-settings-status',
+            statusVisible ? 'parle-settings-status--visible' : 'parle-settings-status--hidden',
+          )}
+        >
+          {status}
+        </p>
+      ) : null}
     </>
   )
 }
 
 export function ParleSettingsPopup({ open, onClose, isAuthed }) {
+  const settings = useParleSettings(isAuthed)
+  const refreshRef = useRef(settings.refreshSettings)
+  refreshRef.current = settings.refreshSettings
+
   useEffect(() => {
     if (!open) return undefined
     function onKeyDown(e) {
@@ -256,6 +439,12 @@ export function ParleSettingsPopup({ open, onClose, isAuthed }) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open, onClose])
+
+  useEffect(() => {
+    if (open && isAuthed) {
+      void refreshRef.current()
+    }
+  }, [open, isAuthed])
 
   if (!open) return null
 
@@ -276,7 +465,7 @@ export function ParleSettingsPopup({ open, onClose, isAuthed }) {
           </button>
         </div>
         <div className="parle-settings-popup__body">
-          <ParleSettingsPanel compact isAuthed={isAuthed} />
+          <ParleSettingsPanel compact isAuthed={isAuthed} settings={settings} />
         </div>
       </div>
     </HavenModal>

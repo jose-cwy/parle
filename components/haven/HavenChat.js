@@ -8,6 +8,7 @@ import { pulseWarmth } from '../../lib/warmthPulse'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
 import ChatInputBar from './ChatInputBar'
+import GuestConsentBanner from './GuestConsentBanner'
 import {
   getChatReturnPath,
   navigateAwayFromChat,
@@ -41,6 +42,7 @@ import {
   setPreferredModeId,
 } from '../../lib/parle/chatPreferences'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
+import { getGuestSessionToken } from '../../lib/parle/guestSessionToken'
 
 const CURRENT_SESSION_ID = 'current-live'
 const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
@@ -671,7 +673,7 @@ export default function HavenChat() {
     const next = typeof updater === 'function' ? updater(prev) : updater
     const archive = getChatArchiveById(storageKey)
 
-    if (archive) {
+    if (archive && isAuthed) {
       saveChatArchive({
         id: storageKey,
         title: archive.title,
@@ -915,6 +917,7 @@ export default function HavenChat() {
 
   useEffect(() => {
     if (historyLoading) return
+    if (!isAuthed) return
     if (!hasUserMessages(visibleMessages)) return
     if (isViewingArchive(activeSessionId)) return
     if (!isActiveLiveSession(activeSessionId)) return
@@ -932,6 +935,7 @@ export default function HavenChat() {
     chatMode?.id,
     pendingModeId,
     liveSessionTitle,
+    isAuthed,
   ])
 
   async function maybeGenerateRecap(currentMessages, modeId) {
@@ -1099,11 +1103,15 @@ export default function HavenChat() {
   }
 
   function handleModeChange(mode) {
-    setPreferredModeId(mode.id)
+    if (isAuthed) {
+      setPreferredModeId(mode.id)
+    }
     const chatActive = hasUserMessages(messages || [])
     if (chatActive) {
       startWithMode(mode, { isSwitch: Boolean(chatMode) })
-      saveLiveSessionMeta({ modeId: mode.id })
+      if (isAuthed) {
+        saveLiveSessionMeta({ modeId: mode.id })
+      }
       return
     }
     setPendingModeId(mode.id)
@@ -1156,6 +1164,7 @@ export default function HavenChat() {
       messages: toApiHistory(nextMessages.slice(0, -1)),
       images,
       ...(isEdit && isAuthed ? { isEdit: true, dbKeepCount } : {}),
+      ...(!isAuthed ? { sessionToken: getGuestSessionToken() } : {}),
     }
 
     const res = await fetch(endpoint, {
@@ -1395,7 +1404,9 @@ export default function HavenChat() {
       const selectedMode = getModeById(pendingModeId)
       mode = { id: selectedMode.id, style: selectedMode.style, mood: selectedMode.mood }
       setChatMode(mode)
-      setPreferredModeId(mode.id)
+      if (isAuthed) {
+        setPreferredModeId(mode.id)
+      }
       setActiveSessionId(CURRENT_SESSION_ID)
       if (!sessionRef.current.startingMode) {
         sessionRef.current.startingMode = selectedMode.label
@@ -1455,7 +1466,7 @@ export default function HavenChat() {
     const storageKey = getActiveStorageKey()
     startSessionLoading(storageKey)
 
-    if (isViewingArchive(activeSessionId)) {
+    if (isViewingArchive(activeSessionId) && isAuthed) {
       const existing = getChatArchiveById(activeSessionId)
       if (existing) {
         saveChatArchive({
@@ -1625,7 +1636,7 @@ export default function HavenChat() {
     const shouldClearServer =
       isAuthed && isActiveLiveSession(activeSessionId) && !isViewingArchive(activeSessionId)
 
-    if (snapshot) {
+    if (snapshot && isAuthed) {
       const archiveId = snapshot.sessionId
       saveChatArchive({
         id: archiveId,
@@ -1714,6 +1725,7 @@ export default function HavenChat() {
 
   function persistSessionBeforeSwitch(targetSessionId) {
     if (targetSessionId === activeSessionId) return null
+    if (!isAuthed) return null
 
     const currentMessages = (messages || []).filter(
       (m) => m.role === 'user' || m.role === 'assistant',
@@ -1933,6 +1945,7 @@ export default function HavenChat() {
         )}
 
         <div className="parle-chat-main__bottom-fixed">
+          {!isAuthed && <GuestConsentBanner visible />}
           <div className="parle-chat-main__bottom-inner">
             {!showEmptyUI && showGuestBanner && (
               <div className="parle-chat__guest-banner">

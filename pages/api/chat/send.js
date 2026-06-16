@@ -90,7 +90,7 @@ export default async function handler(req, res) {
     modeId: modeId || 'cross',
     dontTextStep,
     dontTextMessageCount,
-    preferenceProfile: settings.profile,
+    preferenceProfile: settings.personalisation_enabled ? settings.profile : null,
     contextRecap: contextRecap
       ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
       : null,
@@ -100,6 +100,13 @@ export default async function handler(req, res) {
     userText,
     images: safeImages,
   })
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      '[parle chat] preference profile injected:',
+      Boolean(settings.personalisation_enabled && settings.profile),
+    )
+  }
 
   const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
 

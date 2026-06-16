@@ -9,6 +9,7 @@ import {
   BookOpen,
   LogOut,
   Bookmark,
+  Settings,
 } from 'lucide-react'
 import {
   clearAuthCache,
@@ -197,6 +198,28 @@ export default function AppShell({ children, hideRail = false }) {
 
             <button
               type="button"
+              onClick={() => setSettingsOpen(true)}
+              className={cn(
+                'group relative flex items-center h-11 text-muted-foreground hover:text-foreground transition-colors',
+                expanded ? 'rounded-2xl px-2.5 hover:bg-secondary/60' : 'justify-center w-full',
+              )}
+              title="Settings"
+            >
+              <span
+                className={cn(
+                  'haven-nav-icon-well shrink-0 grid place-items-center transition-colors duration-200',
+                  expanded ? 'h-9 w-9' : 'h-10 w-10 rounded-full group-hover:bg-secondary/60',
+                )}
+              >
+                <Settings size={17} strokeWidth={1.6} />
+              </span>
+              {expanded && (
+                <span className="ml-1 text-[13.5px] font-medium whitespace-nowrap">Settings</span>
+              )}
+            </button>
+
+            <button
+              type="button"
               onClick={handleLogout}
               className={cn(
                 'flex items-center h-11 text-muted-foreground hover:text-foreground transition-colors',
@@ -298,14 +321,16 @@ export default function AppShell({ children, hideRail = false }) {
               )
             })}
           </nav>
-
-          <ParleSettingsPopup
-            open={settingsOpen}
-            onClose={() => setSettingsOpen(false)}
-            isAuthed={Boolean(user)}
-          />
         </>
       )}
+
+      {authReady && user ? (
+        <ParleSettingsPopup
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          isAuthed={Boolean(user)}
+        />
+      ) : null}
 
       <main className="haven-shell__main">
         <div className="haven-shell__content">{children}</div>

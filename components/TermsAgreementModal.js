@@ -306,6 +306,9 @@ export default function TermsAgreementModal({
           </div>
 
           <footer className="terms-agreement-modal__footer">
+            <p className="terms-agreement-modal__consent-note">
+              {SAFETY_AGREEMENT_INTRO.signupConsentNote}
+            </p>
             <label
               className={`terms-agreement-modal__checkbox${hasReachedBottom ? '' : ' terms-agreement-modal__checkbox--locked'}`}
             >

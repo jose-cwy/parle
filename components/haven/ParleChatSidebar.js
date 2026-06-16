@@ -282,7 +282,7 @@ export default function ParleChatSidebar({
           {!isAuthed && (
             <div className="px-3 mt-3 pt-3 border-t border-border/60">
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Chats are saved on this device.{' '}
+                Nothing is stored. Your chat exists only in this session.{' '}
                 <Link
                   href="/register"
                   className="text-foreground underline underline-offset-2 hover:text-primary transition"
@@ -294,6 +294,22 @@ export default function ParleChatSidebar({
             </div>
           )}
         </div>
+
+        {isAuthed ? (
+          <div className="parle-chat-sidebar__nav-extra">
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsOpen(true)
+                onCloseMobile?.()
+              }}
+              className="parle-chat-sidebar__nav-link"
+            >
+              <Settings size={15} strokeWidth={1.75} className="shrink-0 opacity-70" />
+              <span>Settings</span>
+            </button>
+          </div>
+        ) : null}
 
         <div className="parle-chat-sidebar__footer">
           <div className="parle-chat-sidebar__privacy-note">

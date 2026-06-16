@@ -775,6 +775,13 @@ body.body--landing .auth-page__terms-hint {
   box-shadow: 0 -6px 18px rgba(252, 250, 246, 0.85);
 }
 
+.terms-agreement-modal__consent-note {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--hs-text-muted, #6f6760);
+}
+
 .terms-agreement-modal__checkbox {
   display: flex;
   align-items: flex-start;

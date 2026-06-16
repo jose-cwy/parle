@@ -250,6 +250,32 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   pointer-events: auto;
 }
 
+.parle-chat-sidebar__nav-extra {
+  flex-shrink: 0;
+  padding: 0.5rem 0.625rem 0;
+}
+
+.parle-chat-sidebar__nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 11px;
+  color: rgba(61, 53, 48, 0.82);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.parle-chat-sidebar__nav-link:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--foreground);
+}
+
 .parle-chat-sidebar__privacy-note {
   display: flex;
   align-items: center;
@@ -1372,6 +1398,90 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   padding-right: 1rem;
 }
 
+/* ——— Guest consent banner ——— */
+
+.parle-guest-consent {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 16px 24px;
+  background: var(--background, #f9f6f1);
+  border-top: 1px solid var(--border, rgba(61, 53, 48, 0.12));
+}
+
+.parle-guest-consent__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  max-width: var(--parle-input-max, 48rem);
+  margin: 0 auto;
+}
+
+.parle-guest-consent__text {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.parle-guest-consent__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.parle-guest-consent__link {
+  font-size: 12px;
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.parle-guest-consent__link:hover {
+  color: var(--primary);
+}
+
+.parle-guest-consent__btn {
+  height: 2rem;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.parle-guest-consent__btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 767px) {
+  .parle-guest-consent__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .parle-guest-consent__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .parle-guest-consent__btn {
+    width: 100%;
+  }
+}
+
 @media (max-width: 767px) {
   .parle-chat-main__bottom-fixed {
     left: 0;
@@ -1398,6 +1508,18 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   margin-bottom: 1.25rem;
   padding-bottom: 0.875rem;
   border-bottom: 1px solid rgba(61, 53, 48, 0.08);
+}
+
+.parle-settings-status {
+  transition: opacity 0.3s ease;
+}
+
+.parle-settings-status--visible {
+  opacity: 1;
+}
+
+.parle-settings-status--hidden {
+  opacity: 0;
 }
 
 .parle-settings-popup__close {

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
-import { cn } from '../../lib/cn'
-import { defaultIntro } from '../../lib/haven/bookQuotesUi'
+import { cn } from '../../../lib/cn'
+import { defaultIntro } from '../../../lib/haven/bookQuotesUi'
 
 function quoteSizeClass(text) {
   const len = text?.length ?? 0

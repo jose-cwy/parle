@@ -429,24 +429,20 @@ function WhatIsParle() {
 
 const PARLE_PROMISE = [
   {
-    title: 'Built for heartbreak, not everything',
-    description:
-      "Tones, prompts, and pacing tuned for grief — not a general assistant told to be kind.",
+    title: 'Guest mode leaves no trace',
+    description: 'No account, no data, no footprint',
   },
   {
-    title: 'Private by design',
-    description:
-      'Encrypted at rest. Memory off by default. Never sold, never used to train AI.',
+    title: 'You control your data',
+    description: 'Personalisation is opt-in, not default',
   },
   {
-    title: 'There at 3am',
-    description:
-      "When friends are asleep and you don't want to make it a Whole Thing.",
+    title: 'Your data stays private',
+    description: 'Never sold or shared with third parties',
   },
   {
-    title: 'Sits with you',
-    description:
-      'No rushed advice, no "just move on." It listens first.',
+    title: 'Delete anytime',
+    description: 'One click removes everything, instantly',
   },
 ]
 
@@ -478,15 +474,9 @@ const PRIVACY_PILLARS = [
   },
   {
     icon: ShieldOff,
-    title: 'Memory off by default',
+    title: 'Personalisation is opt-in',
     description:
-      'Cross-session memory is opt-in. Toggle it on or off whenever you want.',
-  },
-  {
-    icon: X,
-    title: 'Never sold, never trained on',
-    description:
-      "Your words aren't a product. We don't sell data, and we don't feed it to AI training.",
+      'Cross-session memory and preference learning are off until you turn them on in settings.',
   },
 ]
 

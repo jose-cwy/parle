@@ -3,6 +3,8 @@
 -- User profile extensions
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_session_summary TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS personalisation_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS training_consent BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS image_attach_consent_at TIMESTAMPTZ;
 
@@ -37,8 +39,31 @@ CREATE TABLE IF NOT EXISTS session_signals (
   silence_after_response_count INTEGER NOT NULL DEFAULT 0,
   repeat_sentiment_detected BOOLEAN NOT NULL DEFAULT FALSE,
   session_length_minutes INTEGER NOT NULL DEFAULT 0,
+  training_eligible BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE session_signals ADD COLUMN IF NOT EXISTS training_eligible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE session_signals ALTER COLUMN training_eligible SET DEFAULT TRUE;
+
+ALTER TABLE chat_memory ADD COLUMN IF NOT EXISTS training_content TEXT;
+
+CREATE TABLE IF NOT EXISTS anonymous_sessions (
+  session_token VARCHAR(128) PRIMARY KEY,
+  mode_used VARCHAR(64),
+  message_count INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS anonymous_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_token VARCHAR(128) NOT NULL REFERENCES anonymous_sessions(session_token) ON DELETE CASCADE,
+  role VARCHAR(16) NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_anonymous_messages_session ON anonymous_messages(session_token);
 
 CREATE INDEX IF NOT EXISTS idx_session_signals_user ON session_signals(user_id);
 CREATE INDEX IF NOT EXISTS idx_session_signals_created ON session_signals(user_id, created_at DESC);

@@ -9,7 +9,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:journal-fix-dates": "node scripts/fix-journal-entry-dates.js"
+    "db:journal-fix-dates": "node scripts/fix-journal-entry-dates.js",
+    "test": "node --test tests/unit/*.test.js",
+    "test:api": "node --test tests/api/*.test.js",
+    "test:e2e": "playwright test",
+    "test:seed-users": "node scripts/seed-test-users.js"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.2.11",
@@ -27,6 +31,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "autoprefixer": "^10.4.14",
     "eslint": "^8.43.0",
     "eslint-config-next": "^13.5.6",

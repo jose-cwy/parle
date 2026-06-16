@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 
 const TABS = [
   { label: 'Chat', href: '/chat', primary: true },
-  { label: 'Letter', href: '/letter-to-yourself' },
   { label: 'Journal', href: '/journal' },
   { label: 'Quotes', href: '/quotes' },
 ]

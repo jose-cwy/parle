@@ -28,50 +28,67 @@ export default async function handler(req, res) {
   if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' })
 
   try {
-    await db.query(
-      `INSERT INTO session_signals
-        (session_id, user_id, message_count, user_avg_message_length, avg_reply_gap_seconds,
-         mode_switches, final_mode, silence_after_response_count, repeat_sentiment_detected,
-         session_length_minutes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-       ON CONFLICT (session_id) DO UPDATE SET
-         message_count = EXCLUDED.message_count,
-         user_avg_message_length = EXCLUDED.user_avg_message_length,
-         avg_reply_gap_seconds = EXCLUDED.avg_reply_gap_seconds,
-         mode_switches = EXCLUDED.mode_switches,
-         final_mode = EXCLUDED.final_mode,
-         silence_after_response_count = EXCLUDED.silence_after_response_count,
-         repeat_sentiment_detected = EXCLUDED.repeat_sentiment_detected,
-         session_length_minutes = EXCLUDED.session_length_minutes`,
-      [
-        sessionId,
-        payload.id,
-        message_count || 0,
-        user_avg_message_length || 0,
-        avg_reply_gap_seconds || 0,
-        mode_switches || 0,
-        final_mode || null,
-        silence_after_response_count || 0,
-        Boolean(repeat_sentiment_detected),
-        session_length_minutes || 0,
-      ],
-    )
-
-    await updateProfileAfterSession(payload.id, {
-      message_count,
-      user_avg_message_length,
-      avg_reply_gap_seconds,
-      mode_switches,
-      starting_mode,
-      final_mode,
-      repeat_sentiment_detected,
-    })
-
     const userRow = await db.query(
-      'SELECT memory_enabled FROM users WHERE id = $1',
+      `SELECT memory_enabled, personalisation_enabled
+       FROM users WHERE id = $1`,
       [payload.id],
     )
-    const memoryEnabled = Boolean(userRow.rows[0]?.memory_enabled)
+    const userSettings = userRow.rows[0] || {}
+    const personalisationEnabled = Boolean(userSettings.personalisation_enabled)
+    const trainingEligible = true
+
+    if (personalisationEnabled) {
+      await db.query(
+        `INSERT INTO session_signals
+          (session_id, user_id, message_count, user_avg_message_length, avg_reply_gap_seconds,
+           mode_switches, final_mode, silence_after_response_count, repeat_sentiment_detected,
+           session_length_minutes, training_eligible)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         ON CONFLICT (session_id) DO UPDATE SET
+           message_count = EXCLUDED.message_count,
+           user_avg_message_length = EXCLUDED.user_avg_message_length,
+           avg_reply_gap_seconds = EXCLUDED.avg_reply_gap_seconds,
+           mode_switches = EXCLUDED.mode_switches,
+           final_mode = EXCLUDED.final_mode,
+           silence_after_response_count = EXCLUDED.silence_after_response_count,
+           repeat_sentiment_detected = EXCLUDED.repeat_sentiment_detected,
+           session_length_minutes = EXCLUDED.session_length_minutes,
+           training_eligible = EXCLUDED.training_eligible`,
+        [
+          sessionId,
+          payload.id,
+          message_count || 0,
+          user_avg_message_length || 0,
+          avg_reply_gap_seconds || 0,
+          mode_switches || 0,
+          final_mode || null,
+          silence_after_response_count || 0,
+          Boolean(repeat_sentiment_detected),
+          session_length_minutes || 0,
+          trainingEligible,
+        ],
+      )
+
+      await updateProfileAfterSession(payload.id, {
+        message_count,
+        user_avg_message_length,
+        avg_reply_gap_seconds,
+        mode_switches,
+        starting_mode,
+        final_mode,
+        repeat_sentiment_detected,
+      })
+    } else {
+      await db.query(
+        `INSERT INTO session_signals (session_id, user_id, training_eligible)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (session_id) DO UPDATE SET
+           training_eligible = EXCLUDED.training_eligible`,
+        [sessionId, payload.id, trainingEligible],
+      )
+    }
+
+    const memoryEnabled = Boolean(userSettings.memory_enabled)
 
     if (memoryEnabled && (message_count || 0) > 0) {
       let sessionTranscript = String(transcript || '').trim()
