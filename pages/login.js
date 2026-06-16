@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
@@ -11,9 +11,34 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const router = useRouter()
 
-  useTopProgress(loading)
+  useEffect(() => {
+    let active = true
+
+    fetchAuthUser({ force: true })
+      .then((user) => {
+        if (!active) return
+        if (user) {
+          const destination = !hasPreferredName(user)
+            ? '/welcome'
+            : safeNextPath(router.query.next)
+          router.replace(destination)
+          return
+        }
+        setChecking(false)
+      })
+      .catch(() => {
+        if (active) setChecking(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [router])
+
+  useTopProgress(loading || checking)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -31,13 +56,15 @@ export default function Login() {
         : router.query.next
           ? safeNextPath(router.query.next)
           : '/dashboard'
-      router.push(destination)
+      router.replace(destination)
     } else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Login failed')
       setLoading(false)
     }
   }
+
+  if (checking) return null
 
   return (
     <AuthPageShell>
@@ -60,6 +87,7 @@ export default function Login() {
               type="email"
               autoComplete="email"
               required
+              disabled={loading}
             />
           </AuthField>
           <AuthField label="Password">
@@ -70,6 +98,7 @@ export default function Login() {
               type="password"
               autoComplete="current-password"
               required
+              disabled={loading}
             />
           </AuthField>
           <AuthSubmitButton loading={loading}>Log in</AuthSubmitButton>
@@ -77,18 +106,4 @@ export default function Login() {
       </AuthCard>
     </AuthPageShell>
   )
-}
-
-export async function getServerSideProps({ req, query }) {
-  const { getSessionPayload } = await import('../lib/auth')
-  if (getSessionPayload(req)) {
-    return {
-      redirect: {
-        destination: safeNextPath(query.next),
-        permanent: false,
-      },
-    }
-  }
-
-  return { props: {} }
 }

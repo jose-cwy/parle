@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton } from '../components/auth/AuthCard'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
-import { fetchAuthUser, getCachedAuthUser, setCachedAuthUser } from '../lib/authSession'
+import { fetchAuthUser, setCachedAuthUser } from '../lib/authSession'
 import { hasPreferredName } from '../lib/user'
 
 export default function Welcome() {
@@ -56,7 +56,7 @@ export default function Welcome() {
       } else {
         await fetchAuthUser({ force: true })
       }
-      router.push('/dashboard')
+      router.replace('/dashboard')
       return
     }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { fetchAuthUser, isAuthCacheReady } from '../lib/authSession'
+import { hasPreferredName } from '../lib/user'
 import LandingSplash from '../components/landing/LandingSplash'
 import ParlerLandingPage from '../components/landing/ParlerLandingPage'
 
@@ -13,11 +14,11 @@ export default function Home() {
   useEffect(() => {
     let active = true
 
-    fetchAuthUser()
+    fetchAuthUser({ force: true })
       .then((user) => {
         if (!active) return
         if (user) {
-          router.replace('/dashboard')
+          router.replace(hasPreferredName(user) ? '/dashboard' : '/welcome')
           return
         }
         setChecking(false)

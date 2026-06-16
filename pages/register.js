@@ -31,7 +31,7 @@ export default function Register({ acceptedTermsInitially }) {
     if (res.ok) {
       const payload = await res.json().catch(() => null)
       if (payload?.user) setCachedAuthUser(payload.user)
-      router.push('/welcome')
+      router.replace('/welcome')
     } else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Registration failed')
