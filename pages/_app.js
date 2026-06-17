@@ -131,9 +131,13 @@ export default function App({ Component, pageProps }) {
         <meta name="description" content="A private digital space for young people to share thoughts, feelings, and heartbreak stories safely and anonymously." />
         <meta name="keywords" content="heartbreak support, private journal, AI companion, safe space, teen support" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+        <link rel="alternate icon" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" sizes="180x180" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="application-name" content="parlé" />
         <meta name="theme-color" content="#231821" />
+        <meta name="msapplication-TileColor" content="#231821" />
       </Head>
 
       {!fullBleed && !appLayout && !isHome && !isAuthPage && !isParlerMarketing && (

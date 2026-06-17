@@ -1,11 +1,11 @@
 import { cn } from '../../lib/cn'
 
 const SIZES = {
-  xs: 14,
-  sm: 18,
-  md: 22,
-  lg: 28,
-  xl: 36,
+  xs: 16,
+  sm: 22,
+  md: 27,
+  lg: 34,
+  xl: 44,
 }
 
 /**

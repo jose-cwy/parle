@@ -104,14 +104,9 @@ body.body--parler-landing .pss-nav-logo {
   font-size: 1.3rem;
 }
 
-.haven-mark--expanded .haven-mark__logo .parle-mark {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
 .haven-mark--collapsed .haven-mark__logo-icon .parle-mark {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.65rem;
+  height: 1.65rem;
 }
 
 .haven-shell__brand-btn {
