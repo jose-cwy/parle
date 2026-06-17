@@ -1,6 +1,6 @@
 import { runApiPipeline } from '../../../lib/security/pipeline'
 import { sanitizeJournalContent } from '../../../lib/security/sanitize'
-import { assertEncryptionConfigured } from '../../../lib/security/encryption'
+import { assertEncryptionConfigured, mapEncryptionError } from '../../../lib/security/encryption'
 import { getClientTodayFromReq } from '../../../lib/journalClientDate'
 import {
   createJournalEntry,
@@ -13,10 +13,9 @@ function dbErrorResponse(res, error, context) {
   if (error?.message === 'EMPTY_JOURNAL') {
     return res.status(400).json({ error: 'Write something before saving your entry.' })
   }
-  if (String(error?.message || '').includes('DATA_ENCRYPTION_KEY')) {
-    return res.status(503).json({
-      error: 'Journal encryption is not configured on the server. Set DATA_ENCRYPTION_KEY (32-byte base64 key).',
-    })
+  const encryptionError = mapEncryptionError(error)
+  if (encryptionError) {
+    return res.status(503).json({ error: encryptionError })
   }
   if (error?.code === '42P01') {
     return res.status(500).json({ error: 'Database schema is not installed. Apply database/schema.sql.' })
