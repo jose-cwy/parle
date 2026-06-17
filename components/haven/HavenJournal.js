@@ -154,6 +154,18 @@ export default function HavenJournal() {
         method = 'PUT'
         url = `/api/journal/${payload.id}`
         setTodayEntryId(payload.id)
+        setEntries((prev) => {
+          const next = prev.filter((e) => Number(e.id) !== Number(payload.id))
+          return [
+            ...next,
+            {
+              id: payload.id,
+              content: draft.trim(),
+              entry_date: currentToday,
+              created_at: new Date().toISOString(),
+            },
+          ]
+        })
         res = await fetch(url, {
           method: 'PUT',
           credentials: 'same-origin',

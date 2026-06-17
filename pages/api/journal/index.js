@@ -1,5 +1,6 @@
 import { runApiPipeline } from '../../../lib/security/pipeline'
 import { sanitizeJournalContent } from '../../../lib/security/sanitize'
+import { assertEncryptionConfigured } from '../../../lib/security/encryption'
 import { getClientTodayFromReq } from '../../../lib/journalClientDate'
 import {
   createJournalEntry,
@@ -37,6 +38,8 @@ export default async function handler(req, res) {
   const clientToday = getClientTodayFromReq(req)
 
   try {
+    assertEncryptionConfigured()
+
     if (req.method === 'GET') {
       const rows = await listJournalEntries(payload.id)
       return res.status(200).json(rows)

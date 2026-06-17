@@ -1,5 +1,6 @@
 import { runApiPipeline } from '../../../lib/security/pipeline'
 import { sanitizeJournalContent } from '../../../lib/security/sanitize'
+import { assertEncryptionConfigured } from '../../../lib/security/encryption'
 import { isRowEditableOnClient } from '../../../lib/journal'
 import { getClientTodayFromReq } from '../../../lib/journalClientDate'
 import {
@@ -35,6 +36,8 @@ export default async function handler(req, res) {
   const clientToday = getClientTodayFromReq(req)
 
   try {
+    assertEncryptionConfigured()
+
     const row = await getJournalEntryById(id)
     if (!row) return res.status(404).json({ error: 'Not found' })
     if (row.user_id !== payload.id) return res.status(403).json({ error: 'Forbidden' })
