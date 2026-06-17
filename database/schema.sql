@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS diary (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE diary ADD COLUMN IF NOT EXISTS entry_date DATE;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_diary_user_entry_date_unique ON diary(user_id, entry_date);
+
 CREATE TABLE IF NOT EXISTS chat_memory (
   id SERIAL PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,

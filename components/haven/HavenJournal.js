@@ -61,6 +61,7 @@ export default function HavenJournal() {
     setError('')
     try {
       const res = await fetch('/api/journal', {
+        credentials: 'same-origin',
         headers: journalClientHeaders(todayKey()),
       })
       if (!res.ok) {
@@ -143,6 +144,7 @@ export default function HavenJournal() {
 
       let res = await fetch(url, {
         method,
+        credentials: 'same-origin',
         headers: saveHeaders,
         body: JSON.stringify({ content: draft.trim() }),
       })
@@ -154,6 +156,7 @@ export default function HavenJournal() {
         setTodayEntryId(payload.id)
         res = await fetch(url, {
           method: 'PUT',
+          credentials: 'same-origin',
           headers: saveHeaders,
           body: JSON.stringify({ content: draft.trim() }),
         })
