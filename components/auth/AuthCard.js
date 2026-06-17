@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import HeartLogo from '../landing/HeartLogo'
+import ParleLogo from '../brand/ParleLogo'
 
 const stagger = {
   hidden: {},
@@ -50,7 +50,7 @@ export default function AuthCard({
       </svg>
 
       <div className="auth-page__logoWrap">
-        <HeartLogo size={32} />
+        <ParleLogo variant="inline" size="lg" />
       </div>
 
       <p className="auth-page__eyebrow">{eyebrow}</p>

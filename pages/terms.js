@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Head from 'next/head'
 import { safetyAgreementSections } from '../data/safetyAgreementContent'
+import ParleLogo from '../components/brand/ParleLogo'
 
 function TermsReadingProgress({ progress }) {
   const [mounted, setMounted] = useState(false)
@@ -123,7 +124,9 @@ export default function TermsPage() {
         </div>
 
         <footer className="pss-terms-page__site-footer">
-          <span className="pss-terms-page__site-mark">parlé</span>
+          <span className="pss-terms-page__site-mark">
+            <ParleLogo variant="inline" size="md" />
+          </span>
           <span aria-hidden="true">·</span>
           <span>A quiet space, always open.</span>
           <span aria-hidden="true">·</span>

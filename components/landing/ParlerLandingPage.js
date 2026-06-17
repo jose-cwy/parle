@@ -19,6 +19,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import VerticalTestimonialsSpin from './VerticalTestimonialsSpin'
 import MarketingNav from './MarketingNav'
+import ParleLogo from '../brand/ParleLogo'
 
 function SectionEyebrow({ children }) {
   return (
@@ -952,7 +953,9 @@ export default function ParlerLandingPage({ signupDeclined = false }) {
       <CTA />
       <footer className="pss-landing-footer px-6 md:px-12 py-10 text-center text-sm text-muted-foreground">
         <p className="pss-landing-footer__tagline">
-          <span className="pss-landing-footer__wordmark font-serif italic text-lg text-foreground">parlé</span>
+          <span className="pss-landing-footer__brand">
+            <ParleLogo variant="inline" size="md" />
+          </span>
           {' · '}A quiet space, always open.
         </p>
         <p className="pss-landing-footer__links">

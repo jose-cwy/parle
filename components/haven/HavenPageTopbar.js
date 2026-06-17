@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import ParleLogo from '../brand/ParleLogo'
 
 export default function HavenPageTopbar({ label }) {
   return (
@@ -8,8 +9,8 @@ export default function HavenPageTopbar({ label }) {
         <ChevronLeft size={16} strokeWidth={2} aria-hidden />
         <span>back</span>
       </Link>
-      <Link href="/dashboard" prefetch className="haven-page-topbar__wordmark font-serif">
-        parlé
+      <Link href="/dashboard" prefetch className="haven-page-topbar__wordmark" aria-label="parlé home">
+        <ParleLogo variant="inline" size="md" />
       </Link>
       <span className="haven-page-topbar__label">{label}</span>
     </header>

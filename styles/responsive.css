@@ -208,10 +208,6 @@ html {
 
 /* ——— Marketing navbar & drawer ——— */
 
-body.body--parler-landing .pss-nav-logo__mark {
-  display: none;
-}
-
 @media (max-width: 767px) {
   body.body--parler-landing .pss-nav__inner {
     padding-left: 0.5rem;
@@ -220,28 +216,6 @@ body.body--parler-landing .pss-nav-logo__mark {
 }
 
 @media (max-width: 1024px) {
-  body.body--parler-landing .pss-nav-logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  body.body--parler-landing .pss-nav-logo__mark {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  body.body--parler-landing .pss-nav-logo__mark > div {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  body.body--parler-landing .pss-nav-logo__mark svg {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-
   body.body--parler-landing .pss-nav__menu-btn {
     width: 2.75rem;
     height: 2.75rem;
@@ -1168,10 +1142,8 @@ body.body--parler-landing .pss-nav-logo__mark {
 
   .haven-shell__mobile-wordmark {
     justify-self: center;
-    font-size: 1.35rem;
+    display: inline-flex;
     line-height: 1;
-    letter-spacing: -0.02em;
-    color: var(--foreground);
     text-decoration: none;
   }
 

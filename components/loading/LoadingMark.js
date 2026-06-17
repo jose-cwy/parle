@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import HeartLogo from '../landing/HeartLogo'
+import ParleMark from '../brand/ParleMark'
 
 export default function LoadingMark({ size = 28, className = '' }) {
   const reduceMotion = useReducedMotion()
@@ -11,7 +11,7 @@ export default function LoadingMark({ size = 28, className = '' }) {
       animate={reduceMotion ? undefined : { opacity: [0.72, 1, 0.72], scale: [0.98, 1, 0.98] }}
       transition={reduceMotion ? undefined : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
     >
-      <HeartLogo size={size} />
+      <ParleMark size={size} title="Loading" />
     </motion.div>
   )
 }

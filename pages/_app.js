@@ -1,5 +1,6 @@
 import '../styles/tokens.css'
 import '../styles/theme-palette.css'
+import '../styles/parle-brand.css'
 import '../styles/globals.css'
 import '../styles/typography.css'
 import '../styles/loading.css'
@@ -130,6 +131,9 @@ export default function App({ Component, pageProps }) {
         <meta name="description" content="A private digital space for young people to share thoughts, feelings, and heartbreak stories safely and anonymously." />
         <meta name="keywords" content="heartbreak support, private journal, AI companion, safe space, teen support" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+        <meta name="theme-color" content="#231821" />
       </Head>
 
       {!fullBleed && !appLayout && !isHome && !isAuthPage && !isParlerMarketing && (

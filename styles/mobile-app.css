@@ -83,11 +83,9 @@
 
   body.body--app .haven-shell__mobile-wordmark {
     justify-self: start;
-    font-family: var(--font-haven-serif), Georgia, serif;
-    font-size: 1.35rem;
-    color: var(--ma-text);
+    display: inline-flex;
     text-decoration: none;
-    letter-spacing: -0.02em;
+    line-height: 1;
   }
 
   body.body--app .haven-shell__mobile-menu-btn {
@@ -435,12 +433,7 @@
   }
 
   body.body--parler-landing .pss-nav-logo {
-    color: var(--ma-text);
     margin-left: 0.625rem;
-  }
-
-  body.body--parler-landing .pss-nav-logo__mark {
-    display: none;
   }
 
   body.body--parler-landing .pss-nav__auth-ctas .pss-nav-cta--inverse {

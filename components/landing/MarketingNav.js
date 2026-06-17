@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { BookHeart, BookOpen, LogOut, MessageCircle, X } from 'lucide-react'
 import { ease, spring } from '../../lib/motion'
-import HavenMark from '../haven/HavenMark'
+import ParleLogo from '../brand/ParleLogo'
 
 function HamburgerIcon() {
   return (
@@ -180,11 +180,8 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
   return (
     <nav className="pss-nav sticky top-0 z-40">
       <div className="pss-nav__inner">
-        <Link href={homeHref} className="pss-nav-logo font-serif text-2xl">
-          <span className="pss-nav-logo__mark" aria-hidden>
-            <HavenMark />
-          </span>
-          <span>parlé</span>
+        <Link href={homeHref} className="pss-nav-logo" aria-label="parlé home">
+          <ParleLogo variant="inline" size="lg" />
         </Link>
 
         <div className="pss-nav__actions">

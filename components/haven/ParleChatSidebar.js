@@ -20,6 +20,7 @@ import {
   rememberChatReturnFromReferrer,
 } from '../../lib/parle/chatNavigation'
 import { ParleSettingsPopup } from './ParleSettings'
+import ParleLogo from '../brand/ParleLogo'
 
 function userDisplayName(user) {
   if (!user) return 'Guest'
@@ -144,9 +145,10 @@ export default function ParleChatSidebar({
               onClick={handleLogoClick}
               onMouseEnter={() => prefetchSidebarDestination('/')}
               onFocus={() => prefetchSidebarDestination('/')}
-              className="parle-chat-sidebar__wordmark parle-chat-sidebar__wordmark-link font-serif text-[1.2125rem] leading-none text-foreground tracking-tight"
+              className="parle-chat-sidebar__brand-logo"
+              aria-label="parlé home"
             >
-              parlé
+              <ParleLogo variant="inline" size="md" />
             </button>
             <div className="parle-chat-sidebar__brand-actions">
               <button

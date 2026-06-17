@@ -194,6 +194,14 @@ body.body--app .page-fade {
     align-items: center;
   }
 
+  .haven-shell__rail--expanded .haven-shell__brand-btn {
+    padding-inline: 0;
+  }
+
+  .haven-shell__rail--collapsed .haven-shell__brand-btn {
+    padding-inline: 0;
+  }
+
   .haven-shell__rail--collapsed nav {
     width: 100%;
     align-items: center;

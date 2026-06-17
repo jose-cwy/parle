@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { BookOpen, MessageCircle, Quote } from 'lucide-react'
 import { ease, spring } from '../../lib/motion'
 import AuthButtons from './AuthButtons'
-import HeartLogo from './HeartLogo'
+import ParleMark from '../brand/ParleMark'
 import MenuFeatureCard from './MenuFeatureCard'
 
 function safeHref(user, path) {
@@ -193,7 +193,7 @@ export default function HeartstringsMenu({ user, open, onOpenChange }) {
             >
               <div className="heartstringsMenu__panelTop">
                 <div className="heartstringsMenu__brand">
-                  <HeartLogo size={22} />
+                  <ParleMark size={22} />
                   <div className="heartstringsMenu__brandText">
                     <p className="heartstringsMenu__label">Your journal</p>
                     <p className="heartstringsMenu__brandName">Heartstrings Club</p>

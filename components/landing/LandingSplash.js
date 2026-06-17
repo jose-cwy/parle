@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import ParleMark from '../brand/ParleMark'
 
 export default function LandingSplash({
   message = 'Preparing your quiet space…',
@@ -18,22 +19,7 @@ export default function LandingSplash({
     >
       <div className="landing-splash__inner">
         <div className="landing-splash__mark" aria-hidden>
-          <svg viewBox="0 0 32 32" className="h-11 w-11" fill="none">
-            <path
-              d="M16 25 C 7 19, 7 10, 13 10 C 16 10, 16 13, 16 13 C 16 13, 16 10, 19 10 C 25 10, 25 19, 16 25 Z"
-              stroke="var(--hs-auth-red)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M16 13 C 16 18, 22 21, 28 19"
-              stroke="var(--hs-auth-red-deep)"
-              strokeWidth="1"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-          </svg>
+          <ParleMark size="xl" />
         </div>
 
         <p className="landing-splash__eyebrow">parlé</p>

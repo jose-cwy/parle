@@ -4,6 +4,7 @@ import Head from 'next/head'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Copy, Mail, MessageCircle } from 'lucide-react'
 import { getFeedbackComposeUrl, openFeedbackCompose, SUPPORT_EMAIL } from '../lib/contact'
+import ParleLogo from '../components/brand/ParleLogo'
 
 const FEEDBACK_COMPOSE_URL = getFeedbackComposeUrl()
 
@@ -164,7 +165,9 @@ export default function ContactPage() {
         </section>
 
         <footer className="pss-contact-page__site-footer">
-          <span className="pss-contact-page__site-mark">parlé</span>
+          <span className="pss-contact-page__site-mark">
+            <ParleLogo variant="inline" size="md" />
+          </span>
           <span aria-hidden="true">·</span>
           <span>A quiet space, always open.</span>
           <span aria-hidden="true">·</span>

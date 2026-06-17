@@ -90,26 +90,28 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   min-height: 2rem;
 }
 
-.parle-chat-sidebar__wordmark {
+.parle-chat-sidebar__wordmark,
+.parle-chat-sidebar__brand-logo {
   justify-self: center;
   text-align: center;
   min-width: 0;
   transform: translateX(-3px);
 }
 
-.parle-chat-sidebar__wordmark-link {
-  display: inline-block;
+.parle-chat-sidebar__wordmark-link,
+.parle-chat-sidebar__brand-logo {
+  display: inline-flex;
   padding: 0;
   border: none;
   background: transparent;
   text-decoration: none;
   border-radius: 0.375rem;
   cursor: pointer;
-  transition: color 0.15s ease, opacity 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
-.parle-chat-sidebar__wordmark-link:hover {
-  color: var(--primary);
+.parle-chat-sidebar__wordmark-link:hover,
+.parle-chat-sidebar__brand-logo:hover {
   opacity: 0.92;
 }
 
@@ -1301,8 +1303,9 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
     padding-right: 0.15rem;
   }
 
-  .parle-chat-sidebar__wordmark {
-    font-size: 18px;
+  .parle-chat-sidebar__wordmark,
+  .parle-chat-sidebar__brand-logo {
+    transform: translateX(-2px);
   }
 }
 

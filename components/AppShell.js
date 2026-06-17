@@ -20,6 +20,7 @@ import {
 } from '../lib/authSession'
 import { cn } from '../lib/cn'
 import HavenMark from './haven/HavenMark'
+import ParleLogo from './brand/ParleLogo'
 import { ParleSettingsPopup } from './haven/ParleSettings'
 
 const NAV = [
@@ -133,7 +134,7 @@ export default function AppShell({ children, hideRail = false }) {
         <button
           type="button"
           onClick={() => setPinned((p) => !p)}
-          className={cn('mb-2', expanded ? 'self-start' : 'self-center mx-auto')}
+          className="haven-shell__brand-btn mb-2"
           aria-label={pinned ? 'Collapse navigation' : 'Pin navigation open'}
         >
           <HavenMark expanded={expanded} />
@@ -265,8 +266,8 @@ export default function AppShell({ children, hideRail = false }) {
       {showMobileChrome && (
         <>
           <header className="haven-shell__mobile-header">
-            <Link href="/dashboard" className="haven-shell__mobile-wordmark font-serif">
-              parlé
+            <Link href="/dashboard" prefetch className="haven-shell__mobile-wordmark" aria-label="parlé home">
+              <ParleLogo variant="inline" size="md" />
             </Link>
             <div className="haven-shell__mobile-avatar-wrap" ref={accountRef}>
               <button
