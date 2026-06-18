@@ -8,6 +8,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
+  Settings,
   SquarePen,
   Trash2,
 } from 'lucide-react'
@@ -43,6 +44,7 @@ export default function ParleChatSidebar({
   onSelectSession,
   onDeleteSession,
   onRenameSession,
+  onOpenSettings,
 }) {
   const router = useRouter()
   const [renamingId, setRenamingId] = useState(null)
@@ -308,6 +310,18 @@ export default function ParleChatSidebar({
               <span className="flex-1 min-w-0 text-[11px] text-foreground truncate">
                 {userDisplayName(user)}
               </span>
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenSettings?.()
+                  onCloseMobile?.()
+                }}
+                className="parle-chat-sidebar__settings-btn"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings size={15} strokeWidth={1.75} />
+              </button>
             </div>
           ) : (
             <div className="parle-chat-sidebar__auth-links">

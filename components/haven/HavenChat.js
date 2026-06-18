@@ -17,6 +17,7 @@ import ParleChatSidebar, {
   ParleChatMobileToolbar,
   ParleChatSidebarExpandButton,
 } from './ParleChatSidebar'
+import { ParleSettingsPopup } from './ParleSettings'
 import {
   DEFAULT_MODE,
   MODE_SWITCH_ACK,
@@ -637,6 +638,7 @@ export default function HavenChat() {
   const [liveSessionTitle, setLiveSessionTitle] = useState(LIVE_SESSION_TITLE)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [pendingModeId, setPendingModeId] = useState(DEFAULT_MODE.id)
   const [entryExiting, setEntryExiting] = useState(false)
   const sessionRef = useRef(createSessionState())
@@ -1901,6 +1903,13 @@ export default function HavenChat() {
         onSelectSession={handleSelectSession}
         onDeleteSession={handleDeleteSession}
         onRenameSession={handleRenameSession}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+
+      <ParleSettingsPopup
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        isAuthed={isAuthed}
       />
 
       <div className="parle-chat-main">

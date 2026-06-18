@@ -359,6 +359,31 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
+.parle-chat-sidebar__settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.parle-chat-sidebar__settings-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--foreground);
+}
+
+.parle-chat-sidebar__settings-btn:focus-visible {
+  outline: 2px solid rgba(197, 75, 68, 0.35);
+  outline-offset: 1px;
+}
+
 .parle-chat-sidebar__backdrop {
   position: fixed;
   inset: 0;
