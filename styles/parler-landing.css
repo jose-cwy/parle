@@ -404,6 +404,10 @@ body.body--parler-landing.body--auth .auth-page__description {
   color: var(--muted-foreground);
 }
 
+body.body--parler-landing.body--auth .auth-page__label {
+  color: var(--foreground);
+}
+
 body.body--parler-landing.body--auth .auth-page__input {
   border: 1px solid var(--border);
   border-radius: 0.75rem;

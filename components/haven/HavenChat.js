@@ -107,6 +107,16 @@ function createAssistantMessage(text, { ephemeral = false, at = Date.now(), mode
   }
 }
 
+function createSystemNotice(text, at = Date.now()) {
+  return {
+    id: createMessageId(),
+    role: 'system',
+    text,
+    at,
+    ephemeral: true,
+  }
+}
+
 function getGreetingDisplayName(user) {
   const raw = String(user?.preferred_name || '').trim()
   if (!raw) return null
@@ -527,6 +537,14 @@ function Bubble({
       <article className="parle-chat-msg parle-chat-msg--assistant">
         <AssistantBody text={msg.text} />
       </article>
+    )
+  }
+
+  if (msg.role === 'system') {
+    return (
+      <p className="parle-chat-system-notice" role="status">
+        {msg.text}
+      </p>
     )
   }
 
@@ -1175,6 +1193,28 @@ export default function HavenChat() {
     })
 
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (res.status === 429 || res.status === 400) {
+        const notice =
+          data?.message ||
+          (res.status === 429 ? 'slow down a little.' : 'something went wrong with that message.')
+        commitMessages(
+          storageKey,
+          (prev) => {
+            const list = [...(prev || [])]
+            if (list.length && list[list.length - 1]?.role === 'user') {
+              list.pop()
+            }
+            return [...list, createSystemNotice(notice)]
+          },
+          { chatModeId: mode.id },
+        )
+        if (isViewingStorageKey(storageKey) && userText) {
+          setText(userText)
+        }
+        return
+      }
+
       commitMessages(storageKey, (prev) => [
         ...(prev || []),
         createAssistantMessage('Sorry, something went wrong. Please try again.', {
@@ -1885,7 +1925,9 @@ export default function HavenChat() {
           ) : chatActive ? (
             <div className="parle-chat__messages">
               {(messages || []).map((m, i) => {
-                if (m.role !== 'user' && m.role !== 'assistant') return null
+                if (m.role !== 'user' && m.role !== 'assistant' && m.role !== 'system') {
+                  return null
+                }
                 if (
                   m.role === 'assistant' &&
                   showTypingIndicator &&

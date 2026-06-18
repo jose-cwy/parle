@@ -118,3 +118,12 @@ CREATE TABLE IF NOT EXISTS anonymous_messages (
 CREATE INDEX IF NOT EXISTS idx_anonymous_messages_session ON anonymous_messages(session_token);
 CREATE INDEX IF NOT EXISTS idx_session_signals_user ON session_signals(user_id);
 CREATE INDEX IF NOT EXISTS idx_session_signals_created ON session_signals(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS usage_tracking (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_identifier VARCHAR(64) NOT NULL,
+  message_count INTEGER NOT NULL DEFAULT 0,
+  usage_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  is_guest BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE (user_identifier, usage_date)
+);

@@ -1069,6 +1069,16 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 
 /* ——— Messages ——— */
 
+.parle-chat-system-notice {
+  margin: 0.5rem auto;
+  max-width: 28rem;
+  text-align: center;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted-foreground, rgba(120, 113, 108, 0.85));
+  line-height: 1.45;
+}
+
 .parle-chat-msg {
   display: flex;
   flex-direction: column;

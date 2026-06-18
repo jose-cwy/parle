@@ -7430,7 +7430,7 @@ body.body--landing.body--nav-open {
   margin-bottom: 0.32rem;
   font-size: 0.86rem;
   font-weight: 600;
-  color: rgba(58, 47, 47, 0.82);
+  color: var(--hs-text);
 }
 
 .auth-page__input {

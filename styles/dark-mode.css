@@ -140,6 +140,10 @@ html[data-theme='dark'] body.body--parler-landing {
   --border: var(--parle-border);
 }
 
+html[data-theme='dark'] body.body--auth .auth-page__label {
+  color: var(--foreground);
+}
+
 html[data-theme='light'] body.body--parler-landing {
   --background: var(--parle-bg);
   --foreground: var(--parle-text);

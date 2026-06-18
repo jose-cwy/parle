@@ -7,6 +7,11 @@ import { getModeLabel } from '../../../lib/parle/modes'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
 import { validateImageDataUrls } from '../../../lib/security/images'
+import {
+  runChatAbuseChecks,
+  trimConversationHistory,
+  withChatProcessing,
+} from '../../../lib/chatAbuse'
 
 export const config = {
   api: {
@@ -17,7 +22,7 @@ export const config = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { tier: 'chat' })
+  const guard = runApiPipeline(req, res, { tier: 'guestChat' })
   if (guard.handled) return
 
   try {
@@ -38,13 +43,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid image attachment' })
     }
     const safeImages = imageCheck.images
+    const safeSessionToken = String(sessionToken || '').trim().slice(0, 128) || null
 
-    if (!text && !safeImages.length) {
-      return res.status(400).json({ error: 'Missing text' })
+    const abuse = await runChatAbuseChecks(req, res, {
+      sessionToken: safeSessionToken,
+      hasImages: safeImages.length > 0,
+    })
+    if (!abuse.ok) {
+      return res.status(abuse.status).json(abuse.body)
     }
 
-    const userText = sanitizeChatMessage(text) || '(See attached image)'
-    const safeSessionToken = String(sessionToken || '').trim().slice(0, 128) || null
+    const userText = abuse.userText || sanitizeChatMessage(text) || '(See attached image)'
 
     if (containsCrisisLanguage(userText)) {
       if (safeSessionToken) {
@@ -71,45 +80,55 @@ export default async function handler(req, res) {
       return res.status(200).json({ reply: redirect, guardrail: true })
     }
 
-    const recent = Array.isArray(messages)
-      ? messages
-          .filter((m) => m?.role === 'user' || m?.role === 'assistant')
-          .slice(-14)
-          .map((m) => ({
-            role: m.role,
-            text: sanitizeChatMessage(m.text),
-          }))
-      : []
+    const lockResult = await withChatProcessing(abuse.lockKey, async () => {
+      const recent = trimConversationHistory(
+        Array.isArray(messages)
+          ? messages.map((m) => ({
+              role: m.role,
+              text: sanitizeChatMessage(m.text),
+            }))
+          : [],
+      )
 
-    const completionMessages = buildChatCompletionMessages({
-      modeId: modeId || 'cross',
-      dontTextStep,
-      dontTextMessageCount,
-      preferenceProfile: null,
-      contextRecap: contextRecap
-        ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
-        : null,
-      crossSessionSummary: null,
-      hiddenInjections,
-      conversationHistory: recent,
-      userText,
-      images: safeImages,
-    })
-
-    const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
-
-    const reply = await streamChatReply(res, {
-      messages: completionMessages,
-      temperature: 0.65,
-      fallbackReply,
-    })
-
-    if (safeSessionToken) {
-      void logAnonymousExchange({
-        sessionToken: safeSessionToken,
+      const completionMessages = buildChatCompletionMessages({
         modeId: modeId || 'cross',
+        dontTextStep,
+        dontTextMessageCount,
+        preferenceProfile: null,
+        contextRecap: contextRecap
+          ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
+          : null,
+        crossSessionSummary: null,
+        hiddenInjections,
+        conversationHistory: recent,
         userText,
-        assistantText: reply,
+        images: safeImages,
+      })
+
+      const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
+
+      const reply = await streamChatReply(res, {
+        messages: completionMessages,
+        temperature: 0.65,
+        fallbackReply,
+      })
+
+      if (safeSessionToken) {
+        void logAnonymousExchange({
+          sessionToken: safeSessionToken,
+          modeId: modeId || 'cross',
+          userText,
+          assistantText: reply,
+        })
+      }
+
+      return reply
+    })
+
+    if (lockResult.locked) {
+      return res.status(429).json({
+        error: 'processing',
+        message: 'still thinking about your last message...',
       })
     }
   } catch (error) {

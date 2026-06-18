@@ -29,7 +29,9 @@ function AppearanceToggle({ compact }) {
       >
         <button
           type="button"
-          onClick={() => setTheme(THEMES.LIGHT)}
+          onClick={() => {
+            if (theme !== THEMES.LIGHT) setTheme(THEMES.LIGHT)
+          }}
           aria-pressed={theme === THEMES.LIGHT}
           className={cn(
             'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[10px] font-medium transition',
@@ -43,7 +45,9 @@ function AppearanceToggle({ compact }) {
         </button>
         <button
           type="button"
-          onClick={() => setTheme(THEMES.DARK)}
+          onClick={() => {
+            if (theme !== THEMES.DARK) setTheme(THEMES.DARK)
+          }}
           aria-pressed={theme === THEMES.DARK}
           className={cn(
             'inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[10px] font-medium transition',
@@ -73,11 +77,13 @@ function PrivacyToggle({ label, description, checked, disabled, onToggle }) {
         aria-checked={checked}
         aria-label={label}
         disabled={disabled}
-        onClick={onToggle}
+        onClick={() => {
+          if (!disabled) onToggle()
+        }}
         className={cn(
           'relative shrink-0 h-7 w-12 rounded-full transition-colors duration-200',
           checked ? 'bg-clay' : 'bg-border',
-          disabled && 'opacity-50',
+          disabled && 'opacity-50 cursor-not-allowed',
         )}
       >
         <span
@@ -126,8 +132,13 @@ export function useParleSettings(isAuthed = true) {
   const [resetting, setResetting] = useState(false)
   const [status, setStatus] = useState('')
   const [statusVisible, setStatusVisible] = useState(false)
+  const [saving, setSaving] = useState(false)
   const statusTimerRef = useRef(null)
-  const fetchAbortRef = useRef(null)
+  const syncAbortRef = useRef(null)
+  const patchSeqRef = useRef(0)
+  const togglingRef = useRef(false)
+  const lastPatchAtRef = useRef(0)
+  const PATCH_DEBOUNCE_MS = 400
 
   const setters = {
     setMemoryEnabled,
@@ -150,15 +161,15 @@ export function useParleSettings(isAuthed = true) {
       return null
     }
 
-    if (fetchAbortRef.current) fetchAbortRef.current.abort()
+    if (syncAbortRef.current) syncAbortRef.current.abort()
     const controller = new AbortController()
-    fetchAbortRef.current = controller
+    syncAbortRef.current = controller
 
     try {
       const res = await fetch('/api/user/settings', { signal: controller.signal })
       if (!res.ok) return null
       const data = await res.json()
-      if (!data || controller.signal.aborted) return null
+      if (!data || controller.signal.aborted || patchSeqRef.current > 0) return null
 
       applySettings(setters, data)
       writeSettingsCache(data)
@@ -192,13 +203,22 @@ export function useParleSettings(isAuthed = true) {
     void syncFromServer()
 
     return () => {
-      if (fetchAbortRef.current) fetchAbortRef.current.abort()
+      if (syncAbortRef.current) syncAbortRef.current.abort()
       if (statusTimerRef.current) clearTimeout(statusTimerRef.current)
     }
   }, [isAuthed, syncFromServer])
 
   async function patchSetting(field, next, successMessage, revert) {
+    if (saving) return false
+
+    const now = Date.now()
+    if (now - lastPatchAtRef.current < PATCH_DEBOUNCE_MS) return false
+    lastPatchAtRef.current = now
+
+    const seq = ++patchSeqRef.current
+    setSaving(true)
     setStatus('')
+
     try {
       const res = await fetch('/api/user/settings', {
         method: 'PATCH',
@@ -206,13 +226,22 @@ export function useParleSettings(isAuthed = true) {
         body: JSON.stringify({ [field]: next }),
       })
 
+      if (seq !== patchSeqRef.current) return false
+
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         revert()
-        showStatus("couldn't save, try again")
+        if (res.status === 429) {
+          showStatus(data?.message || 'too many requests. please wait.')
+        } else {
+          showStatus("couldn't save, try again")
+        }
         return false
       }
 
       const data = await res.json()
+      if (seq !== patchSeqRef.current) return false
+
       applySettings(setters, data)
       writeSettingsCache(data)
 
@@ -223,34 +252,53 @@ export function useParleSettings(isAuthed = true) {
       showStatus(successMessage)
       return true
     } catch {
-      revert()
-      showStatus("couldn't save, try again")
+      if (seq === patchSeqRef.current) {
+        revert()
+        showStatus("couldn't save, try again")
+      }
       return false
+    } finally {
+      if (seq === patchSeqRef.current) {
+        patchSeqRef.current = 0
+        setSaving(false)
+      }
     }
   }
 
   async function toggleMemory() {
+    if (togglingRef.current || saving || (hydrating && !hasCache)) return
+    togglingRef.current = true
     const prev = memoryEnabled
     const next = !prev
     setMemoryEnabled(next)
-    await patchSetting(
-      'memory_enabled',
-      next,
-      next ? 'Conversation memory turned on.' : 'Conversation memory turned off.',
-      () => setMemoryEnabled(prev),
-    )
+    try {
+      await patchSetting(
+        'memory_enabled',
+        next,
+        next ? 'Conversation memory turned on.' : 'Conversation memory turned off.',
+        () => setMemoryEnabled(prev),
+      )
+    } finally {
+      togglingRef.current = false
+    }
   }
 
   async function togglePersonalisation() {
+    if (togglingRef.current || saving || (hydrating && !hasCache)) return
+    togglingRef.current = true
     const prev = personalisationEnabled
     const next = !prev
     setPersonalisationEnabled(next)
-    await patchSetting(
-      'personalisation_enabled',
-      next,
-      next ? 'Personalisation turned on.' : 'Personalisation turned off.',
-      () => setPersonalisationEnabled(prev),
-    )
+    try {
+      await patchSetting(
+        'personalisation_enabled',
+        next,
+        next ? 'Personalisation turned on.' : 'Personalisation turned off.',
+        () => setPersonalisationEnabled(prev),
+      )
+    } finally {
+      togglingRef.current = false
+    }
   }
 
   async function resetPreferences() {
@@ -284,6 +332,7 @@ export function useParleSettings(isAuthed = true) {
     confirmReset,
     setConfirmReset,
     resetting,
+    saving,
     status,
     statusVisible,
     toggleMemory,
@@ -308,6 +357,7 @@ export function ParleSettingsPanel({
     confirmReset,
     setConfirmReset,
     resetting,
+    saving,
     status,
     statusVisible,
     toggleMemory,
@@ -315,6 +365,7 @@ export function ParleSettingsPanel({
     resetPreferences,
   } = settings
 
+  const togglesDisabled = !togglesReady || saving
   const showSkeleton = hydrating && !togglesReady
 
   if (!isAuthed) {
@@ -363,14 +414,14 @@ export function ParleSettingsPanel({
               label="Remember my conversations"
               description="parlé will remember what you talked about last time and open with a personalised message when you return. Only you can see this. Off by default."
               checked={memoryEnabled}
-              disabled={!togglesReady}
+              disabled={togglesDisabled}
               onToggle={toggleMemory}
             />
             <PrivacyToggle
               label="Personalise my experience"
               description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. This data never leaves parlé and is never shared. Off by default."
               checked={personalisationEnabled}
-              disabled={!togglesReady}
+              disabled={togglesDisabled}
               onToggle={togglePersonalisation}
             />
           </>
@@ -428,8 +479,6 @@ export function ParleSettingsPanel({
 
 export function ParleSettingsPopup({ open, onClose, isAuthed }) {
   const settings = useParleSettings(isAuthed)
-  const refreshRef = useRef(settings.refreshSettings)
-  refreshRef.current = settings.refreshSettings
 
   useEffect(() => {
     if (!open) return undefined
@@ -439,12 +488,6 @@ export function ParleSettingsPopup({ open, onClose, isAuthed }) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open, onClose])
-
-  useEffect(() => {
-    if (open && isAuthed) {
-      void refreshRef.current()
-    }
-  }, [open, isAuthed])
 
   if (!open) return null
 

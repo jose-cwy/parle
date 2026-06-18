@@ -6,7 +6,7 @@ import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 export default async function handler(req,res){
   if(req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { tier: 'auth' })
+  const guard = runApiPipeline(req, res)
   if (guard.handled) return
 
   try {
