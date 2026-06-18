@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowUp, ChevronDown, Loader2, Mic, Plus, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
@@ -15,6 +15,16 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const MAX_IMAGES = 2
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const TEXTAREA_MAX_HEIGHT = 120
+const TEXTAREA_MIN_HEIGHT = 28
+
+function resizeTextarea(el) {
+  if (!el) return
+  el.style.overflowY = 'hidden'
+  el.style.height = `${TEXTAREA_MIN_HEIGHT}px`
+  const next = Math.max(TEXTAREA_MIN_HEIGHT, Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT))
+  el.style.height = `${next}px`
+  el.style.overflowY = next >= TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
+}
 
 function getSpeechRecognition() {
   if (typeof window === 'undefined') return null
@@ -157,12 +167,17 @@ export default function ChatInputBar({
     }
   }, [])
 
+  const resizeTextareaRef = useCallback(() => {
+    resizeTextarea(textareaRef.current)
+  }, [])
+
+  useLayoutEffect(() => {
+    resizeTextareaRef()
+  }, [text, resizeTextareaRef])
+
   useEffect(() => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT)}px`
-  }, [text])
+    resizeTextareaRef()
+  }, [attachments.length, resizeTextareaRef])
 
   const persistImageConsent = useCallback(async () => {
     setImageConsent(true)
@@ -395,7 +410,10 @@ export default function ChatInputBar({
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => onTextChange(e.target.value)}
+            onChange={(e) => {
+              onTextChange(e.target.value)
+              resizeTextarea(e.target)
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -404,8 +422,7 @@ export default function ChatInputBar({
             }}
             rows={1}
             placeholder="say what's on your mind..."
-            style={{ maxHeight: TEXTAREA_MAX_HEIGHT }}
-            className="parle-chat-input__textarea resize-none bg-transparent border-0 outline-none leading-relaxed placeholder:text-muted-foreground/50 min-w-0 py-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="parle-chat-input__textarea resize-none bg-transparent border-0 outline-none leading-relaxed placeholder:text-muted-foreground/50 min-w-0 py-1 overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             disabled={disabled}
           />
 
