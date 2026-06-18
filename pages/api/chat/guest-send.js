@@ -1,4 +1,5 @@
 import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSafety'
+import { isOutOfScope, getRedirectResponse } from '../../../lib/chatGuardrails'
 import { logAnonymousExchange } from '../../../lib/parle/anonymousChatDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
@@ -55,6 +56,19 @@ export default async function handler(req, res) {
         })
       }
       return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
+    }
+
+    if (isOutOfScope(userText)) {
+      const redirect = getRedirectResponse(userText)
+      if (safeSessionToken) {
+        void logAnonymousExchange({
+          sessionToken: safeSessionToken,
+          modeId: modeId || 'cross',
+          userText,
+          assistantText: redirect,
+        })
+      }
+      return res.status(200).json({ reply: redirect, guardrail: true })
     }
 
     const recent = Array.isArray(messages)

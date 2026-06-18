@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Check, ChevronLeft, ChevronRight, CloudRain, Copy, Heart, Lock, MessageCircle, Pencil, RotateCcw, X } from 'lucide-react'
@@ -762,8 +762,9 @@ export default function HavenChat() {
     }
   }, [])
 
-  const visibleMessages = (messages || []).filter(
-    (m) => m.role === 'user' || m.role === 'assistant',
+  const visibleMessages = useMemo(
+    () => (messages || []).filter((m) => m.role === 'user' || m.role === 'assistant'),
+    [messages],
   )
 
   const sendSessionEnd = useCallback(async () => {

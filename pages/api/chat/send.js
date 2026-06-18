@@ -1,4 +1,5 @@
 import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSafety'
+import { isOutOfScope, getRedirectResponse } from '../../../lib/chatGuardrails'
 import { insertChatMessage, getRecentChatMessages } from '../../../lib/chatMemoryDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
@@ -55,6 +56,13 @@ export default async function handler(req, res) {
     await insertChatMessage(payload.id, 'user', userText)
     await insertChatMessage(payload.id, 'assistant', CRISIS_SAFETY_REPLY)
     return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
+  }
+
+  if (isOutOfScope(userText)) {
+    const redirect = getRedirectResponse(userText)
+    await insertChatMessage(payload.id, 'user', userText)
+    await insertChatMessage(payload.id, 'assistant', redirect)
+    return res.status(200).json({ reply: redirect, guardrail: true })
   }
 
   if (isEdit && typeof dbKeepCount === 'number') {

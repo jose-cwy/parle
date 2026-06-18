@@ -8,7 +8,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
-  Settings,
   SquarePen,
   Trash2,
 } from 'lucide-react'
@@ -19,7 +18,6 @@ import {
   prefetchChatExitRoutes,
   rememberChatReturnFromReferrer,
 } from '../../lib/parle/chatNavigation'
-import { ParleSettingsPopup } from './ParleSettings'
 import ParleLogo from '../brand/ParleLogo'
 
 function userDisplayName(user) {
@@ -47,7 +45,6 @@ export default function ParleChatSidebar({
   onRenameSession,
 }) {
   const router = useRouter()
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [renamingId, setRenamingId] = useState(null)
   const [renameDraft, setRenameDraft] = useState('')
   const renameInputRef = useRef(null)
@@ -297,22 +294,6 @@ export default function ParleChatSidebar({
           )}
         </div>
 
-        {isAuthed ? (
-          <div className="parle-chat-sidebar__nav-extra">
-            <button
-              type="button"
-              onClick={() => {
-                setSettingsOpen(true)
-                onCloseMobile?.()
-              }}
-              className="parle-chat-sidebar__nav-link"
-            >
-              <Settings size={15} strokeWidth={1.75} className="shrink-0 opacity-70" />
-              <span>Settings</span>
-            </button>
-          </div>
-        ) : null}
-
         <div className="parle-chat-sidebar__footer">
           <div className="parle-chat-sidebar__privacy-note">
             <Lock size={11} strokeWidth={2} aria-hidden />
@@ -327,15 +308,6 @@ export default function ParleChatSidebar({
               <span className="flex-1 min-w-0 text-[11px] text-foreground truncate">
                 {userDisplayName(user)}
               </span>
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                className="h-8 w-8 shrink-0 grid place-items-center rounded-lg text-muted-foreground hover:text-foreground transition"
-                aria-label="Settings"
-                title="Settings"
-              >
-                <Settings size={16} strokeWidth={1.75} />
-              </button>
             </div>
           ) : (
             <div className="parle-chat-sidebar__auth-links">
@@ -357,12 +329,6 @@ export default function ParleChatSidebar({
           )}
         </div>
       </aside>
-
-      <ParleSettingsPopup
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        isAuthed={isAuthed}
-      />
     </>
   )
 }
