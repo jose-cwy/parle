@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS anonymous_sessions (
   session_token VARCHAR(128) PRIMARY KEY,
   mode_used VARCHAR(64),
   message_count INTEGER NOT NULL DEFAULT 0,
+  training_eligible BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -112,10 +113,23 @@ CREATE TABLE IF NOT EXISTS anonymous_messages (
   session_token VARCHAR(128) NOT NULL REFERENCES anonymous_sessions(session_token) ON DELETE CASCADE,
   role VARCHAR(16) NOT NULL,
   content TEXT NOT NULL,
+  mode_id VARCHAR(64),
+  training_eligible BOOLEAN NOT NULL DEFAULT TRUE,
+  reply_kind VARCHAR(16) NOT NULL DEFAULT 'normal',
+  training_content TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE anonymous_sessions ADD COLUMN IF NOT EXISTS training_eligible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE anonymous_messages ADD COLUMN IF NOT EXISTS mode_id VARCHAR(64);
+ALTER TABLE anonymous_messages ADD COLUMN IF NOT EXISTS training_eligible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE anonymous_messages ADD COLUMN IF NOT EXISTS reply_kind VARCHAR(16) NOT NULL DEFAULT 'normal';
+ALTER TABLE anonymous_messages ADD COLUMN IF NOT EXISTS training_content TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_anonymous_messages_session ON anonymous_messages(session_token);
+CREATE INDEX IF NOT EXISTS idx_anonymous_messages_training
+  ON anonymous_messages(training_eligible, created_at DESC)
+  WHERE training_eligible = TRUE;
 CREATE INDEX IF NOT EXISTS idx_session_signals_user ON session_signals(user_id);
 CREATE INDEX IF NOT EXISTS idx_session_signals_created ON session_signals(user_id, created_at DESC);
 

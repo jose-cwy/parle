@@ -43,7 +43,7 @@ import {
   setPreferredModeId,
 } from '../../lib/parle/chatPreferences'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
-import { getGuestSessionToken } from '../../lib/parle/guestSessionToken'
+import { getGuestSessionToken, setGuestSessionToken } from '../../lib/parle/guestSessionToken'
 
 const CURRENT_SESSION_ID = 'current-live'
 const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
@@ -1194,6 +1194,11 @@ export default function HavenChat() {
       body: JSON.stringify(body),
     })
 
+    if (!isAuthed) {
+      const sessionHeader = res.headers.get('X-Parle-Guest-Session')
+      if (sessionHeader) setGuestSessionToken(sessionHeader)
+    }
+
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
       if (res.status === 429 || res.status === 400) {
@@ -1280,6 +1285,9 @@ export default function HavenChat() {
       }
     } else {
       const data = await res.json()
+      if (!isAuthed && data?.sessionToken) {
+        setGuestSessionToken(data.sessionToken)
+      }
       const replyMessage = createAssistantMessage(data.reply, {
         at: Date.now(),
         modeId: mode.id,

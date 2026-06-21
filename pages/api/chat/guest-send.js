@@ -1,6 +1,9 @@
 import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSafety'
 import { isOutOfScope, getRedirectResponse } from '../../../lib/chatGuardrails'
-import { logAnonymousExchange } from '../../../lib/parle/anonymousChatDb'
+import {
+  logGuestTrainingExchange,
+  resolveGuestSessionToken,
+} from '../../../lib/parle/guestTrainingDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
@@ -43,10 +46,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid image attachment' })
     }
     const safeImages = imageCheck.images
-    const safeSessionToken = String(sessionToken || '').trim().slice(0, 128) || null
+    const safeModeId = modeId || 'cross'
+    const trainingSessionToken = resolveGuestSessionToken(req, sessionToken)
 
     const abuse = await runChatAbuseChecks(req, res, {
-      sessionToken: safeSessionToken,
+      sessionToken: trainingSessionToken,
       hasImages: safeImages.length > 0,
     })
     if (!abuse.ok) {
@@ -56,28 +60,34 @@ export default async function handler(req, res) {
     const userText = abuse.userText || sanitizeChatMessage(text) || '(See attached image)'
 
     if (containsCrisisLanguage(userText)) {
-      if (safeSessionToken) {
-        void logAnonymousExchange({
-          sessionToken: safeSessionToken,
-          modeId: modeId || 'cross',
-          userText,
-          assistantText: CRISIS_SAFETY_REPLY,
-        })
-      }
-      return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
+      await logGuestTrainingExchange({
+        sessionToken: trainingSessionToken,
+        modeId: safeModeId,
+        userText,
+        assistantText: CRISIS_SAFETY_REPLY,
+        replyKind: 'safety',
+      })
+      return res.status(200).json({
+        reply: CRISIS_SAFETY_REPLY,
+        safety: true,
+        sessionToken: trainingSessionToken,
+      })
     }
 
     if (isOutOfScope(userText)) {
       const redirect = getRedirectResponse(userText)
-      if (safeSessionToken) {
-        void logAnonymousExchange({
-          sessionToken: safeSessionToken,
-          modeId: modeId || 'cross',
-          userText,
-          assistantText: redirect,
-        })
-      }
-      return res.status(200).json({ reply: redirect, guardrail: true })
+      await logGuestTrainingExchange({
+        sessionToken: trainingSessionToken,
+        modeId: safeModeId,
+        userText,
+        assistantText: redirect,
+        replyKind: 'guardrail',
+      })
+      return res.status(200).json({
+        reply: redirect,
+        guardrail: true,
+        sessionToken: trainingSessionToken,
+      })
     }
 
     const lockResult = await withChatProcessing(abuse.lockKey, async () => {
@@ -91,7 +101,7 @@ export default async function handler(req, res) {
       )
 
       const completionMessages = buildChatCompletionMessages({
-        modeId: modeId || 'cross',
+        modeId: safeModeId,
         dontTextStep,
         dontTextMessageCount,
         preferenceProfile: null,
@@ -107,20 +117,21 @@ export default async function handler(req, res) {
 
       const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
 
+      res.setHeader('X-Parle-Guest-Session', trainingSessionToken)
+
       const reply = await streamChatReply(res, {
         messages: completionMessages,
         temperature: 0.65,
         fallbackReply,
       })
 
-      if (safeSessionToken) {
-        void logAnonymousExchange({
-          sessionToken: safeSessionToken,
-          modeId: modeId || 'cross',
-          userText,
-          assistantText: reply,
-        })
-      }
+      await logGuestTrainingExchange({
+        sessionToken: trainingSessionToken,
+        modeId: safeModeId,
+        userText,
+        assistantText: reply,
+        replyKind: 'normal',
+      })
 
       return reply
     })
