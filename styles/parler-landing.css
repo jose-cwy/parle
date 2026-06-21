@@ -2376,52 +2376,27 @@ body.body--parler-landing .pss-contact-page__site-mark {
   opacity: 0.5;
 }
 
-/* ——— Scroll-swap (mobile What / Features) ——— */
+/* ——— Mobile swipe carousel (What / Features, max-width 767px) ——— */
 
-.parler-landing .pss-scroll-swap {
+.parler-landing .pss-mobile-carousel {
   position: relative;
   margin-top: 2rem;
 }
 
-@media (max-width: 767px) {
-  .parler-landing .pss-scroll-swap {
-    touch-action: none;
-  }
-}
-
-.parler-landing .pss-scroll-swap__sticky {
-  position: sticky;
-  top: 4.5rem;
+.parler-landing .pss-mobile-carousel__container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100dvh - 5.5rem);
-  padding: 1rem 0 2rem;
-  z-index: 2;
 }
 
-.parler-landing .pss-scroll-swap__stage {
-  position: relative;
-  width: 100%;
-  min-height: 14rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+.parler-landing .pss-mobile-carousel__card {
+  flex-shrink: 0;
 }
 
-.parler-landing .pss-scroll-swap__panel {
-  width: 100%;
-  will-change: transform, opacity;
-}
-
-.parler-landing .pss-scroll-swap__panel .pss-what-card,
-.parler-landing .pss-scroll-swap__panel .pss-features-bento__card {
+.parler-landing .pss-mobile-carousel__card .pss-what-card,
+.parler-landing .pss-mobile-carousel__card .pss-features-bento__card {
   width: 100%;
 }
 
-.parler-landing .pss-scroll-swap__dots {
+.parler-landing .pss-mobile-carousel__dots {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2429,7 +2404,7 @@ body.body--parler-landing .pss-contact-page__site-mark {
   margin-top: 1.25rem;
 }
 
-.parler-landing .pss-scroll-swap__dot {
+.parler-landing .pss-mobile-carousel__dot {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 9999px;
@@ -2437,9 +2412,45 @@ body.body--parler-landing .pss-contact-page__site-mark {
   transition: background 0.25s ease, transform 0.25s ease;
 }
 
-.parler-landing .pss-scroll-swap__dot--active {
+.parler-landing .pss-mobile-carousel__dot--active {
   background: var(--primary);
   transform: scale(1.25);
+}
+
+@media (max-width: 767px) {
+  body.body--parler-landing {
+    overflow-x: hidden;
+  }
+
+  .parler-landing .pss-mobile-carousel__container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+    scroll-padding-inline: 16px;
+    padding-inline: 16px;
+    margin-inline: -16px;
+    width: calc(100% + 32px);
+    scrollbar-width: none;
+    gap: 0;
+  }
+
+  .parler-landing .pss-mobile-carousel__container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .parler-landing .pss-mobile-carousel__card {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+
+  .parler-landing .pss-mobile-carousel__card .pss-what-card,
+  .parler-landing .pss-mobile-carousel__card .pss-features-bento__card {
+    min-height: 14rem;
+  }
 }
 
 /* ——— Mobile Why parlé paired compare ——— */
@@ -2525,7 +2536,7 @@ body.body--parler-landing .pss-contact-page__site-mark {
 }
 
 @media (min-width: 768px) {
-  .parler-landing .pss-scroll-swap,
+  .parler-landing .pss-mobile-carousel,
   .parler-landing .pss-why-compare-mobile,
   .parler-landing .pss-companion-mobile {
     display: none;
