@@ -7,6 +7,7 @@ import {
   readSettingsCache,
   writeSettingsCache,
 } from '../../lib/parle/settingsCache'
+import { fetchAuthUser, getCachedAuthUser, setCachedAuthUser } from '../../lib/authSession'
 import { THEMES } from '../../lib/theme'
 import { useTheme } from '../ThemeProvider'
 import HavenModal from './HavenModal'
@@ -97,6 +98,51 @@ function PrivacyToggle({ label, description, checked, disabled, onToggle }) {
   )
 }
 
+function DisplayNameField({ value, draft, disabled, saving, onDraftChange, onSave }) {
+  const trimmedDraft = String(draft || '').trim()
+  const trimmedSaved = String(value || '').trim()
+  const canSave = !disabled && !saving && trimmedDraft.length > 0 && trimmedDraft !== trimmedSaved
+
+  return (
+    <div className="border-t border-border/70 mt-5 pt-4 first:mt-0 first:pt-0 first:border-t-0">
+      <p className="text-[12px] font-medium text-foreground">Displayed name</p>
+      <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+        How parlé greets you in chat and across the app. Only visible to you.
+      </p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input
+          type="text"
+          value={draft}
+          maxLength={50}
+          disabled={disabled || saving}
+          onChange={(e) => onDraftChange(e.target.value)}
+          placeholder={trimmedSaved || 'Your name'}
+          className="h-9 w-full min-w-0 flex-1 rounded-lg border border-border bg-card px-3 text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-clay/30 disabled:opacity-50"
+          aria-label="Displayed name"
+        />
+        <button
+          type="button"
+          disabled={!canSave}
+          onClick={onSave}
+          className="h-9 shrink-0 rounded-lg bg-primary px-4 text-[11px] font-medium text-primary-foreground hover:opacity-90 transition disabled:opacity-40"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function DisplayNameSkeleton() {
+  return (
+    <div className="border-t border-border/70 mt-5 pt-4" aria-hidden>
+      <div className="h-3 w-28 rounded bg-border/70 animate-pulse" />
+      <div className="mt-2 h-2 w-full max-w-sm rounded bg-border/50 animate-pulse" />
+      <div className="mt-3 h-9 w-full rounded-lg bg-border/60 animate-pulse" />
+    </div>
+  )
+}
+
 function PrivacyToggleSkeleton() {
   return (
     <div
@@ -116,6 +162,10 @@ function PrivacyToggleSkeleton() {
 function applySettings(setters, settings) {
   setters.setMemoryEnabled(Boolean(settings.memory_enabled))
   setters.setPersonalisationEnabled(Boolean(settings.personalisation_enabled))
+  if (settings.preferred_name != null) {
+    setters.setPreferredName(String(settings.preferred_name))
+    setters.setPreferredNameDraft(String(settings.preferred_name))
+  }
 }
 
 export function useParleSettings(isAuthed = true) {
@@ -126,6 +176,9 @@ export function useParleSettings(isAuthed = true) {
   const [personalisationEnabled, setPersonalisationEnabled] = useState(
     () => cached?.personalisation_enabled ?? DEFAULT_SETTINGS_CACHE.personalisation_enabled,
   )
+  const [preferredName, setPreferredName] = useState('')
+  const [preferredNameDraft, setPreferredNameDraft] = useState('')
+  const [savingName, setSavingName] = useState(false)
   const [hydrating, setHydrating] = useState(() => isAuthed && !cached)
   const [hasCache, setHasCache] = useState(() => Boolean(cached))
   const [confirmReset, setConfirmReset] = useState(false)
@@ -143,6 +196,8 @@ export function useParleSettings(isAuthed = true) {
   const setters = {
     setMemoryEnabled,
     setPersonalisationEnabled,
+    setPreferredName,
+    setPreferredNameDraft,
   }
 
   function showStatus(message) {
@@ -173,6 +228,12 @@ export function useParleSettings(isAuthed = true) {
 
       applySettings(setters, data)
       writeSettingsCache(data)
+
+      const cachedUser = getCachedAuthUser()
+      if (cachedUser && data.preferred_name != null) {
+        setCachedAuthUser({ ...cachedUser, preferred_name: data.preferred_name || null })
+      }
+
       setHasCache(true)
       return data
     } catch (error) {
@@ -192,6 +253,11 @@ export function useParleSettings(isAuthed = true) {
     }
 
     const cachedOnMount = readSettingsCache()
+    const authUser = getCachedAuthUser()
+    if (authUser?.preferred_name) {
+      setPreferredName(String(authUser.preferred_name))
+      setPreferredNameDraft(String(authUser.preferred_name))
+    }
     if (cachedOnMount) {
       applySettings(setters, cachedOnMount)
       setHasCache(true)
@@ -301,6 +367,45 @@ export function useParleSettings(isAuthed = true) {
     }
   }
 
+  async function saveDisplayName() {
+    if (saving || savingName || (hydrating && !hasCache)) return
+
+    const trimmed = String(preferredNameDraft || '').trim()
+    if (!trimmed || trimmed === String(preferredName || '').trim()) return
+
+    setSavingName(true)
+    setStatus('')
+
+    try {
+      const res = await fetch('/api/auth/preferred-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferred_name: trimmed }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        showStatus(data?.error || "couldn't save, try again")
+        return
+      }
+
+      const payload = await res.json().catch(() => null)
+      const saved = payload?.user?.preferred_name ?? trimmed
+      setPreferredName(saved)
+      setPreferredNameDraft(saved)
+      if (payload?.user) {
+        setCachedAuthUser(payload.user)
+      } else {
+        await fetchAuthUser({ force: true })
+      }
+      showStatus('Display name updated.')
+    } catch {
+      showStatus("couldn't save, try again")
+    } finally {
+      setSavingName(false)
+    }
+  }
+
   async function resetPreferences() {
     setResetting(true)
     setStatus('')
@@ -326,6 +431,9 @@ export function useParleSettings(isAuthed = true) {
   return {
     memoryEnabled,
     personalisationEnabled,
+    preferredName,
+    preferredNameDraft,
+    setPreferredNameDraft,
     hydrating,
     hasCache,
     togglesReady: hasCache || !hydrating,
@@ -333,10 +441,12 @@ export function useParleSettings(isAuthed = true) {
     setConfirmReset,
     resetting,
     saving,
+    savingName,
     status,
     statusVisible,
     toggleMemory,
     togglePersonalisation,
+    saveDisplayName,
     resetPreferences,
     refreshSettings: syncFromServer,
   }
@@ -352,20 +462,25 @@ export function ParleSettingsPanel({
   const {
     memoryEnabled,
     personalisationEnabled,
+    preferredName,
+    preferredNameDraft,
+    setPreferredNameDraft,
     hydrating,
     togglesReady,
     confirmReset,
     setConfirmReset,
     resetting,
     saving,
+    savingName,
     status,
     statusVisible,
     toggleMemory,
     togglePersonalisation,
+    saveDisplayName,
     resetPreferences,
   } = settings
 
-  const togglesDisabled = !togglesReady || saving
+  const togglesDisabled = !togglesReady || saving || savingName
   const showSkeleton = hydrating && !togglesReady
 
   if (!isAuthed) {
@@ -404,6 +519,21 @@ export function ParleSettingsPanel({
 
       <div className={cn(compact ? 'mt-5' : 'mt-6')}>
         {showSkeleton ? (
+          <DisplayNameSkeleton />
+        ) : (
+          <DisplayNameField
+            value={preferredName}
+            draft={preferredNameDraft}
+            disabled={!togglesReady}
+            saving={savingName}
+            onDraftChange={setPreferredNameDraft}
+            onSave={saveDisplayName}
+          />
+        )}
+      </div>
+
+      <div className={cn(compact ? 'mt-5' : 'mt-6')}>
+        {showSkeleton ? (
           <>
             <PrivacyToggleSkeleton />
             <PrivacyToggleSkeleton />
@@ -412,14 +542,14 @@ export function ParleSettingsPanel({
           <>
             <PrivacyToggle
               label="Remember my conversations"
-              description="parlé will remember what you talked about last time and open with a personalised message when you return. Only you can see this. Off by default."
+              description="parlé will remember what you talked about last time and open with a personalised message when you return. Only you can see this. On by default."
               checked={memoryEnabled}
               disabled={togglesDisabled}
               onToggle={toggleMemory}
             />
             <PrivacyToggle
               label="Personalise my experience"
-              description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. This data never leaves parlé and is never shared. Off by default."
+              description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. This data never leaves parlé and is never shared. On by default."
               checked={personalisationEnabled}
               disabled={togglesDisabled}
               onToggle={togglePersonalisation}

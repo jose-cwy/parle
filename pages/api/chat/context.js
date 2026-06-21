@@ -31,8 +31,8 @@ export default async function handler(req, res) {
     } catch (error) {
       if (error?.code === '42P01' || error?.code === '42703') {
         return res.status(200).json({
-          memory_enabled: false,
-          personalisation_enabled: false,
+          memory_enabled: true,
+          personalisation_enabled: true,
           last_session_summary: null,
           profile: null,
         })

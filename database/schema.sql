@@ -75,8 +75,8 @@ CREATE INDEX IF NOT EXISTS idx_letters_to_self_user_completed ON letters_to_self
 
 -- parlé chatbot (see database/parle_chat.sql for full migration)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_session_summary TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS personalisation_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS personalisation_enabled BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS training_consent BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
 

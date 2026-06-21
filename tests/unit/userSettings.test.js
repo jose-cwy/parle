@@ -2,9 +2,9 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const userSettings = require('../../lib/parle/userSettings')
 
-test('DEFAULT_USER_SETTINGS are all false', () => {
-  assert.equal(userSettings.DEFAULT_USER_SETTINGS.memory_enabled, false)
-  assert.equal(userSettings.DEFAULT_USER_SETTINGS.personalisation_enabled, false)
+test('DEFAULT_USER_SETTINGS are on by default', () => {
+  assert.equal(userSettings.DEFAULT_USER_SETTINGS.memory_enabled, true)
+  assert.equal(userSettings.DEFAULT_USER_SETTINGS.personalisation_enabled, true)
 })
 
 test('normalizeSettings coerces booleans', () => {
