@@ -34,3 +34,9 @@ test('scrubPII removes emails and phone numbers for training storage', () => {
   assert.match(scrubbed, /\[phone\]/)
   assert.doesNotMatch(scrubbed, /jane@example.com/)
 })
+
+test('guest training ciphertext uses encryption prefix', () => {
+  const { encrypt } = require('../../lib/security/encryption')
+  const ciphertext = encrypt(scrubPII('hello there'))
+  assert.match(ciphertext, /^enc:v1:/)
+})

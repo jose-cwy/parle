@@ -1,5 +1,6 @@
 import { openaiChatComplete } from '../../../lib/openai'
 import { SESSION_TITLE_PROMPT } from '../../../lib/parle/prompts'
+import { sanitizeSessionTitle } from '../../../lib/parle/sessionTitle'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
 
@@ -25,6 +26,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing messages' })
   }
 
+  const userTexts = messages
+    .filter((m) => m?.role === 'user')
+    .map((m) => sanitizeChatMessage(m.text))
+    .filter(Boolean)
+
   const transcript = messages
     .filter((m) => m?.role === 'user' || m?.role === 'assistant')
     .slice(0, 6)
@@ -44,7 +50,7 @@ export default async function handler(req, res) {
       temperature: 0.3,
     })
 
-    const title = cleanTitle(raw)
+    const title = sanitizeSessionTitle(cleanTitle(raw), userTexts)
     if (!title || GENERIC_TITLES.test(title)) {
       return res.status(200).json({ title: null })
     }
