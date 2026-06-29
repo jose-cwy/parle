@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { fetchAuthUser, isAuthCacheReady } from '../lib/authSession'
+import { fetchAuthUser } from '../lib/authSession'
 import { hasPreferredName } from '../lib/user'
-import LandingSplash from '../components/landing/LandingSplash'
 import ParlerLandingPage from '../components/landing/ParlerLandingPage'
 
 export default function Home() {
   const router = useRouter()
-  const [checking, setChecking] = useState(() => !isAuthCacheReady())
   const signupDeclined = router.query.signup === 'declined'
 
   useEffect(() => {
@@ -19,22 +17,14 @@ export default function Home() {
         if (!active) return
         if (user) {
           router.replace(hasPreferredName(user) ? '/dashboard' : '/welcome')
-          return
         }
-        setChecking(false)
       })
-      .catch(() => {
-        if (active) setChecking(false)
-      })
+      .catch(() => {})
 
     return () => {
       active = false
     }
-  }, [])
-
-  if (checking) {
-    return <LandingSplash />
-  }
+  }, [router])
 
   return (
     <>
