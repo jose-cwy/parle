@@ -44,6 +44,7 @@ import {
 } from '../../lib/parle/chatPreferences'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
 import { getGuestSessionToken, setGuestSessionToken } from '../../lib/parle/guestSessionToken'
+import { parseBoldSegments } from '../../lib/parle/renderBoldText'
 
 const CURRENT_SESSION_ID = 'current-live'
 const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
@@ -293,6 +294,16 @@ function splitAssistantParagraphs(text) {
   return parts
 }
 
+function renderParagraphContent(text) {
+  return parseBoldSegments(text).map((segment, index) =>
+    segment.type === 'bold' ? (
+      <strong key={index}>{segment.value}</strong>
+    ) : (
+      segment.value
+    ),
+  )
+}
+
 function AssistantBody({ text }) {
   const paragraphs = splitAssistantParagraphs(text)
 
@@ -302,7 +313,7 @@ function AssistantBody({ text }) {
     <div className="parle-chat-msg__body">
       {paragraphs.map((paragraph, index) => (
         <p key={index} className="parle-chat-msg__paragraph">
-          {paragraph}
+          {renderParagraphContent(paragraph)}
         </p>
       ))}
     </div>

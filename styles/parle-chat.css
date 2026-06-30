@@ -1151,6 +1151,10 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   word-break: break-word;
 }
 
+.parle-chat-msg__paragraph strong {
+  font-weight: 600;
+}
+
 .parle-chat-msg__paragraph:last-child {
   margin-bottom: 0;
 }
