@@ -201,8 +201,8 @@ function resolveSessionStorageKey(activeSessionId, sessionId) {
   return sessionId
 }
 
-function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSessionTitle }) {
-  const archives = getChatArchives()
+function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSessionTitle, isAuthed }) {
+  const archives = isAuthed ? getChatArchives() : []
   const items = []
   const hasUserMessageInLiveSession = hasUserMessages(visibleMessages)
   const viewingArchive = isViewingArchive(activeSessionId)
@@ -943,6 +943,7 @@ export default function HavenChat() {
         visibleMessages,
         activeSessionId,
         liveSessionTitle,
+        isAuthed,
       }),
     )
   }, [messages, chatMode, visibleMessages, isAuthed, activeSessionId, archivesRevision, liveSessionTitle])
