@@ -48,7 +48,7 @@ export default function Register() {
         if (!active) return
         if (user) {
           setRedirecting(true)
-          router.replace(hasPreferredName(user) ? '/dashboard' : '/welcome')
+          router.replace(hasPreferredName(user) ? '/dashboard' : '/chat')
           return
         }
 
@@ -84,7 +84,7 @@ export default function Register() {
     if (res.ok) {
       const payload = await res.json().catch(() => null)
       if (payload?.user) setCachedAuthUser(payload.user)
-      router.replace('/welcome')
+      router.replace('/chat')
     } else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Registration failed')
