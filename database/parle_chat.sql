@@ -7,6 +7,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS personalisation_enabled BOOLEAN NOT N
 ALTER TABLE users ADD COLUMN IF NOT EXISTS training_consent BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS image_attach_consent_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_reason VARCHAR(32);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_answered BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Learned preference profile (logged-in only)
 CREATE TABLE IF NOT EXISTS user_preference_profile (

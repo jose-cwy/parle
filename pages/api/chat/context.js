@@ -12,14 +12,20 @@ export default async function handler(req, res) {
     try {
       const settings = await getUserChatSettings(payload.id)
       let imageAttachConsent = false
+      let onboardingAnswered = false
+      let onboardingReason = null
       try {
         const consentRow = await db.query(
-          'SELECT image_attach_consent_at FROM users WHERE id = $1',
+          'SELECT image_attach_consent_at, onboarding_answered, onboarding_reason FROM users WHERE id = $1',
           [payload.id],
         )
         imageAttachConsent = Boolean(consentRow.rows[0]?.image_attach_consent_at)
+        onboardingAnswered = Boolean(consentRow.rows[0]?.onboarding_answered)
+        onboardingReason = consentRow.rows[0]?.onboarding_reason || null
       } catch {
         imageAttachConsent = false
+        onboardingAnswered = false
+        onboardingReason = null
       }
       return res.status(200).json({
         memory_enabled: settings.memory_enabled,
@@ -27,6 +33,8 @@ export default async function handler(req, res) {
         last_session_summary: settings.last_session_summary,
         profile: settings.profile,
         image_attach_consent: imageAttachConsent,
+        onboarding_answered: onboardingAnswered,
+        onboarding_reason: onboardingReason,
       })
     } catch (error) {
       if (error?.code === '42P01' || error?.code === '42703') {
@@ -35,6 +43,8 @@ export default async function handler(req, res) {
           personalisation_enabled: true,
           last_session_summary: null,
           profile: null,
+          onboarding_answered: false,
+          onboarding_reason: null,
         })
       }
       console.error('chat_context_error', error)
