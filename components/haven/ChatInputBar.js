@@ -130,8 +130,31 @@ export default function ChatInputBar({
   const recognitionRef = useRef(null)
   const recordingRef = useRef(false)
   const preRecordingTextRef = useRef('')
+  const wasDisabledRef = useRef(disabled)
 
   const [micAvailable, setMicAvailable] = useState(false)
+
+  const focusTextarea = useCallback(() => {
+    const el = textareaRef.current
+    if (!el || disabled || modeOpen || showConsentModal) return
+    try {
+      el.focus({ preventScroll: true })
+    } catch {
+      el.focus()
+    }
+  }, [disabled, modeOpen, showConsentModal])
+
+  useEffect(() => {
+    const wasDisabled = wasDisabledRef.current
+    wasDisabledRef.current = disabled
+
+    if (!wasDisabled || disabled || modeOpen || showConsentModal) return undefined
+
+    const id = window.requestAnimationFrame(() => {
+      focusTextarea()
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [disabled, modeOpen, showConsentModal, focusTextarea])
 
   useEffect(() => {
     setMicAvailable(Boolean(getSpeechRecognition()))

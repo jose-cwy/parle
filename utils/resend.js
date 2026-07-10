@@ -26,4 +26,28 @@ async function sendVerificationEmail(email) {
   })
 }
 
-module.exports = { sendVerificationEmail }
+async function sendGuestCheckInEmail(email) {
+  const resend = getResendClient()
+  if (!resend) return false
+
+  const text = `hey.
+
+it's been a couple of days since you came to parlé.
+
+just wanted to check in — how are you doing?
+
+if you want to keep talking, we're here.
+parle.chat
+
+— parlé`
+
+  await resend.emails.send({
+    from: process.env.PARLE_FROM_EMAIL || 'parlé <hello@parle.chat>',
+    to: email,
+    subject: 'how are you doing?',
+    text,
+  })
+  return true
+}
+
+module.exports = { sendVerificationEmail, sendGuestCheckInEmail }

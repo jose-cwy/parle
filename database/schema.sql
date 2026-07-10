@@ -143,3 +143,19 @@ CREATE TABLE IF NOT EXISTS usage_tracking (
   is_guest BOOLEAN NOT NULL DEFAULT FALSE,
   UNIQUE (user_identifier, usage_date)
 );
+
+CREATE TABLE IF NOT EXISTS guest_emails (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(320) NOT NULL,
+  reason VARCHAR(32),
+  session_message_count INTEGER,
+  source VARCHAR(32) NOT NULL DEFAULT 'guest_chat',
+  followup_due_at TIMESTAMPTZ,
+  followup_sent_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS guest_emails_email_lower_idx ON guest_emails (LOWER(email));
+CREATE INDEX IF NOT EXISTS guest_emails_followup_due_idx
+  ON guest_emails (followup_due_at)
+  WHERE followup_sent_at IS NULL;

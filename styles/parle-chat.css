@@ -1750,3 +1750,156 @@ html[data-theme='light'] .parle-onboarding__option:active {
     max-width: 340px;
   }
 }
+
+/* ——— Guest email capture (in-chat) ——— */
+
+.parle-guest-email-prompt {
+  width: 100%;
+  padding: 8px 0 12px;
+}
+
+.parle-guest-email-prompt__divider {
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.1;
+  margin: 0 0 18px;
+}
+
+.parle-guest-email-prompt__label {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  font-style: italic;
+  text-align: center;
+  color: var(--parle-text, #f0ebe4);
+  opacity: 0.45;
+}
+
+.parle-guest-email-prompt__form {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 48px);
+  max-width: 560px;
+  height: 48px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.parle-guest-email-prompt__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 14px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font-size: 15px;
+}
+
+.parle-guest-email-prompt__input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.parle-guest-email-prompt__submit {
+  flex-shrink: 0;
+  width: 44px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--primary, #c9a87c);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.parle-guest-email-prompt__submit:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.parle-guest-email-prompt__submit:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.parle-guest-email-prompt__skip {
+  display: block;
+  width: 100%;
+  margin: 12px auto 0;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--parle-text, #f0ebe4);
+  opacity: 0.45;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.parle-guest-email-prompt__skip:hover {
+  opacity: 0.65;
+}
+
+.parle-guest-email-prompt__error {
+  margin: 8px auto 0;
+  max-width: calc(100% - 48px);
+  font-size: 12px;
+  text-align: center;
+  color: #e8a8a0;
+}
+
+.parle-guest-email-prompt__confirmation {
+  margin: 0;
+  padding: 4px 24px 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-style: italic;
+  text-align: center;
+  color: var(--parle-text, #f0ebe4);
+  opacity: 0.55;
+  animation: parle-guest-email-fade-in 0.35s ease-out;
+}
+
+.parle-guest-email-prompt--confirmed {
+  animation: parle-guest-email-fade-out 3s ease forwards;
+}
+
+@keyframes parle-guest-email-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes parle-guest-email-fade-out {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+html[data-theme='light'] .parle-guest-email-prompt__form {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme='light'] .parle-guest-email-prompt__input {
+  color: var(--foreground, #2a2420);
+}
+
+html[data-theme='light'] .parle-guest-email-prompt__input::placeholder {
+  color: rgba(42, 36, 32, 0.45);
+}
+

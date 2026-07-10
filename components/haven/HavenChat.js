@@ -44,11 +44,21 @@ import {
 } from '../../lib/parle/chatPreferences'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
 import OnboardingSheet from './OnboardingSheet'
+import GuestEmailPrompt from './GuestEmailPrompt'
 import {
   getOnboardingContextInjection,
   isGuestOnboardingAnswered,
   saveGuestOnboarding,
 } from '../../lib/parle/onboarding'
+import {
+  getGuestEmailThreshold,
+  getGuestOnboardingReasonForEmail,
+  hasGuestEmail,
+  markEmailPromptShownThisSession,
+  saveGuestEmail,
+  shouldOfferBeforeunloadEmailPrompt,
+  wasEmailPromptShownThisSession,
+} from '../../lib/parle/guestEmail'
 import { getGuestSessionToken, setGuestSessionToken } from '../../lib/parle/guestSessionToken'
 import { parseBoldSegments } from '../../lib/parle/renderBoldText'
 
@@ -658,7 +668,11 @@ export default function HavenChat() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [onboardingAnswered, setOnboardingAnswered] = useState(true)
   const [onboardingSheetOpen, setOnboardingSheetOpen] = useState(false)
+  const [guestEmailPromptActive, setGuestEmailPromptActive] = useState(false)
+  const [guestEmailPromptConfirmed, setGuestEmailPromptConfirmed] = useState(false)
+  const [guestEmailSubmitting, setGuestEmailSubmitting] = useState(false)
   const pendingReplyRef = useRef(null)
+  const guestEmailConfirmTimerRef = useRef(null)
   const [pendingModeId, setPendingModeId] = useState(DEFAULT_MODE.id)
   const [entryExiting, setEntryExiting] = useState(false)
   const sessionRef = useRef(createSessionState())
@@ -945,6 +959,53 @@ export default function HavenChat() {
       window.removeEventListener('beforeunload', onLeave)
     }
   }, [sendSessionEnd])
+
+  useEffect(() => {
+    if (isAuthed) return undefined
+
+    function onGuestEmailBeforeUnload(event) {
+      if (hasGuestEmail() || wasEmailPromptShownThisSession() || guestEmailPromptActive) {
+        return
+      }
+
+      const count = (messagesRef.current || []).filter((m) => m.role === 'user').length
+      if (!shouldOfferBeforeunloadEmailPrompt(count)) return
+
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', onGuestEmailBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', onGuestEmailBeforeUnload)
+    }
+  }, [isAuthed, guestEmailPromptActive])
+
+  useEffect(() => {
+    if (isAuthed || historyLoading) return
+    if (hasGuestEmail() || wasEmailPromptShownThisSession()) return
+    if (guestEmailPromptActive || guestEmailPromptConfirmed) return
+
+    const count = (messages || []).filter((m) => m.role === 'user').length
+    const threshold = getGuestEmailThreshold()
+    if (count >= threshold) {
+      setGuestEmailPromptActive(true)
+    }
+  }, [
+    isAuthed,
+    historyLoading,
+    messages,
+    guestEmailPromptActive,
+    guestEmailPromptConfirmed,
+  ])
+
+  useEffect(() => {
+    return () => {
+      if (guestEmailConfirmTimerRef.current) {
+        window.clearTimeout(guestEmailConfirmTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -1236,6 +1297,45 @@ export default function HavenChat() {
       ], { chatModeId: pending.mode.id })
     } finally {
       stopSessionLoading(pending.storageKey)
+    }
+  }
+
+  function dismissGuestEmailPrompt() {
+    markEmailPromptShownThisSession()
+    setGuestEmailPromptActive(false)
+    setGuestEmailPromptConfirmed(false)
+  }
+
+  async function handleGuestEmailSubmit(email) {
+    setGuestEmailSubmitting(true)
+    try {
+      const reason = getGuestOnboardingReasonForEmail()
+      const count = (messages || []).filter((m) => m.role === 'user').length
+      const res = await fetch('/api/guest/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          reason: reason || undefined,
+          message_count: count,
+        }),
+      })
+      if (!res.ok) return
+
+      saveGuestEmail(email)
+      markEmailPromptShownThisSession()
+      setGuestEmailPromptConfirmed(true)
+
+      if (guestEmailConfirmTimerRef.current) {
+        window.clearTimeout(guestEmailConfirmTimerRef.current)
+      }
+      guestEmailConfirmTimerRef.current = window.setTimeout(() => {
+        setGuestEmailPromptActive(false)
+        setGuestEmailPromptConfirmed(false)
+        guestEmailConfirmTimerRef.current = null
+      }, 3000)
+    } finally {
+      setGuestEmailSubmitting(false)
     }
   }
 
@@ -2060,6 +2160,14 @@ export default function HavenChat() {
                   />
                 )
               })}
+              {!isAuthed && guestEmailPromptActive ? (
+                <GuestEmailPrompt
+                  confirmed={guestEmailPromptConfirmed}
+                  submitting={guestEmailSubmitting}
+                  onSubmit={handleGuestEmailSubmit}
+                  onSkip={dismissGuestEmailPrompt}
+                />
+              ) : null}
               {showTypingIndicator && <TypingIndicator />}
             </div>
           ) : null}
