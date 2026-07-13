@@ -19,7 +19,7 @@ export default function LandingTrustSection() {
           <div>
             <p className="landing-v2-trust__label">Privacy-first</p>
             <p className="landing-v2-trust__body">
-              No public posts. No feed. Start talking without a real name. Delete your chat anytime.
+              No public posts. No feed. Start talking without an account. Clear your chat anytime; signed-in history is encrypted at rest.
             </p>
           </div>
           <div>

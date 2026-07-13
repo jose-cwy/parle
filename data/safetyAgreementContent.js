@@ -84,8 +84,9 @@ export const safetyAgreementSections = [
     id: 'what-we-collect',
     title: 'What we collect',
     body: [
-      'For guests: conversation data exists only in your browser session. Anonymised excerpts may be used to improve parlé\'s AI.',
+      'For guests: you can chat without an account. Your conversation is not saved to a parlé account, but messages are sent to our servers and processed by our AI provider to generate replies. Scrubbed, anonymised excerpts may be stored to improve parlé\'s AI. We also use a hashed version of your IP address to enforce daily message limits.',
       'For logged-in users: we store your account information, chat history, journal entries, and kept quotes so the product works. Anonymised excerpts of conversations may be used to improve parlé\'s AI.',
+      'If you choose to share an email as a guest, we store it so we can send an optional follow-up message.',
     ],
   },
   {
@@ -93,24 +94,25 @@ export const safetyAgreementSections = [
     title: 'How we use your conversations',
     body: [
       'parlé uses anonymised conversation data to improve our AI and make it more supportive over time. This means occasional excerpts from conversations may be used for training purposes.',
+      'To operate the service, we also use trusted providers — for example, our AI provider processes chat messages to generate replies, and our email provider sends account and follow-up messages. We do not sell your data.',
       'What we do:',
-      '- Strip all identifying information before any data is used (names, usernames, contact details)',
-      '- Use data only to improve parlé\'s ability to support users going through heartbreak',
+      '- Strip common identifying details (such as emails and phone numbers) before excerpts are stored for AI improvement',
+      '- Encrypt journal entries and signed-in chat history at rest',
       '- Never sell data to third parties',
-      '- Never share data with advertisers',
-      '- Never use data for any purpose other than improving parlé',
+      '- Never share data with advertisers or ad networks',
+      '- Use service providers only to run parlé (AI replies, email, hosting)',
       'What this means for you:',
-      'By using parlé, you agree that anonymised conversation data may be used to improve our AI. You can delete your account and all associated data at any time from settings.',
+      'By using parlé, you agree that anonymised conversation data may be used to improve our AI. You can clear your chat history from the chat interface. To request full account deletion, contact us via the contact page.',
     ],
   },
   {
     id: 'your-choices',
     title: 'Your choices',
     body: [
-      'You have two opt-in settings, all off by default:',
+      'You can control two privacy settings in settings. Both are on by default for new accounts, and you can turn either off anytime:',
       '1. Conversation memory — lets parlé remember your last session',
       '2. Personalisation — lets parlé learn your communication preferences',
-      'You can turn either of these on or off at any time in settings. Turning off personalisation immediately stops preference learning for your account.',
+      'Turning off personalisation immediately stops preference learning for your account.',
     ],
   },
 ]

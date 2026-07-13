@@ -542,14 +542,14 @@ export function ParleSettingsPanel({
           <>
             <PrivacyToggle
               label="Remember my conversations"
-              description="parlé will remember what you talked about last time and open with a personalised message when you return. Only you can see this. On by default."
+              description="parlé will remember what you talked about last time and open with a personalised message when you return. Stored on your account and used only to support your chats. On by default."
               checked={memoryEnabled}
               disabled={togglesDisabled}
               onToggle={toggleMemory}
             />
             <PrivacyToggle
               label="Personalise my experience"
-              description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. This data never leaves parlé and is never shared. On by default."
+              description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. Not sold or shared with advertisers. On by default."
               checked={personalisationEnabled}
               disabled={togglesDisabled}
               onToggle={togglePersonalisation}

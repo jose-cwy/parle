@@ -13,13 +13,13 @@ const STEPS = [
   },
   {
     emoji: '🔒',
-    title: '100% private',
-    description: 'Private by default. Never sold or analyzed.',
+    title: 'Built for privacy',
+    description: 'No public feed. Never sold for ads or tracked across the web.',
   },
 ]
 
 const PROS = [
-  { title: 'Private & safe', desc: 'Encrypted, never shared' },
+  { title: 'Private & safe', desc: 'Encrypted at rest when signed in' },
   { title: 'Remembers your story', desc: 'Context-aware support' },
   { title: 'Available 24/7', desc: 'When friends are asleep' },
   { title: 'No rush to heal', desc: 'Your pace, your journey' },

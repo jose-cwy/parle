@@ -59,7 +59,7 @@ export default function LandingHero() {
               className="text-base mb-8"
               style={{ color: 'var(--muted-foreground)' }}
             >
-              🔒 Private by default · 🛡️ Not therapy · 💬 Short replies
+              No ad tracking · Not therapy · Short replies
             </motion.p>
 
             <motion.div
@@ -83,7 +83,7 @@ export default function LandingHero() {
               className="text-sm mt-6"
               style={{ color: 'var(--muted-foreground)' }}
             >
-              Free to start · Private by default
+              Free to start · No account needed
             </motion.p>
           </div>
 

@@ -93,7 +93,7 @@ export default function LandingClosingCta() {
           </div>
           <div className="flex items-center gap-2">
             <BadgeIcon />
-            <span>Private by default</span>
+            <span>No ad tracking</span>
           </div>
         </motion.div>
       </div>

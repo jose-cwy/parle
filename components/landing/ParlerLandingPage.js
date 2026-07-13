@@ -9,12 +9,12 @@ import {
   Check,
   X,
   Lock,
+  Moon,
   Brain,
   Coffee,
   PhoneOff,
   GitBranch,
   Volume2,
-  ShieldOff,
 } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import VerticalTestimonialsSpin from './VerticalTestimonialsSpin'
@@ -59,7 +59,7 @@ function DictionaryHero() {
           <div className="pss-hero-divider pss-hero-rule" aria-hidden />
 
           <p className="pss-hero-defs pss-hero-definition pss-hero-definition--desktop">
-            No advice unless you want it. Just space.
+            Your private place to heal from heartbreak. 
           </p>
           <p className="pss-hero-defs pss-hero-definition pss-hero-definition--mobile">
             A private space to say the things you can&apos;t say out loud.
@@ -80,7 +80,7 @@ function DictionaryHero() {
           </Link>
 
           <p className="pss-hero-footnote">
-            Free to start · Private by default · Available 24/7
+           Made for heartbreak. Private by default.
           </p>
 
           <div className="pss-hero-scroll-hint" aria-hidden>
@@ -99,19 +99,19 @@ const WHAT_CARDS = [
     icon: Heart,
     title: 'What it is',
     description:
-      "A small, private corner of the internet built for one thing — the messy middle of a breakup. Not a journal app with a chatbot bolted on. Not a generic AI told to be nice. Something made for this.",
+      'Your private space made to deal with the messy feelings of heartbreak - when your thoughts feel too loud and you do not know who to talk to.',
   },
   {
     icon: MessageCircle,
     title: "What it's for",
     description:
-      "The 2am spiral. The unsent text. The thought you can't say to friends without it becoming a Whole Thing. Talk it out, write it down, or save the line that finally made sense.",
+      'For the 2am spirals, the urge to text them, the unanswered questions, and the moments when you simply need to let everything out.',
   },
   {
     icon: Sparkles,
     title: 'Why use it',
     description:
-      "Because heartbreak doesn't keep office hours, and you shouldn't have to perform okay-ness to get heard. parlé sits with you exactly as you are — no audience, no judgment, no advice you didn't ask for.",
+      'Parlé is built specifically for heartbreak and the emotions that come with it - not as another generic AI. It is made with you in mind.',
   },
 ]
 
@@ -124,7 +124,7 @@ function WhatIsParle() {
           A quiet place for the <span className="italic text-primary">loud</span> feelings.
         </h2>
         <p className="pss-what-section__intro mt-5 text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-          parlé is a heartbreak companion — built to listen, not to fix you.
+          Parlé is a heartbreak companion — built to listen, not to fix you.
         </p>
 
         <MobileCardCarousel trackClassName="pss-mobile-carousel--what">
@@ -156,54 +156,72 @@ function WhatIsParle() {
 
 const PARLE_PROMISE = [
   {
-    title: 'Guest mode leaves no trace',
-    description: 'No account, no data, no footprint',
+    title: 'Guest Mode leaves no trace',
+    description: "Chat history isn't saved, so you can talk freely and leave no trace.",
   },
   {
-    title: 'You control your data',
-    description: 'Personalisation is opt-in, not default',
+    title: 'You choose what parlé remembers',
+    description:
+      'Choose whether parlé remembers you for personalised support or forgets everything after each session.',
   },
   {
-    title: 'Your data stays private',
-    description: 'Never sold or shared with third parties',
+    title: 'Built specifically for heartbreak',
+    description:
+      'Every response is designed around the emotions of a heartbreak, whether you need comfort, perspective, or simply someone to listen.',
   },
   {
-    title: 'Delete anytime',
-    description: 'One click removes everything, instantly',
+    title: 'Support that adapts to you',
+    description:
+      'Choose the type of comfort you need, from venting and reassurance to logical perspective, instead of receiving the same style of response every time.',
+  },
+  {
+    title: 'You stay in control',
+    description:
+      "Enable personalised support or keep every conversation separate. You're always in control.",
   },
 ]
 
 const GENERIC_AI = [
   {
+    title: 'Chats are often linked to your account',
+    description:
+      'Users often switch to incognito or manually delete conversations if they want a more anonymous experience.',
+  },
+  {
     title: 'Generic chatbot tone',
-    description: 'Same script for every kind of pain.',
+    description:
+      'Responses are generic, emotional support can feel robotic or overly solution-focused.',
   },
   {
-    title: 'You become the product',
-    description: 'Your words become training data and ad signal.',
+    title: 'One assistant for every situation',
+    description:
+      "The same assistant handles every topic, which may not always match the emotional support you're looking for.",
   },
   {
-    title: 'Profiled across every session',
-    description: "Always-on memory you can't really turn off.",
-  },
-  {
-    title: '"Have you tried meditation?"',
-    description: 'Solutions when you just wanted to be heard.',
+    title: 'Memory is built for convenience',
+    description:
+      'not specifically for users who want emotional privacy after sensitive conversations.',
   },
 ]
 
 const PRIVACY_PILLARS = [
   {
     icon: Lock,
-    title: 'Encrypted at rest',
+    title: 'Encrypted and protected',
     description:
-      'Your journal and signed-in chats are encrypted before they ever hit the database.',
+      'Your chats and journal entries are encrypted before they are stored.',
   },
   {
-    icon: ShieldOff,
-    title: 'Personalisation is opt-in',
+    icon: Moon,
+    title: 'Here when the spiral hits',
     description:
-      'Cross-session memory and preference learning are off until you turn them on in settings.',
+      'For late-night spirals, sudden reminders, or moments when you need support.',
+  },
+  {
+    icon: BookOpen,
+    title: 'More than just a conversation',
+    description:
+      'Use journaling and reflection tools to help you process your emotions.',
   },
 ]
 
@@ -227,14 +245,16 @@ function CompareListItem({ title, description, variant = 'yes' }) {
 }
 
 function WhyParle() {
-  const comparePairs = PARLE_PROMISE.map((parle, index) => ({
-    headline: parle.title,
-    parle,
+  const pairCount = Math.min(PARLE_PROMISE.length, GENERIC_AI.length)
+  const comparePairs = Array.from({ length: pairCount }, (_, index) => ({
+    headline: PARLE_PROMISE[index].title,
+    parle: PARLE_PROMISE[index],
     other: GENERIC_AI[index],
   }))
+  const unpairedParle = PARLE_PROMISE.slice(pairCount)
 
   return (
-    <section id="why" className="pss-why-section px-6 md:px-12 py-20 md:py-28">
+    <section id="why" className="pss-why-section px-6 md:px-12 pt-20 pb-8 md:pt-28 md:pb-10">
       <div className="max-w-6xl mx-auto text-center">
         <SectionEyebrow>Why parlé</SectionEyebrow>
         <h2 className="font-serif text-4xl md:text-5xl tracking-tight">
@@ -281,6 +301,13 @@ function WhyParle() {
               <CompareListItem title={other.title} description={other.description} variant="no" />
             </article>
           ))}
+          {unpairedParle.map(({ title, description }) => (
+            <article key={title} className="pss-why-compare-mobile__pair">
+              <h3 className="pss-why-compare-mobile__headline font-serif">{title}</h3>
+              <p className="pss-why-compare-mobile__label">parlé</p>
+              <CompareListItem title={title} description={description} variant="yes" />
+            </article>
+          ))}
         </div>
 
         <ul className="pss-why-privacy">
@@ -297,8 +324,9 @@ function WhyParle() {
           ))}
         </ul>
 
-        <p className="mt-8 text-sm text-muted-foreground">
-          The full breakdown lives in{' '}
+        <p className="pss-why-terms-link">
+          How parlé protects you
+          <span aria-hidden="true"> • </span>
           <Link href="/terms" className="text-primary hover:underline underline-offset-2">
             Privacy &amp; Terms &amp; Safety
           </Link>
@@ -397,7 +425,7 @@ const COMPANION_MODES = [
     id: 'emotional',
     label: 'Emotional',
     icon: Heart,
-    blurb: 'Hold-me-while-I-cry mode. Pure comfort, no fixing.',
+    blurb: 'Hear you out, stay with you, and give you all the comfort you need.',
     modeTag: 'Emotional mode',
     messages: [
       { role: 'assistant', text: "Hey. Whatever brought you here — I'm glad you came. What's weighing on you?" },
@@ -409,7 +437,7 @@ const COMPANION_MODES = [
     id: 'logical',
     label: 'Logical',
     icon: Brain,
-    blurb: 'Help me see this clearly. Patterns, perspective, truth.',
+    blurb: 'See the situation clearly with honest perspective and practical advice.',
     modeTag: 'Logical mode',
     messages: [
       { role: 'assistant', text: "Tell me what happened — the version you haven't edited for anyone else." },
@@ -421,7 +449,7 @@ const COMPANION_MODES = [
     id: 'vent',
     label: 'Venting',
     icon: Volume2,
-    blurb: 'Unfiltered. I just listen. No advice, no judgment.',
+    blurb: 'Let it all out. I’ll match your energy and respond like your supportive bestie.',
     modeTag: 'Vent mode',
     messages: [
       { role: 'user', text: "I'm so angry I could scream and I hate that I still miss them." },
@@ -432,7 +460,7 @@ const COMPANION_MODES = [
     id: 'talk',
     label: 'Just talking',
     icon: Coffee,
-    blurb: 'Casual company when the silence gets too loud.',
+    blurb: 'Casual conversation to say whatever is on your mind',
     modeTag: 'Just talking',
     messages: [
       { role: 'assistant', text: 'the thing about rewatching comfort shows after a breakup is they hit different every time.' },
@@ -542,7 +570,7 @@ function CompanionPreview({ mode }) {
         </div>
         <div className="pss-companion-preview__lock">
           <Lock className="w-3 h-3" strokeWidth={2} aria-hidden />
-          <span>Encrypted at rest</span>
+          <span>Handled securely</span>
         </div>
       </div>
 
@@ -569,7 +597,7 @@ function CompanionPreview({ mode }) {
       <div className="pss-companion-preview__footer">
         <span>Memory off</span>
         <span className="pss-companion-preview__footer-sep" aria-hidden>·</span>
-        <span>Guest · Device-only</span>
+        <span>Guest · Not saved to account</span>
       </div>
     </div>
   )
@@ -648,14 +676,14 @@ function CTA() {
           <Check className="w-4 h-4 text-primary" /> No credit card
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <Check className="w-4 h-4 text-primary" /> Private by default
+          <Check className="w-4 h-4 text-primary" /> No ad tracking
         </span>
       </div>
     </section>
   )
 }
 
-export default function ParlerLandingPage({ signupDeclined = false }) {
+export default function ndingPage({ signupDeclined = false }) {
   return (
     <main className="parler-landing min-h-screen bg-background text-foreground">
       <MarketingNav />

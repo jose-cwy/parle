@@ -299,7 +299,7 @@ export default function ParleChatSidebar({
         <div className="parle-chat-sidebar__footer">
           <div className="parle-chat-sidebar__privacy-note">
             <Lock size={11} strokeWidth={2} aria-hidden />
-            <span>Private by default</span>
+            <span>No public feed</span>
           </div>
 
           {isAuthed && user ? (
