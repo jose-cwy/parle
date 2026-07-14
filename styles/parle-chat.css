@@ -1,4 +1,4 @@
-/* parlé chat — ChatGPT-style sidebar + main layout */
+﻿/* parlÃ© chat â€” ChatGPT-style sidebar + main layout */
 
 .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__main,
 .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__content,
@@ -32,7 +32,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   overflow: hidden;
 }
 
-/* ——— Sidebar ——— */
+/* â€”â€”â€” Sidebar â€”â€”â€” */
 
 .parle-chat-sidebar {
   width: var(--parle-sidebar-width);
@@ -439,7 +439,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   }
 }
 
-/* ——— Main chat area ——— */
+/* â€”â€”â€” Main chat area â€”â€”â€” */
 
 .parle-chat-main {
   flex: 1;
@@ -517,7 +517,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   padding-bottom: 2rem;
 }
 
-/* ——— New chat empty state ——— */
+/* â€”â€”â€” New chat empty state â€”â€”â€” */
 
 .parle-chat-empty-state {
   position: absolute;
@@ -983,7 +983,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   color: var(--mode-cross-muted);
 }
 
-/* Filled pills (mode menu + trigger) — always high contrast */
+/* Filled pills (mode menu + trigger) â€” always high contrast */
 .parle-mode-pill--filled {
   border-color: transparent;
   color: var(--mode-on-saturated);
@@ -1092,7 +1092,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   padding-bottom: 0.75rem;
 }
 
-/* ——— Messages ——— */
+/* â€”â€”â€” Messages â€”â€”â€” */
 
 .parle-chat-system-notice {
   margin: 0.5rem auto;
@@ -1358,7 +1358,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   }
 }
 
-/* ——— Fixed input zone (main column only) ——— */
+/* â€”â€”â€” Fixed input zone (main column only) â€”â€”â€” */
 
 .parle-chat-main__bottom-fixed {
   position: fixed;
@@ -1450,7 +1450,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   padding-right: 1rem;
 }
 
-/* ——— Guest consent banner ——— */
+/* â€”â€”â€” Guest consent banner â€”â€”â€” */
 
 .parle-guest-consent {
   position: relative;
@@ -1550,7 +1550,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   }
 }
 
-/* ——— Settings popup ——— */
+/* â€”â€”â€” Settings popup â€”â€”â€” */
 
 .parle-settings-popup__header {
   display: flex;
@@ -1592,7 +1592,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   background-color: rgba(61, 53, 48, 0.06);
 }
 
-/* ——— First-message onboarding sheet ——— */
+/* â€”â€”â€” First-message onboarding sheet â€”â€”â€” */
 
 .parle-onboarding {
   position: fixed;
@@ -1751,155 +1751,158 @@ html[data-theme='light'] .parle-onboarding__option:active {
   }
 }
 
-/* ——— Guest email capture (in-chat) ——— */
+/* ——— Message thumbs feedback ——— */
 
-.parle-guest-email-prompt {
-  width: 100%;
-  padding: 8px 0 12px;
+.parle-msg-feedback {
+  margin-top: 0.5rem;
+  min-height: 1.5rem;
 }
 
-.parle-guest-email-prompt__divider {
-  width: 100%;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.1;
-  margin: 0 0 18px;
-}
-
-.parle-guest-email-prompt__label {
-  margin: 0 0 14px;
-  font-size: 13px;
-  line-height: 1.45;
-  font-style: italic;
-  text-align: center;
-  color: var(--parle-text, #f0ebe4);
-  opacity: 0.45;
-}
-
-.parle-guest-email-prompt__form {
+.parle-msg-feedback__actions {
   display: flex;
   align-items: center;
-  width: calc(100% - 48px);
-  max-width: 560px;
-  height: 48px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.08);
+  gap: 0.35rem;
+}
+
+.parle-msg-feedback__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.parle-msg-feedback__btn:hover:not(:disabled) {
+  opacity: 0.9;
+  color: var(--foreground);
+}
+
+.parle-msg-feedback__btn--selected {
+  opacity: 1;
+  color: var(--primary);
+}
+
+.parle-msg-feedback__btn:disabled {
+  cursor: default;
+}
+
+.parle-msg-feedback__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  transition: opacity 0.18s ease;
+}
+
+.parle-msg-feedback__reasons--fade {
+  opacity: 0;
+}
+
+.parle-msg-feedback__pill {
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.parle-guest-email-prompt__input {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  padding: 0 14px;
-  border: 0;
-  outline: none;
+  border-radius: 20px;
+  padding: 4px 10px;
   background: transparent;
-  color: #fff;
-  font-size: 15px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
 }
 
-.parle-guest-email-prompt__input::placeholder {
-  color: rgba(255, 255, 255, 0.45);
+.parle-msg-feedback__pill:hover {
+  opacity: 0.9;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
-.parle-guest-email-prompt__submit {
-  flex-shrink: 0;
-  width: 44px;
-  height: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--primary, #c9a87c);
-  font-size: 18px;
-  line-height: 1;
+html[data-theme='light'] .parle-msg-feedback__pill {
+  color: rgba(42, 36, 32, 0.6);
+  border-color: rgba(42, 36, 32, 0.2);
+}
+
+/* ——— Product pulse (proactive micro feedback) ——— */
+
+.parle-product-pulse {
+  margin: 0 1rem 0.75rem;
+  padding: 20px 24px;
+  border-radius: 16px 16px 0 0;
+  background: color-mix(in srgb, var(--card) 88%, var(--foreground) 6%);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
+}
+
+.parle-product-pulse__question {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 0.9375rem;
+  color: var(--foreground);
+}
+
+.parle-product-pulse__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.parle-product-pulse__option {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--primary);
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  color: var(--foreground);
+  font-size: 0.875rem;
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
 
-.parle-guest-email-prompt__submit:disabled {
-  opacity: 0.35;
-  cursor: default;
+.parle-product-pulse__option:hover:not(:disabled) {
+  opacity: 0.88;
 }
 
-.parle-guest-email-prompt__submit:not(:disabled):hover {
-  opacity: 0.85;
-}
-
-.parle-guest-email-prompt__skip {
+.parle-product-pulse__skip {
   display: block;
   width: 100%;
-  margin: 12px auto 0;
-  padding: 4px 8px;
+  margin-top: 12px;
   border: 0;
   background: transparent;
-  color: var(--parle-text, #f0ebe4);
-  opacity: 0.45;
+  color: var(--muted-foreground);
   font-size: 13px;
-  text-align: center;
   cursor: pointer;
 }
 
-.parle-guest-email-prompt__skip:hover {
-  opacity: 0.65;
+.parle-product-pulse__followup {
+  margin-top: 4px;
 }
 
-.parle-guest-email-prompt__error {
-  margin: 8px auto 0;
-  max-width: calc(100% - 48px);
-  font-size: 12px;
-  text-align: center;
-  color: #e8a8a0;
+.parle-product-pulse__textarea {
+  width: 100%;
+  resize: none;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  outline: none;
 }
 
-.parle-guest-email-prompt__confirmation {
-  margin: 0;
-  padding: 4px 24px 8px;
-  font-size: 13px;
-  line-height: 1.5;
-  font-style: italic;
-  text-align: center;
-  color: var(--parle-text, #f0ebe4);
-  opacity: 0.55;
-  animation: parle-guest-email-fade-in 0.35s ease-out;
+.parle-product-pulse__followup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
 }
 
-.parle-guest-email-prompt--confirmed {
-  animation: parle-guest-email-fade-out 3s ease forwards;
+.parle-product-pulse__link {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
 }
-
-@keyframes parle-guest-email-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes parle-guest-email-fade-out {
-  0%,
-  75% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-html[data-theme='light'] .parle-guest-email-prompt__form {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-html[data-theme='light'] .parle-guest-email-prompt__input {
-  color: var(--foreground, #2a2420);
-}
-
-html[data-theme='light'] .parle-guest-email-prompt__input::placeholder {
-  color: rgba(42, 36, 32, 0.45);
-}
-

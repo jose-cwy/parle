@@ -86,7 +86,6 @@ export const safetyAgreementSections = [
     body: [
       'Guests: You can chat without an account. Chats are not saved to a parlé profile, but messages are processed by our servers and AI provider to generate replies. Anonymised excerpts may be used to improve parlé. A hashed IP address is also used to enforce daily limits.',
       'Logged-in users: We store your account details, chat history, journal entries, and saved quotes so the service works. Anonymised conversation excerpts may also be used to improve parlé.',
-      'Guest email: If you provide an email, we store it only to send an optional follow-up.',
     ],
   },
   {

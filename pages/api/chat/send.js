@@ -4,6 +4,7 @@ import { insertChatMessage, getRecentChatMessages } from '../../../lib/chatMemor
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getUserChatSettings } from '../../../lib/parle/preferences'
+import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
@@ -81,6 +82,7 @@ export default async function handler(req, res) {
       await insertChatMessage(payload.id, 'user', userText)
 
       const settings = await getUserChatSettings(payload.id)
+      const replyFeedback = await getRecentReplyFeedback({ userId: payload.id, limit: 6 })
       const crossSummary =
         isNewSession && settings.memory_enabled ? settings.last_session_summary : crossSessionSummary
 
@@ -107,6 +109,7 @@ export default async function handler(req, res) {
         dontTextStep,
         dontTextMessageCount,
         preferenceProfile: settings.personalisation_enabled ? settings.profile : null,
+        replyFeedback,
         contextRecap: contextRecap
           ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
           : null,

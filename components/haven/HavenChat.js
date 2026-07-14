@@ -9,6 +9,8 @@ import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
 import ChatInputBar from './ChatInputBar'
 import GuestConsentBanner from './GuestConsentBanner'
+import MessageFeedbackActions from './MessageFeedbackActions'
+import ProductPulseCard, { wasProductPulseShown } from './ProductPulseCard'
 import {
   getChatReturnPath,
   navigateAwayFromChat,
@@ -44,21 +46,11 @@ import {
 } from '../../lib/parle/chatPreferences'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
 import OnboardingSheet from './OnboardingSheet'
-import GuestEmailPrompt from './GuestEmailPrompt'
 import {
   getOnboardingContextInjection,
   isGuestOnboardingAnswered,
   saveGuestOnboarding,
 } from '../../lib/parle/onboarding'
-import {
-  getGuestEmailThreshold,
-  getGuestOnboardingReasonForEmail,
-  hasGuestEmail,
-  markEmailPromptShownThisSession,
-  saveGuestEmail,
-  shouldOfferBeforeunloadEmailPrompt,
-  wasEmailPromptShownThisSession,
-} from '../../lib/parle/guestEmail'
 import { getGuestSessionToken, setGuestSessionToken } from '../../lib/parle/guestSessionToken'
 import { parseBoldSegments } from '../../lib/parle/renderBoldText'
 
@@ -543,6 +535,8 @@ function Bubble({
   msg,
   messageIndex,
   thinking,
+  isAuthed,
+  userExcerpt,
   onEditUserMessage,
   onResendUserMessage,
   onBranchChange,
@@ -561,9 +555,22 @@ function Bubble({
   }
 
   if (msg.role === 'assistant') {
+    const showFeedback =
+      !msg.ephemeral && String(msg.text || '').trim().length > 0
+
     return (
       <article className="parle-chat-msg parle-chat-msg--assistant">
         <AssistantBody text={msg.text} />
+        {showFeedback ? (
+          <MessageFeedbackActions
+            messageId={msg.id}
+            modeId={msg.modeId}
+            isAuthed={isAuthed}
+            disabled={thinking}
+            replyExcerpt={msg.text}
+            userExcerpt={userExcerpt}
+          />
+        ) : null}
       </article>
     )
   }
@@ -668,11 +675,9 @@ export default function HavenChat() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [onboardingAnswered, setOnboardingAnswered] = useState(true)
   const [onboardingSheetOpen, setOnboardingSheetOpen] = useState(false)
-  const [guestEmailPromptActive, setGuestEmailPromptActive] = useState(false)
-  const [guestEmailPromptConfirmed, setGuestEmailPromptConfirmed] = useState(false)
-  const [guestEmailSubmitting, setGuestEmailSubmitting] = useState(false)
+  const [productPulseVisible, setProductPulseVisible] = useState(false)
+  const lastAssistantDoneAtRef = useRef(0)
   const pendingReplyRef = useRef(null)
-  const guestEmailConfirmTimerRef = useRef(null)
   const [pendingModeId, setPendingModeId] = useState(DEFAULT_MODE.id)
   const [entryExiting, setEntryExiting] = useState(false)
   const sessionRef = useRef(createSessionState())
@@ -961,51 +966,41 @@ export default function HavenChat() {
   }, [sendSessionEnd])
 
   useEffect(() => {
-    if (isAuthed) return undefined
-
-    function onGuestEmailBeforeUnload(event) {
-      if (hasGuestEmail() || wasEmailPromptShownThisSession() || guestEmailPromptActive) {
-        return
-      }
-
-      const count = (messagesRef.current || []).filter((m) => m.role === 'user').length
-      if (!shouldOfferBeforeunloadEmailPrompt(count)) return
-
-      event.preventDefault()
-      event.returnValue = ''
+    if (productPulseVisible && String(text || '').trim()) {
+      setProductPulseVisible(false)
     }
-
-    window.addEventListener('beforeunload', onGuestEmailBeforeUnload)
-    return () => {
-      window.removeEventListener('beforeunload', onGuestEmailBeforeUnload)
-    }
-  }, [isAuthed, guestEmailPromptActive])
+  }, [text, productPulseVisible])
 
   useEffect(() => {
-    if (isAuthed || historyLoading) return
-    if (hasGuestEmail() || wasEmailPromptShownThisSession()) return
-    if (guestEmailPromptActive || guestEmailPromptConfirmed) return
-
-    const count = (messages || []).filter((m) => m.role === 'user').length
-    const threshold = getGuestEmailThreshold()
-    if (count >= threshold) {
-      setGuestEmailPromptActive(true)
+    const msgs = messages || []
+    const last = msgs[msgs.length - 1]
+    if (
+      last?.role === 'assistant'
+      && String(last.text || '').trim()
+      && !last.ephemeral
+      && !thinking
+    ) {
+      lastAssistantDoneAtRef.current = Date.now()
     }
-  }, [
-    isAuthed,
-    historyLoading,
-    messages,
-    guestEmailPromptActive,
-    guestEmailPromptConfirmed,
-  ])
+  }, [messages, thinking])
 
   useEffect(() => {
-    return () => {
-      if (guestEmailConfirmTimerRef.current) {
-        window.clearTimeout(guestEmailConfirmTimerRef.current)
-      }
-    }
-  }, [])
+    if (historyLoading || wasProductPulseShown()) return undefined
+
+    const intervalId = window.setInterval(() => {
+      if (wasProductPulseShown() || productPulseVisible) return
+      if (thinking || String(text || '').trim()) return
+
+      const userCount = (messagesRef.current || []).filter((m) => m.role === 'user').length
+      if (userCount < 4) return
+      if (!lastAssistantDoneAtRef.current) return
+      if (Date.now() - lastAssistantDoneAtRef.current < 50000) return
+
+      setProductPulseVisible(true)
+    }, 8000)
+
+    return () => window.clearInterval(intervalId)
+  }, [historyLoading, productPulseVisible, thinking, text])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -1297,45 +1292,6 @@ export default function HavenChat() {
       ], { chatModeId: pending.mode.id })
     } finally {
       stopSessionLoading(pending.storageKey)
-    }
-  }
-
-  function dismissGuestEmailPrompt() {
-    markEmailPromptShownThisSession()
-    setGuestEmailPromptActive(false)
-    setGuestEmailPromptConfirmed(false)
-  }
-
-  async function handleGuestEmailSubmit(email) {
-    setGuestEmailSubmitting(true)
-    try {
-      const reason = getGuestOnboardingReasonForEmail()
-      const count = (messages || []).filter((m) => m.role === 'user').length
-      const res = await fetch('/api/guest/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          reason: reason || undefined,
-          message_count: count,
-        }),
-      })
-      if (!res.ok) return
-
-      saveGuestEmail(email)
-      markEmailPromptShownThisSession()
-      setGuestEmailPromptConfirmed(true)
-
-      if (guestEmailConfirmTimerRef.current) {
-        window.clearTimeout(guestEmailConfirmTimerRef.current)
-      }
-      guestEmailConfirmTimerRef.current = window.setTimeout(() => {
-        setGuestEmailPromptActive(false)
-        setGuestEmailPromptConfirmed(false)
-        guestEmailConfirmTimerRef.current = null
-      }, 3000)
-    } finally {
-      setGuestEmailSubmitting(false)
     }
   }
 
@@ -1673,6 +1629,7 @@ export default function HavenChat() {
     }
 
     setText('')
+    if (productPulseVisible) setProductPulseVisible(false)
     const displayText = v || (imagePayload.length ? '[Image attached]' : '')
     const priorMessages = messages || []
     const hasStopContactOpening = priorMessages.some(
@@ -2133,6 +2090,7 @@ export default function HavenChat() {
                   at: Date.now(),
                   modeId: 'emotional',
                 }}
+                isAuthed={isAuthed}
               />
             </div>
           ) : chatActive ? (
@@ -2148,26 +2106,24 @@ export default function HavenChat() {
                 ) {
                   return null
                 }
+                const priorUser =
+                  m.role === 'assistant'
+                    ? [...(messages || []).slice(0, i)].reverse().find((row) => row.role === 'user')
+                    : null
                 return (
                   <Bubble
                     key={m.id || `${m.role}-${i}-${m.text.slice(0, 8)}`}
                     msg={m}
                     messageIndex={i}
                     thinking={thinking}
+                    isAuthed={isAuthed}
+                    userExcerpt={priorUser?.text || ''}
                     onEditUserMessage={editUserMessage}
                     onResendUserMessage={resendUserMessage}
                     onBranchChange={switchMessageBranch}
                   />
                 )
               })}
-              {!isAuthed && guestEmailPromptActive ? (
-                <GuestEmailPrompt
-                  confirmed={guestEmailPromptConfirmed}
-                  submitting={guestEmailSubmitting}
-                  onSubmit={handleGuestEmailSubmit}
-                  onSkip={dismissGuestEmailPrompt}
-                />
-              ) : null}
               {showTypingIndicator && <TypingIndicator />}
             </div>
           ) : null}
@@ -2217,6 +2173,17 @@ export default function HavenChat() {
         <div className="parle-chat-main__bottom-fixed">
           {!isAuthed && <GuestConsentBanner visible />}
           <div className="parle-chat-main__bottom-inner">
+            <ProductPulseCard
+              visible={productPulseVisible && !showEmptyUI}
+              sessionId={
+                isAuthed
+                  ? sessionRef.current.sessionId
+                  : getGuestSessionToken()
+              }
+              messageCount={userMessageCount}
+              isGuest={!isAuthed}
+              onDismiss={() => setProductPulseVisible(false)}
+            />
             {!showEmptyUI && showGuestBanner && (
               <div className="parle-chat__guest-banner">
                 <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-card/90 px-4 py-3 text-[12px] max-w-xl mx-auto">

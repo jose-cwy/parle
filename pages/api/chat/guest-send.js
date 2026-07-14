@@ -4,6 +4,7 @@ import {
   logGuestTrainingExchange,
   resolveGuestSessionToken,
 } from '../../../lib/parle/guestTrainingDb'
+import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
@@ -100,11 +101,17 @@ export default async function handler(req, res) {
           : [],
       )
 
+      const replyFeedback = await getRecentReplyFeedback({
+        sessionId: trainingSessionToken,
+        limit: 6,
+      })
+
       const completionMessages = buildChatCompletionMessages({
         modeId: safeModeId,
         dontTextStep,
         dontTextMessageCount,
         preferenceProfile: null,
+        replyFeedback,
         contextRecap: contextRecap
           ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
           : null,

@@ -159,3 +159,32 @@ CREATE UNIQUE INDEX IF NOT EXISTS guest_emails_email_lower_idx ON guest_emails (
 CREATE INDEX IF NOT EXISTS guest_emails_followup_due_idx
   ON guest_emails (followup_due_at)
   WHERE followup_sent_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS message_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  session_id VARCHAR(128),
+  message_id VARCHAR(128),
+  rating VARCHAR(16) NOT NULL,
+  reason VARCHAR(64),
+  mode_id VARCHAR(64),
+  reply_excerpt TEXT,
+  user_excerpt TEXT,
+  is_guest BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE message_feedback ADD COLUMN IF NOT EXISTS reason VARCHAR(64);
+ALTER TABLE message_feedback ADD COLUMN IF NOT EXISTS reply_excerpt TEXT;
+ALTER TABLE message_feedback ADD COLUMN IF NOT EXISTS user_excerpt TEXT;
+
+CREATE TABLE IF NOT EXISTS product_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  session_id VARCHAR(128),
+  variant VARCHAR(8),
+  response VARCHAR(64) NOT NULL,
+  note TEXT,
+  message_count INTEGER,
+  is_guest BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
