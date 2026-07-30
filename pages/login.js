@@ -4,6 +4,7 @@ import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { fetchAuthUser } from '../lib/authSession'
+import { clearGuestChatState } from '../lib/parle/clearGuestChatState'
 import { safeNextPath } from '../lib/routes'
 import { hasPreferredName } from '../lib/user'
 
@@ -50,6 +51,7 @@ export default function Login() {
     })
 
     if (res.ok) {
+      clearGuestChatState()
       const authUser = await fetchAuthUser({ force: true })
       const destination = !hasPreferredName(authUser)
         ? '/welcome'

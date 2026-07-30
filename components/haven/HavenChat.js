@@ -42,6 +42,7 @@ import {
   getPreferredModeId,
   loadLiveSessionMeta,
   saveLiveSessionMeta,
+  setChatLocalUserId,
   setPreferredModeId,
 } from '../../lib/parle/chatPreferences'
 import { buildContextRecapBlock } from '../../lib/parle/prompts'
@@ -51,7 +52,7 @@ import {
   isGuestOnboardingAnswered,
   saveGuestOnboarding,
 } from '../../lib/parle/onboarding'
-import { getGuestSessionToken, setGuestSessionToken } from '../../lib/parle/guestSessionToken'
+import { getGuestSessionToken, setGuestSessionToken, clearGuestSessionToken } from '../../lib/parle/guestSessionToken'
 import { parseBoldSegments } from '../../lib/parle/renderBoldText'
 
 const CURRENT_SESSION_ID = 'current-live'
@@ -788,7 +789,7 @@ export default function HavenChat() {
     if (isAuthed && !user) return
     greetingPickRef.current = true
     setEmptyGreeting(buildTimeGreeting(user, isAuthed))
-  }, [messages, user, isAuthed])
+  }, [messages, user, isAuthed, historyLoading])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -880,6 +881,8 @@ export default function HavenChat() {
         setUser(authUser)
 
         if (authed) {
+          setChatLocalUserId(authUser.id)
+          clearGuestSessionToken()
           track('chat_loaded', { authed: true })
           const [historyRes, contextRes] = await Promise.all([
             fetch('/api/chat/history'),
@@ -901,7 +904,7 @@ export default function HavenChat() {
           }))
 
           if (history.length > 0) {
-            if (!hasUserMessages(messagesRef.current) && !pendingReplyRef.current) {
+            if (!pendingReplyRef.current) {
               setMessages(history)
               setIsNewSession(false)
               setActiveSessionId(CURRENT_SESSION_ID)
@@ -911,9 +914,16 @@ export default function HavenChat() {
             return
           }
 
-          if (!hasUserMessages(messagesRef.current) && !pendingReplyRef.current) {
+          // Empty account history → always start a fresh live chat
+          clearLiveSessionMeta()
+          if (!pendingReplyRef.current) {
             setMessages([])
+            setChatMode(null)
             setPendingModeId(getPreferredModeId(DEFAULT_MODE.id))
+            setIsNewSession(true)
+            setActiveSessionId(null)
+            setLiveSessionTitle(LIVE_SESSION_TITLE)
+            sessionRef.current = createSessionState()
           }
           setHistoryLoading(false)
 
@@ -930,6 +940,7 @@ export default function HavenChat() {
           return
         }
 
+        setChatLocalUserId(null)
         track('chat_loaded', { authed: false })
         setUser(null)
         setOnboardingAnswered(isGuestOnboardingAnswered())

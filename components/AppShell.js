@@ -11,14 +11,9 @@ import {
   Bookmark,
   Settings,
 } from 'lucide-react'
-import {
-  clearAuthCache,
-  fetchAuthUser,
-  getCachedAuthUser,
-  isAuthCacheReady,
-  subscribeAuthUser,
-} from '../lib/authSession'
+import { clearAuthCache, fetchAuthUser, getCachedAuthUser, isAuthCacheReady, subscribeAuthUser } from '../lib/authSession'
 import { cn } from '../lib/cn'
+import { setChatLocalUserId } from '../lib/parle/chatPreferences'
 import HavenMark from './haven/HavenMark'
 import ParleLogo from './brand/ParleLogo'
 import { ParleSettingsPopup } from './haven/ParleSettings'
@@ -117,6 +112,7 @@ export default function AppShell({ children, hideRail = false }) {
     closeAccount()
     await fetch('/api/auth/logout', { method: 'POST' })
     clearAuthCache()
+    setChatLocalUserId(null)
     router.push('/')
   }
 
