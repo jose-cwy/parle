@@ -2439,17 +2439,24 @@ body.body--parler-landing .pss-contact-page__site-mark {
   .parler-landing .pss-mobile-carousel {
     width: 100%;
     margin-inline: 0;
+    /* Keep card glow / border highlight inside the section (not under the heading) */
+    margin-top: 1.5rem;
+    padding-top: 0.75rem;
   }
 
   .parler-landing .pss-mobile-carousel__container {
     display: flex;
     overflow-x: auto;
+    overflow-y: visible;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     touch-action: pan-x pan-y;
     scroll-padding-inline: 24px;
     padding-inline: 24px;
+    /* overflow-x forces a scrollport — pad so top/side box-shadow highlights aren’t clipped */
+    padding-block: 1rem;
+    margin-block: -0.25rem;
     margin-inline: 0;
     width: 100%;
     scrollbar-width: none;
@@ -2467,6 +2474,8 @@ body.body--parler-landing .pss-contact-page__site-mark {
     scroll-snap-stop: always;
     height: 340px;
     box-sizing: border-box;
+    /* Let card glow paint outside the slide frame */
+    overflow: visible;
   }
 
   .parler-landing .pss-mobile-carousel__card .pss-what-card,
@@ -2475,7 +2484,7 @@ body.body--parler-landing .pss-contact-page__site-mark {
     height: 100%;
     min-height: 340px;
     max-height: 340px;
-    overflow: hidden;
+    overflow: visible;
     box-sizing: border-box;
   }
 
