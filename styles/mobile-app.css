@@ -74,6 +74,10 @@
 
   body.body--app .haven-shell--no-rail .haven-shell__content {
     padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  body.body--app .haven-shell--no-rail.haven-shell--has-mobile-chrome .haven-shell__content {
     padding-bottom: calc(var(--ma-bottomnav) + env(safe-area-inset-bottom, 0px) + 0.5rem);
   }
 

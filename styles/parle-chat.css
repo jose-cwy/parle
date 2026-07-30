@@ -698,7 +698,8 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
     --parle-mobile-nav-inset: 0px;
   }
 
-  body.body--app .parle-chat-layout {
+  /* Only reserve nav space when the mobile bottom nav is actually rendered */
+  body.body--app .haven-shell--has-mobile-chrome .parle-chat-layout {
     --parle-mobile-nav-inset: calc(var(--ma-bottomnav, 64px) + env(safe-area-inset-bottom, 0px));
   }
 
@@ -1538,7 +1539,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   .parle-chat-main__bottom-fixed {
     left: 0;
     z-index: 45;
-    padding-bottom: 0.5rem;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   }
 
   body.body--app .parle-chat-main__bottom-fixed {
