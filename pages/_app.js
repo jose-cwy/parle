@@ -34,6 +34,7 @@ import {
   isParlerMarketingPage,
   isProtectedAppRoute,
 } from '../lib/routes'
+import { Analytics } from '@vercel/analytics/next'
 
 export default function App({ Component, pageProps }) {
   const router = useRouter()
@@ -188,6 +189,7 @@ export default function App({ Component, pageProps }) {
       )}
 
       {!fullBleed && !appLayout && !isAuthPage && !isParlerMarketing && <Footer />}
+      <Analytics />
     </div>
     </TopProgressProvider>
     </ThemeProvider>
