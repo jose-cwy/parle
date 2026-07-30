@@ -240,17 +240,61 @@ body.body--auth.body--landing .auth-page__terms-hint {
 }
 
 @media (max-height: 700px), (max-width: 480px) {
+  /* Keep auth pages locked to the viewport on mobile so the card fits without page scroll */
   body.body--auth.body--landing,
   body.body--auth.body--landing #__next,
   body.body--auth.body--landing .app-shell {
-    height: auto;
-    max-height: none;
+    height: 100dvh;
+    max-height: 100dvh;
     min-height: 100dvh;
-    overflow: auto;
+    overflow: hidden;
+  }
+
+  body.body--auth.body--landing .auth-page-main {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.body--auth.body--landing .auth-page {
+    min-height: 0;
+    padding: 0.5rem 0.85rem calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+
+  body.body--auth.body--landing .auth-page__inner {
+    max-height: 100%;
   }
 
   body.body--auth.body--landing .auth-page__card {
-    max-height: none;
+    max-height: calc(100dvh - var(--pss-nav-height, 4.5rem) - 1.25rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.body--auth.body--landing .auth-page__title {
+    font-size: clamp(1.4rem, 3.6vh, 1.65rem);
+  }
+
+  body.body--auth.body--landing .auth-page__description {
+    font-size: 0.84rem;
+  }
+
+  body.body--auth.body--landing .auth-page__formWrap {
+    margin-top: 0.75rem;
+  }
+
+  body.body--auth.body--landing .auth-page__form {
+    gap: 0.55rem;
+  }
+
+  body.body--auth.body--landing .auth-page__input {
+    min-height: 2.85rem;
+    height: 2.85rem;
+    padding: 0.55rem 0.85rem;
+  }
+
+  body.body--auth.body--landing .auth-page__submit {
+    min-height: 2.85rem;
+    padding: 0.6rem 1rem;
   }
 }
 
