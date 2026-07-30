@@ -460,11 +460,13 @@
   }
 
   body.body--parler-landing .pss-hero-section {
-    min-height: 100svh;
+    /* Fill the viewport below the sticky nav so content truly centers on load */
+    min-height: calc(100svh - var(--pss-nav-height, 4.5rem));
+    min-height: calc(100dvh - var(--pss-nav-height, 4.5rem));
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: calc(env(safe-area-inset-top, 0px) + 3.5rem) 1.5rem calc(env(safe-area-inset-bottom, 0px) + 2rem);
+    padding: 1.25rem 1.5rem calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
     background: transparent;
   }
 
