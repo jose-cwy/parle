@@ -13,7 +13,7 @@ import '../styles/parler-landing.css'
 import '../styles/dark-mode.css'
 import '../styles/responsive.css'
 import '../styles/mobile-app.css'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import TopProgressProvider from '../components/TopProgressProvider'
 import { ThemeProvider } from '../components/ThemeProvider'
 import AppShell from '../components/AppShell'
@@ -47,42 +47,22 @@ export default function App({ Component, pageProps }) {
   const isParlerMarketing = isParlerMarketingPage(router.pathname)
   const isParlerShell = isHome || isAuthPage || isParlerMarketing
 
-  useEffect(() => {
-    if (landingTheme) {
-      document.body.classList.add('body--landing')
-    } else {
-      document.body.classList.remove('body--landing', 'body--nav-open')
-    }
-    if (marketingCream) {
-      document.body.classList.add('body--marketing')
-    } else {
-      document.body.classList.remove('body--marketing')
-    }
-    if (isParlerShell) {
-      document.body.classList.add('body--home-hero', 'body--parler-landing')
-    } else {
-      document.body.classList.remove('body--home-hero', 'body--parler-landing')
-    }
+  // Apply body layout classes before paint so login → dashboard doesn't keep
+  // auth overflow/height styles for a frame (that causes horizontal page shift).
+  useLayoutEffect(() => {
+    const { body } = document
+    body.classList.toggle('body--landing', landingTheme)
+    body.classList.toggle('body--marketing', marketingCream)
+    body.classList.toggle('body--home-hero', isParlerShell)
+    body.classList.toggle('body--parler-landing', isParlerShell)
+    body.classList.toggle('body--app', appLayout)
+    body.classList.toggle('body--auth', isAuthPage)
+    if (!landingTheme) body.classList.remove('body--nav-open')
+
     if (appLayout) {
-      document.body.classList.add('body--app')
-    } else {
-      document.body.classList.remove('body--app')
-    }
-    if (isAuthPage) {
-      document.body.classList.add('body--auth')
-    } else {
-      document.body.classList.remove('body--auth')
-    }
-    return () => {
-      document.body.classList.remove(
-        'body--landing',
-        'body--nav-open',
-        'body--marketing',
-        'body--home-hero',
-        'body--parler-landing',
-        'body--app',
-        'body--auth',
-      )
+      window.scrollTo(0, 0)
+      document.documentElement.scrollLeft = 0
+      body.scrollLeft = 0
     }
   }, [landingTheme, marketingCream, appLayout, isParlerShell, isAuthPage])
 
@@ -114,6 +94,8 @@ export default function App({ Component, pageProps }) {
 
     function scrollAppToTop() {
       window.scrollTo(0, 0)
+      document.documentElement.scrollLeft = 0
+      document.body.scrollLeft = 0
     }
 
     router.events.on('routeChangeComplete', scrollAppToTop)

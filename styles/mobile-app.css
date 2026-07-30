@@ -39,6 +39,14 @@
     background-color: var(--background);
     background-image: radial-gradient(ellipse 90% 60% at 100% 0%, rgba(193, 116, 107, 0.12) 0%, transparent 55%);
     color: var(--foreground);
+    overflow-x: hidden;
+  }
+
+  body.body--app .haven-shell,
+  body.body--app .haven-shell__main,
+  body.body--app .haven-shell__content {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   body.body--app .haven-shell__rail {
