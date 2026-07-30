@@ -461,12 +461,13 @@
 
   body.body--parler-landing .pss-hero-section {
     /* Fill the viewport below the sticky nav so content truly centers on load */
+    position: relative;
     min-height: calc(100svh - var(--pss-nav-height, 4.5rem));
     min-height: calc(100dvh - var(--pss-nav-height, 4.5rem));
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.25rem 1.5rem calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+    padding: 1.25rem 1.5rem calc(env(safe-area-inset-bottom, 0px) + 2.75rem);
     background: transparent;
   }
 
@@ -553,7 +554,11 @@
   body.body--parler-landing .pss-hero-scroll-hint {
     display: flex;
     justify-content: center;
-    margin-top: 2rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.65rem);
+    margin-top: 0;
     color: var(--ma-text-subtle);
     animation: ma-bounce 1.8s ease-in-out infinite;
   }
