@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Check, ChevronLeft, ChevronRight, CloudRain, Copy, Heart, Lock, MessageCircle, Pencil, RotateCcw, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Clock, CloudRain, Copy, Heart, Lock, MessageCircle, Pencil, RotateCcw, X } from 'lucide-react'
 import { fetchAuthUser } from '../../lib/authSession'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
@@ -53,6 +53,12 @@ import {
   saveGuestOnboarding,
 } from '../../lib/parle/onboarding'
 import { getGuestSessionToken, setGuestSessionToken, clearGuestSessionToken } from '../../lib/parle/guestSessionToken'
+import {
+  saveGuestChatDraft,
+  loadGuestChatDraft,
+  clearGuestChatDraft,
+  guestDraftHasUserMessages,
+} from '../../lib/parle/guestChatDraft'
 import { parseBoldSegments } from '../../lib/parle/renderBoldText'
 
 const CURRENT_SESSION_ID = 'current-live'
@@ -208,6 +214,68 @@ function resolveSessionStorageKey(activeSessionId, sessionId) {
     return activeSessionId
   }
   return sessionId
+}
+
+function parseGuestUsageRemaining(res, data) {
+  const header = res?.headers?.get?.('X-Parle-Usage-Remaining')
+  if (header != null && header !== '') {
+    const remaining = Number(header)
+    if (Number.isFinite(remaining)) return Math.max(0, remaining)
+  }
+  if (data?.error === 'daily_limit_reached') {
+    const remaining = Number(data.remaining)
+    return Number.isFinite(remaining) ? Math.max(0, remaining) : 0
+  }
+  if (data?.remaining != null) {
+    const remaining = Number(data.remaining)
+    if (Number.isFinite(remaining)) return Math.max(0, remaining)
+  }
+  return null
+}
+
+function formatGuestUsageResetTime() {
+  // TEMP: keep in sync with GUEST_LIMIT_WINDOW_MS in lib/usageTracking.js
+  const windowMs = 5 * 60 * 1000
+  const reset = new Date((Math.floor(Date.now() / windowMs) + 1) * windowMs)
+  return reset.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
+function GuestUsageHint({ remaining }) {
+  if (remaining == null || remaining <= 0 || remaining > 5) return null
+
+  return (
+    <div className="parle-chat__composer-notice" role="status">
+      <div className="parle-chat__composer-notice-bar">
+        <p className="parle-chat__composer-notice-text">
+          {remaining} {remaining === 1 ? 'message' : 'messages'} left today. Don&apos;t end the conversation here.
+        </p>
+        <Link href="/register" className="parle-chat__composer-notice-action">
+          Sign up
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function GuestLimitBlock() {
+  return (
+    <div className="parle-chat__input-wrap">
+      <div className="parle-chat__composer-lock" role="status" aria-live="polite">
+        <Clock
+          size={16}
+          strokeWidth={1.75}
+          className="parle-chat__composer-lock-icon"
+          aria-hidden
+        />
+        <p className="parle-chat__composer-lock-text">
+          Your free messages return at {formatGuestUsageResetTime()}.
+        </p>
+        <Link href="/register" className="parle-chat__composer-lock-action">
+          Sign up
+        </Link>
+      </div>
+    </div>
+  )
 }
 
 function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSessionTitle, isAuthed }) {
@@ -662,6 +730,7 @@ export default function HavenChat() {
   const [memoryEnabled, setMemoryEnabled] = useState(false)
   const [returningOpening, setReturningOpening] = useState(null)
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false)
+  const [guestUsageRemaining, setGuestUsageRemaining] = useState(null)
   const [imageAttachConsent, setImageAttachConsent] = useState(false)
   const [stopContactPhase, setStopContactPhase] = useState(null)
   const [hiddenInjections, setHiddenInjections] = useState([])
@@ -910,12 +979,37 @@ export default function HavenChat() {
               setActiveSessionId(CURRENT_SESSION_ID)
               restoreLiveSessionFromMeta(loadLiveSessionMeta(), { history })
             }
+            clearGuestChatDraft()
+            setHistoryLoading(false)
+            return
+          }
+
+          const guestDraft = loadGuestChatDraft()
+          if (guestDraftHasUserMessages(guestDraft) && !pendingReplyRef.current) {
+            await fetch('/api/chat/import-guest', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages: guestDraft.messages }),
+            }).catch(() => null)
+
+            setMessages(guestDraft.messages)
+            const modeId = guestDraft.chatModeId || guestDraft.pendingModeId
+            if (modeId) {
+              const mode = getModeById(modeId)
+              setChatMode({ id: mode.id, style: mode.style, mood: mode.mood })
+              setPendingModeId(mode.id)
+            }
+            setIsNewSession(false)
+            setActiveSessionId(CURRENT_SESSION_ID)
+            restoreLiveSessionFromMeta(loadLiveSessionMeta(), { history: guestDraft.messages })
+            clearGuestChatDraft()
             setHistoryLoading(false)
             return
           }
 
           // Empty account history → always start a fresh live chat
           clearLiveSessionMeta()
+          clearGuestChatDraft()
           if (!pendingReplyRef.current) {
             setMessages([])
             setChatMode(null)
@@ -944,11 +1038,30 @@ export default function HavenChat() {
         track('chat_loaded', { authed: false })
         setUser(null)
         setOnboardingAnswered(isGuestOnboardingAnswered())
-        if (!hasUserMessages(messagesRef.current) && !pendingReplyRef.current) {
+        const guestDraft = loadGuestChatDraft()
+        if (guestDraftHasUserMessages(guestDraft) && !pendingReplyRef.current) {
+          setMessages(guestDraft.messages)
+          const modeId = guestDraft.chatModeId || guestDraft.pendingModeId
+          if (modeId) {
+            const mode = getModeById(modeId)
+            setChatMode({ id: mode.id, style: mode.style, mood: mode.mood })
+            setPendingModeId(mode.id)
+          }
+          setIsNewSession(false)
+        } else if (!hasUserMessages(messagesRef.current) && !pendingReplyRef.current) {
           setMessages([])
           setPendingModeId(getPreferredModeId(DEFAULT_MODE.id))
         }
         setHistoryLoading(false)
+
+        fetch('/api/chat/guest-usage')
+          .then((usageRes) => (usageRes.ok ? usageRes.json() : null))
+          .then((payload) => {
+            if (!active || payload?.remaining == null) return
+            const remaining = Number(payload.remaining)
+            if (Number.isFinite(remaining)) setGuestUsageRemaining(Math.max(0, remaining))
+          })
+          .catch(() => {})
       } catch {
         if (active) {
           setIsAuthed(false)
@@ -965,6 +1078,19 @@ export default function HavenChat() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (isAuthed || historyLoading) return undefined
+    const draft = {
+      messages,
+      chatModeId: chatMode?.id || null,
+      pendingModeId,
+    }
+    saveGuestChatDraft(draft)
+    return () => {
+      saveGuestChatDraft(draft)
+    }
+  }, [isAuthed, historyLoading, messages, chatMode, pendingModeId])
 
   useEffect(() => {
     const onLeave = () => {
@@ -1181,39 +1307,15 @@ export default function HavenChat() {
       if (mode.id === 'stop_contact') {
         setStopContactPhase('awaiting_unsent')
         sessionRef.current.stopContactMessageCount = 0
-        setMessages((prev) => [
-          ...(prev || []),
-          createAssistantMessage(STOP_CONTACT_OPENING, {
-            ephemeral: true,
-            modeId: 'stop_contact',
-          }),
-        ])
-        return
+      } else {
+        setStopContactPhase(null)
       }
-      const ack = MODE_SWITCH_ACK[mode.id]
-      if (ack) {
-        setMessages((prev) => [
-          ...(prev || []),
-          createAssistantMessage(ack, { ephemeral: true, modeId: mode.id }),
-        ])
-      }
-      setStopContactPhase(null)
       return
     }
 
     if (mode.id === 'stop_contact') {
       setStopContactPhase('awaiting_unsent')
       sessionRef.current.stopContactMessageCount = 0
-      setMessages((prev) => {
-        const base = prev?.length ? prev : []
-        return [
-          ...base,
-          createAssistantMessage(STOP_CONTACT_OPENING, {
-            ephemeral: true,
-            modeId: 'stop_contact',
-          }),
-        ]
-      })
     } else {
       setStopContactPhase(null)
     }
@@ -1342,10 +1444,16 @@ export default function HavenChat() {
     if (!isAuthed) {
       const sessionHeader = res.headers.get('X-Parle-Guest-Session')
       if (sessionHeader) setGuestSessionToken(sessionHeader)
+      const remaining = parseGuestUsageRemaining(res)
+      if (remaining != null) setGuestUsageRemaining(remaining)
     }
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
+      if (!isAuthed) {
+        const remaining = parseGuestUsageRemaining(res, data)
+        if (remaining != null) setGuestUsageRemaining(remaining)
+      }
       if (res.status === 429 || res.status === 400) {
         const notice =
           data?.message ||
@@ -1593,6 +1701,7 @@ export default function HavenChat() {
     const v = String(value || '').trim()
     const imagePayload = Array.isArray(images) ? images.filter(Boolean).slice(0, 2) : []
     if ((!v && !imagePayload.length) || isActiveSessionLoading() || historyLoading) return
+    if (!isAuthed && guestUsageRemaining === 0) return
 
     let mode = resolveMode()
     let activeStopContactPhase = stopContactPhase
@@ -1642,24 +1751,7 @@ export default function HavenChat() {
     setText('')
     if (productPulseVisible) setProductPulseVisible(false)
     const displayText = v || (imagePayload.length ? '[Image attached]' : '')
-    const priorMessages = messages || []
-    const hasStopContactOpening = priorMessages.some(
-      (m) => m.role === 'assistant' && m.text === STOP_CONTACT_OPENING,
-    )
-    let nextMessages
-    if (mode.id === 'stop_contact' && !hasStopContactOpening && activeStopContactPhase === 'awaiting_unsent') {
-      nextMessages = [
-        ...priorMessages,
-        createAssistantMessage(STOP_CONTACT_OPENING, {
-          ephemeral: true,
-          modeId: 'stop_contact',
-          at: now - 1,
-        }),
-        createUserMessage(displayText, now),
-      ]
-    } else {
-      nextMessages = [...priorMessages, createUserMessage(displayText, now)]
-    }
+    const nextMessages = [...(messages || []), createUserMessage(displayText, now)]
     setMessages(nextMessages)
     const storageKey = getActiveStorageKey()
 
@@ -2036,11 +2128,22 @@ export default function HavenChat() {
 
   const hasLiveUserMessages = hasUserMessages(visibleMessages)
   const chatActive = hasLiveUserMessages || thinking
-  const inputDisabled = thinking || onboardingSheetOpen || historyLoading
+  const guestDailyCapReached = !isAuthed && guestUsageRemaining === 0
+  const inputDisabled = thinking || onboardingSheetOpen || historyLoading || guestDailyCapReached
   const showEmptyUI = entryExiting || (!hasLiveUserMessages && !thinking)
   const userMessageCount = visibleMessages.filter((m) => m.role === 'user').length
+  const showUsageHint =
+    !isAuthed &&
+    guestUsageRemaining != null &&
+    guestUsageRemaining > 0 &&
+    guestUsageRemaining <= 5
   const showGuestBanner =
-    !isAuthed && !guestBannerDismissed && userMessageCount >= 10 && chatActive
+    !isAuthed &&
+    !guestBannerDismissed &&
+    userMessageCount >= 10 &&
+    chatActive &&
+    !showUsageHint &&
+    !guestDailyCapReached
   const showStopContactLabel = chatMode?.id === 'stop_contact' && chatActive
   const lastVisibleMessage = visibleMessages[visibleMessages.length - 1]
   const showTypingIndicator =
@@ -2154,22 +2257,26 @@ export default function HavenChat() {
             </h1>
 
             <div className="parle-chat-empty-state__input parle-chat-empty-state__input--center">
-              <ChatInputBar
-                text={text}
-                onTextChange={setText}
-                onSend={send}
-                disabled={inputDisabled}
-                loading={thinking}
-                activeModeId={chatMode?.id || pendingModeId}
-                onModeChange={handleModeChange}
-                isAuthed={isAuthed}
-                imageConsentFromServer={imageAttachConsent}
-              />
+              {guestDailyCapReached ? (
+                <GuestLimitBlock />
+              ) : (
+                <ChatInputBar
+                  text={text}
+                  onTextChange={setText}
+                  onSend={send}
+                  disabled={inputDisabled}
+                  loading={thinking}
+                  activeModeId={chatMode?.id || pendingModeId}
+                  onModeChange={handleModeChange}
+                  isAuthed={isAuthed}
+                  imageConsentFromServer={imageAttachConsent}
+                />
+              )}
             </div>
 
             <EmptyStateQuickPrompts
               onSelect={(prompt) => send({ text: prompt })}
-              disabled={thinking || onboardingSheetOpen || historyLoading}
+              disabled={thinking || onboardingSheetOpen || historyLoading || guestDailyCapReached}
               exiting={entryExiting}
             />
           </div>
@@ -2196,27 +2303,28 @@ export default function HavenChat() {
               onDismiss={() => setProductPulseVisible(false)}
             />
             {!showEmptyUI && showGuestBanner && (
-              <div className="parle-chat__guest-banner">
-                <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-card/90 px-4 py-3 text-[12px] max-w-xl mx-auto">
-                  <p className="flex-1 text-muted-foreground leading-relaxed">
-                    Your chat disappears when you leave. Create a free account to save it.{' '}
-                    <Link
-                      href="/register"
-                      className="text-foreground underline underline-offset-2 hover:text-primary transition"
-                    >
-                      Save this chat →
-                    </Link>
+              <div className="parle-chat__composer-notice">
+                <div className="parle-chat__composer-notice-bar">
+                  <p className="parle-chat__composer-notice-text">
+                    Your chat disappears when you leave. Create a free account to save it.
                   </p>
+                  <Link href="/register" className="parle-chat__composer-notice-action">
+                    Save
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setGuestBannerDismissed(true)}
-                    className="shrink-0 text-muted-foreground hover:text-foreground transition p-0.5"
+                    className="parle-chat__composer-notice-close"
                     aria-label="Dismiss"
                   >
                     <X size={16} strokeWidth={1.8} />
                   </button>
                 </div>
               </div>
+            )}
+
+            {!guestDailyCapReached && showUsageHint && (
+              <GuestUsageHint remaining={guestUsageRemaining} />
             )}
 
             {!showEmptyUI && showStopContactLabel && (
@@ -2231,17 +2339,21 @@ export default function HavenChat() {
                 showEmptyUI && 'parle-chat-main__bottom-input--empty-mobile',
               )}
             >
-              <ChatInputBar
-                text={text}
-                onTextChange={setText}
-                onSend={send}
-                disabled={inputDisabled}
-                loading={thinking}
-                activeModeId={chatMode?.id || pendingModeId}
-                onModeChange={handleModeChange}
-                isAuthed={isAuthed}
-                imageConsentFromServer={imageAttachConsent}
-              />
+              {guestDailyCapReached ? (
+                <GuestLimitBlock />
+              ) : (
+                <ChatInputBar
+                  text={text}
+                  onTextChange={setText}
+                  onSend={send}
+                  disabled={inputDisabled}
+                  loading={thinking}
+                  activeModeId={chatMode?.id || pendingModeId}
+                  onModeChange={handleModeChange}
+                  isAuthed={isAuthed}
+                  imageConsentFromServer={imageAttachConsent}
+                />
+              )}
             </div>
 
             <p className="parle-chat__disclaimer">

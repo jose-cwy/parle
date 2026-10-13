@@ -634,13 +634,27 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   align-items: end;
   gap: 0.35rem 0.5rem;
   width: 100%;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
 }
 
 .parle-chat-input__textarea {
   box-sizing: border-box;
   min-height: 1.75rem;
   max-height: 120px;
-  caret-color: currentColor;
+  color: var(--foreground);
+  caret-color: var(--foreground);
+  -webkit-text-fill-color: var(--foreground);
+}
+
+.parle-chat-input__textarea::placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 82%, var(--foreground));
+  opacity: 1;
+  -webkit-text-fill-color: color-mix(in srgb, var(--muted-foreground) 82%, var(--foreground));
+}
+
+.parle-chat-input__textarea:disabled,
+.parle-chat-input__textarea:disabled::placeholder {
+  opacity: 1;
 }
 
 .parle-chat-input__mic--placeholder {
@@ -765,6 +779,12 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
     line-height: 1.35;
     text-align: left;
     white-space: normal;
+  }
+
+  .parle-chat__composer-lock {
+    min-height: 3.35rem;
+    padding: 0.7rem 0.75rem 0.7rem 0.95rem;
+    border-radius: 1.35rem;
   }
 
   .parle-chat-input__bar {
@@ -1445,10 +1465,135 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   opacity: 0.65;
 }
 
-.parle-chat__guest-banner {
-  margin-bottom: 0.75rem;
+.parle-chat__composer-notice {
+  width: max-content;
+  max-width: min(var(--parle-input-max), 100%);
+  margin: 0 auto 0.5rem;
   padding-left: 1rem;
   padding-right: 1rem;
+  box-sizing: border-box;
+}
+
+.parle-chat__composer-notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: max-content;
+  max-width: 100%;
+  padding: 0.4rem 0.55rem 0.4rem 0.95rem;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+}
+
+.parle-chat__composer-notice-text {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.parle-chat__composer-notice-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--card));
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.parle-chat__composer-notice-action:hover {
+  background: color-mix(in srgb, var(--foreground) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+}
+
+.parle-chat__composer-notice-close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.parle-chat__composer-notice-close:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.parle-chat__composer-lock {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.625rem 0.7rem 0.625rem 1.15rem;
+  box-sizing: border-box;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+}
+
+.parle-chat__composer-lock-icon {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+
+.parle-chat__composer-lock-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.parle-chat__composer-lock-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 9999px;
+  border: none;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.parle-chat__composer-lock-action:hover {
+  opacity: 0.9;
 }
 
 /* â€”â€”â€” Guest consent banner â€”â€”â€” */

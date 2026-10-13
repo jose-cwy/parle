@@ -445,7 +445,7 @@ export default function ChatInputBar({
             }}
             rows={1}
             placeholder="say what's on your mind..."
-            className="parle-chat-input__textarea resize-none bg-transparent border-0 outline-none leading-relaxed placeholder:text-muted-foreground/50 min-w-0 py-1 overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="parle-chat-input__textarea resize-none bg-transparent border-0 outline-none leading-relaxed min-w-0 py-1 overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             disabled={disabled}
           />
 

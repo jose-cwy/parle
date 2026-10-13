@@ -7,7 +7,6 @@ import TermsAgreementModal from '../components/TermsAgreementModal'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { TERMS_VERSION } from '../lib/termsVersion'
 import { fetchAuthUser, setCachedAuthUser } from '../lib/authSession'
-import { clearGuestChatState } from '../lib/parle/clearGuestChatState'
 import { hasPreferredName } from '../lib/user'
 
 const REGISTER_TERMS_SESSION_KEY = 'parle_register_terms_ok'
@@ -83,7 +82,6 @@ export default function Register() {
       body: JSON.stringify({ email, password }),
     })
     if (res.ok) {
-      clearGuestChatState()
       const payload = await res.json().catch(() => null)
       if (payload?.user) setCachedAuthUser(payload.user)
       router.replace('/welcome')

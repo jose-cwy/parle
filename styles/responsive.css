@@ -1036,6 +1036,13 @@ html {
     padding-right: 0;
   }
 
+  .parle-chat__composer-notice {
+    width: max-content;
+    max-width: calc(100% - 32px);
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .parle-chat-empty-state__input .parle-chat__input-wrap {
     width: calc(100% - 32px);
     margin-left: auto;

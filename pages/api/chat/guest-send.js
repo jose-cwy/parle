@@ -23,6 +23,16 @@ export const config = {
   },
 }
 
+function setGuestUsageHeaders(res, usage) {
+  if (!usage) return
+  if (usage.remaining != null) {
+    res.setHeader('X-Parle-Usage-Remaining', String(usage.remaining))
+  }
+  if (usage.limit != null) {
+    res.setHeader('X-Parle-Usage-Limit', String(usage.limit))
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -55,8 +65,11 @@ export default async function handler(req, res) {
       hasImages: safeImages.length > 0,
     })
     if (!abuse.ok) {
+      setGuestUsageHeaders(res, abuse.body)
       return res.status(abuse.status).json(abuse.body)
     }
+
+    setGuestUsageHeaders(res, abuse)
 
     const userText = abuse.userText || sanitizeChatMessage(text) || '(See attached image)'
 
