@@ -80,7 +80,7 @@ export default async function handler(req, res) {
         userText,
         assistantText: CRISIS_SAFETY_REPLY,
         replyKind: 'safety',
-      })
+      }).catch(() => false)
       return res.status(200).json({
         reply: CRISIS_SAFETY_REPLY,
         safety: true,
@@ -96,7 +96,7 @@ export default async function handler(req, res) {
         userText,
         assistantText: redirect,
         replyKind: 'guardrail',
-      })
+      }).catch(() => false)
       return res.status(200).json({
         reply: redirect,
         guardrail: true,
@@ -151,7 +151,7 @@ export default async function handler(req, res) {
         userText,
         assistantText: reply,
         replyKind: 'normal',
-      })
+      }).catch(() => false)
 
       return reply
     })
