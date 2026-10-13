@@ -1769,7 +1769,7 @@ export default function HavenChat() {
       }
     }
 
-    const shouldShowOnboarding = !onboardingAnswered && !hasUserMessages(priorMessages)
+    const shouldShowOnboarding = !onboardingAnswered && !hasUserMessages(messages || [])
     if (shouldShowOnboarding) {
       pendingReplyRef.current = {
         userText: v,
