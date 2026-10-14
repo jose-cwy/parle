@@ -140,10 +140,7 @@ export default async function handler(req, res) {
     })
 
     if (lockResult.locked) {
-      return res.status(429).json({
-        error: 'processing',
-        message: 'still thinking about your last message...',
-      })
+      return res.status(429).json({ error: 'processing' })
     }
   } catch (error) {
     return handleApiError(res, error, 'chat_send')

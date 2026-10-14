@@ -235,7 +235,7 @@ function parseGuestUsageRemaining(res, data) {
 
 function formatGuestUsageResetTime() {
   // TEMP: keep in sync with GUEST_LIMIT_WINDOW_MS in lib/usageTracking.js
-  const windowMs = 5 * 60 * 1000
+  const windowMs = 4 * 60 * 60 * 1000
   const reset = new Date((Math.floor(Date.now() / windowMs) + 1) * windowMs)
   return reset.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
@@ -1455,9 +1455,7 @@ export default function HavenChat() {
         if (remaining != null) setGuestUsageRemaining(remaining)
       }
       if (res.status === 429 || res.status === 400) {
-        const notice =
-          data?.message ||
-          (res.status === 429 ? 'slow down a little.' : 'something went wrong with that message.')
+        const isProcessingLock = data?.error === 'processing'
         commitMessages(
           storageKey,
           (prev) => {
@@ -1465,6 +1463,10 @@ export default function HavenChat() {
             if (list.length && list[list.length - 1]?.role === 'user') {
               list.pop()
             }
+            if (isProcessingLock) return list
+            const notice =
+              data?.message ||
+              (res.status === 429 ? 'slow down a little.' : 'something went wrong with that message.')
             return [...list, createSystemNotice(notice)]
           },
           { chatModeId: mode.id },

@@ -105,6 +105,7 @@ test('concurrent processing returns 429 with processing error', { skip: !RUN_API
   assert.ok(statuses.includes(200) || statuses.includes(429))
   if (hasProcessing) {
     const blocked = [first, second].find((r) => r.json()?.error === 'processing')
-    assert.match(blocked.json()?.message || '', /still thinking/i)
+    assert.equal(blocked.json()?.error, 'processing')
+    assert.ok(!/still thinking/i.test(blocked.json()?.message || ''))
   }
 })
