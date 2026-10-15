@@ -176,6 +176,11 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   background: rgba(61, 53, 48, 0.36);
 }
 
+.parle-chat-sidebar__history li.group {
+  position: relative;
+  overflow: hidden;
+}
+
 .parle-chat-sidebar__session-actions {
   position: absolute;
   right: 0.375rem;
@@ -186,6 +191,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   gap: 0.125rem;
   opacity: 0;
   pointer-events: none;
+  z-index: 1;
   transition: opacity 0.15s ease;
 }
 
@@ -193,6 +199,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .group:focus-within .parle-chat-sidebar__session-actions,
 .parle-chat-sidebar__session-actions--visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .parle-chat-sidebar__session-action {

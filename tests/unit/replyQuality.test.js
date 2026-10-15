@@ -51,7 +51,7 @@ test('asks for a name once when she/he is used and no name is known', () => {
       userText: 'she told me she needed space',
       history: [],
     }),
-    true,
+    false,
   )
   const named = shouldAskPersonName({
     userText: 'her name is Jia Hui and she needed space',
@@ -99,32 +99,47 @@ test('role labels are not treated as names', () => {
   )
 })
 
-test('name ask is required and still fires on a late first she', () => {
-  const history = [
-    { role: 'user', text: 'hey' },
-    { role: 'assistant', text: 'hey. what is going on?' },
-    { role: 'user', text: 'just a rough week' },
-    { role: 'assistant', text: 'yeah. say more if you want.' },
-    { role: 'user', text: 'work has been a lot' },
-    { role: 'assistant', text: 'work on top of everything else is a lot.' },
-    { role: 'user', text: 'and i have not been sleeping' },
-    { role: 'assistant', text: 'that kind of tired sits in your body.' },
+test('name ask waits until the 3rd person mention and stops after the 5th', () => {
+  const turn1 = []
+  assert.equal(
+    shouldAskPersonName({ userText: 'she needed space', history: turn1 }),
+    false,
+  )
+  const turn2 = [
+    { role: 'user', text: 'she needed space' },
+    { role: 'assistant', text: 'yeah.' },
   ]
   assert.equal(
-    shouldAskPersonName({
-      userText: 'she told me she needed space',
-      history,
-    }),
+    shouldAskPersonName({ userText: 'and she went clubbing', history: turn2 }),
+    false,
+  )
+  const turn3 = [
+    ...turn2,
+    { role: 'user', text: 'and she went clubbing' },
+    { role: 'assistant', text: 'that does not match space.' },
+  ]
+  assert.equal(
+    shouldAskPersonName({ userText: 'still no text from her', history: turn3 }),
     true,
   )
   const block = buildReplyQualityBlock(
     getReplyQualitySignals({
-      userText: 'she told me she needed space',
-      history,
+      userText: 'still no text from her',
+      history: turn3,
     }),
   )
   assert.match(block, /MUST/)
   assert.match(block, /name ask/)
+
+  const many = []
+  for (let i = 0; i < 5; i += 1) {
+    many.push({ role: 'user', text: `she did another thing ${i}` })
+    many.push({ role: 'assistant', text: 'ok' })
+  }
+  assert.equal(
+    shouldAskPersonName({ userText: 'she posted again', history: many }),
+    false,
+  )
 })
 
 test('cross sits with the story until they ask for a take', () => {
@@ -168,6 +183,7 @@ test('base prompt teaches no parrot, name ask, and thin-situation handling', () 
   assert.match(BASE_SYSTEM_PROMPT, /that's not space/)
   assert.match(BASE_SYSTEM_PROMPT, /Never generate a long answer and then cut it down/)
   assert.match(BASE_SYSTEM_PROMPT, /you MUST ask/)
+  assert.match(BASE_SYSTEM_PROMPT, /Do not ask for a name on the first/)
   assert.match(MODE_PROMPTS.cross, /Sit with the situation/)
   assert.match(MODE_PROMPTS.talk, /Mid-sentence "that's" is fine/)
 })

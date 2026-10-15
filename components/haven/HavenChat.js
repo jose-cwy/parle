@@ -36,7 +36,10 @@ import {
   renameChatArchive,
   uniquifyArchiveTitle,
   migrateLegacyArchiveTitles,
+  pruneArchivesMatchingMessages,
+  isArchiveDeleted,
 } from '../../lib/parle/chatArchives'
+import { shouldIgnoreCommit } from '../../lib/parle/sessionCommit'
 import {
   clearLiveSessionMeta,
   getPreferredModeId,
@@ -287,6 +290,7 @@ function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSession
     hasUserMessageInLiveSession && isActiveLiveSession(activeSessionId) && !viewingArchive
 
   archives.forEach((archive) => {
+    if (isArchiveDeleted(archive.id)) return
     if (!hasUserMessages(archive.messages)) return
     items.push({
       id: archive.id,
@@ -323,43 +327,63 @@ function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSession
     }))
 }
 
-async function consumeChatStream(res, onUpdate) {
+async function consumeChatStream(res, onUpdate, signal) {
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
   let reply = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+  const abortError = () => {
+    const error = new Error('Aborted')
+    error.name = 'AbortError'
+    return error
+  }
 
-    buffer += decoder.decode(value, { stream: true })
-    const events = buffer.split('\n\n')
-    buffer = events.pop() || ''
+  try {
+    if (signal?.aborted) throw abortError()
 
-    for (const event of events) {
-      const line = event.split('\n').find((entry) => entry.startsWith('data:'))
-      if (!line) continue
+    while (true) {
+      if (signal?.aborted) throw abortError()
+      const { done, value } = await reader.read()
+      if (signal?.aborted) throw abortError()
+      if (done) break
 
-      let payload
+      buffer += decoder.decode(value, { stream: true })
+      const events = buffer.split('\n\n')
+      buffer = events.pop() || ''
+
+      for (const event of events) {
+        const line = event.split('\n').find((entry) => entry.startsWith('data:'))
+        if (!line) continue
+
+        let payload
+        try {
+          payload = JSON.parse(line.slice(5).trim())
+        } catch {
+          continue
+        }
+
+        if (payload.delta) {
+          reply += payload.delta
+          onUpdate(reply)
+        }
+        if (payload.done) {
+          reply = payload.reply || reply
+          onUpdate(reply)
+        }
+      }
+    }
+
+    return reply
+  } finally {
+    if (signal?.aborted) {
       try {
-        payload = JSON.parse(line.slice(5).trim())
+        await reader.cancel()
       } catch {
-        continue
-      }
-
-      if (payload.delta) {
-        reply += payload.delta
-        onUpdate(reply)
-      }
-      if (payload.done) {
-        reply = payload.reply || reply
-        onUpdate(reply)
+        /* ignore */
       }
     }
   }
-
-  return reply
 }
 
 function splitAssistantParagraphs(text) {
@@ -758,6 +782,10 @@ export default function HavenChat() {
   const liveSessionTitleRef = useRef(LIVE_SESSION_TITLE)
   const activeSessionIdRef = useRef(activeSessionId)
   const loadingSessionsRef = useRef(new Set())
+  const replyAbortRef = useRef(null)
+  const sessionOpGenRef = useRef(0)
+  const selectGenRef = useRef(0)
+  const liveClearedRef = useRef(false)
   messagesRef.current = messages
   liveSessionTitleRef.current = liveSessionTitle
   activeSessionIdRef.current = activeSessionId
@@ -789,6 +817,29 @@ export default function HavenChat() {
     setLoadingRevision((n) => n + 1)
   }
 
+  function bumpSessionOpGen() {
+    sessionOpGenRef.current += 1
+    return sessionOpGenRef.current
+  }
+
+  function abortInFlightReply() {
+    if (replyAbortRef.current) {
+      replyAbortRef.current.abort()
+      replyAbortRef.current = null
+    }
+    loadingSessionsRef.current.clear()
+    setLoadingRevision((n) => n + 1)
+  }
+
+  function canCommitMessages(storageKey, opGen) {
+    return !shouldIgnoreCommit({
+      storageKey,
+      deletedIds: isArchiveDeleted(storageKey) ? [storageKey] : [],
+      opGen,
+      currentOpGen: sessionOpGenRef.current,
+    })
+  }
+
   function readMessagesForStorageKey(storageKey) {
     if (isViewingStorageKey(storageKey)) {
       return messagesRef.current || []
@@ -797,12 +848,13 @@ export default function HavenChat() {
     return archive?.messages || []
   }
 
-  function commitMessages(storageKey, updater, { chatModeId, bumpOrder = false } = {}) {
+  function commitMessages(storageKey, updater, { chatModeId, bumpOrder = false, opGen } = {}) {
+    if (!canCommitMessages(storageKey, opGen)) return readMessagesForStorageKey(storageKey)
     const prev = readMessagesForStorageKey(storageKey)
     const next = typeof updater === 'function' ? updater(prev) : updater
     const archive = getChatArchiveById(storageKey)
 
-    if (archive && isAuthed) {
+    if (archive && isAuthed && !isArchiveDeleted(storageKey)) {
       saveChatArchive({
         id: storageKey,
         title: archive.title,
@@ -1435,11 +1487,24 @@ export default function HavenChat() {
       ...(!isAuthed ? { sessionToken: getGuestSessionToken() } : {}),
     }
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    const opGen = sessionOpGenRef.current
+    const controller = new AbortController()
+    replyAbortRef.current = controller
+
+    let res
+    try {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+      throw error
+    }
+
+    if (!canCommitMessages(storageKey, opGen)) return
 
     if (!isAuthed) {
       const sessionHeader = res.headers.get('X-Parle-Guest-Session')
@@ -1469,7 +1534,7 @@ export default function HavenChat() {
               (res.status === 429 ? 'slow down a little.' : 'something went wrong with that message.')
             return [...list, createSystemNotice(notice)]
           },
-          { chatModeId: mode.id },
+          { chatModeId: mode.id, opGen },
         )
         if (isViewingStorageKey(storageKey) && userText) {
           setText(userText)
@@ -1482,7 +1547,7 @@ export default function HavenChat() {
         createAssistantMessage('Sorry, something went wrong. Please try again.', {
           modeId: mode.id,
         }),
-      ], { chatModeId: mode.id })
+      ], { chatModeId: mode.id, opGen })
       return
     }
 
@@ -1493,15 +1558,25 @@ export default function HavenChat() {
       commitMessages(storageKey, (prev) => [
         ...(prev || []),
         createAssistantMessage('', { at: assistantAt, modeId: mode.id }),
-      ], { chatModeId: mode.id })
+      ], { chatModeId: mode.id, opGen })
 
-      const finalReply = await consumeChatStream(res, (replyText) => {
-        commitMessages(storageKey, (prev) =>
-          (prev || []).map((m) =>
-            m.at === assistantAt ? { ...m, text: replyText, modeId: mode.id } : m,
-          ),
-        { chatModeId: mode.id })
-      })
+      let finalReply = ''
+      try {
+        finalReply = await consumeChatStream(
+          res,
+          (replyText) => {
+            commitMessages(storageKey, (prev) =>
+              (prev || []).map((m) =>
+                m.at === assistantAt ? { ...m, text: replyText, modeId: mode.id } : m,
+              ),
+            { chatModeId: mode.id, opGen })
+          },
+          controller.signal,
+        )
+      } catch (error) {
+        if (error?.name === 'AbortError') return
+        throw error
+      }
 
       const replyMessage = createAssistantMessage(finalReply || '', {
         at: assistantAt,
@@ -1516,10 +1591,11 @@ export default function HavenChat() {
           return isEdit && typeof editMessageIndex === 'number'
             ? syncBranchTail(mapped, editMessageIndex)
             : mapped
-        }, { chatModeId: mode.id })
+        }, { chatModeId: mode.id, opGen })
       } else if (isEdit && typeof editMessageIndex === 'number') {
         commitMessages(storageKey, (prev) => syncBranchTail(prev || [], editMessageIndex), {
           chatModeId: mode.id,
+          opGen,
         })
       }
 
@@ -1553,7 +1629,7 @@ export default function HavenChat() {
         return isEdit && typeof editMessageIndex === 'number'
           ? syncBranchTail(merged, editMessageIndex)
           : merged
-      }, { chatModeId: mode.id })
+      }, { chatModeId: mode.id, opGen })
       session.lastAssistantAt = Date.now()
       if (isViewingStorageKey(storageKey)) {
         setIsNewSession(false)
@@ -1750,6 +1826,7 @@ export default function HavenChat() {
       session.stopContactMessageCount += 1
     }
 
+    liveClearedRef.current = false
     setText('')
     if (productPulseVisible) setProductPulseVisible(false)
     const displayText = v || (imagePayload.length ? '[Image attached]' : '')
@@ -1788,7 +1865,7 @@ export default function HavenChat() {
 
     startSessionLoading(storageKey)
 
-    if (isViewingArchive(activeSessionId) && isAuthed) {
+    if (isViewingArchive(activeSessionId) && isAuthed && !isArchiveDeleted(activeSessionId)) {
       const existing = getChatArchiveById(activeSessionId)
       if (existing) {
         saveChatArchive({
@@ -1804,6 +1881,7 @@ export default function HavenChat() {
       }
     }
 
+    const sendOpGen = sessionOpGenRef.current
     try {
       track('chat_send', { authed: isAuthed, mode: mode.id })
       await requestAssistantReply({
@@ -1815,13 +1893,14 @@ export default function HavenChat() {
         images: imagePayload,
         storageKey,
       })
-    } catch {
+    } catch (error) {
+      if (error?.name === 'AbortError') return
       commitMessages(storageKey, (prev) => [
         ...(prev || []),
         createAssistantMessage('Sorry, something went wrong. Please try again.', {
           modeId: mode.id,
         }),
-      ], { chatModeId: mode.id })
+      ], { chatModeId: mode.id, opGen: sendOpGen })
     } finally {
       stopSessionLoading(storageKey)
     }
@@ -1862,6 +1941,18 @@ export default function HavenChat() {
     greetingPickRef.current = false
     setEmptyGreeting('')
     sessionRef.current = createSessionState()
+  }
+
+  function discardLiveAndArchives(snapshot) {
+    abortInFlightReply()
+    bumpSessionOpGen()
+    liveClearedRef.current = true
+    if (snapshot?.sessionId) {
+      removeChatArchive(snapshot.sessionId)
+    }
+    if (snapshot?.messages?.length) {
+      pruneArchivesMatchingMessages(snapshot.messages)
+    }
   }
 
   function captureSessionSnapshot() {
@@ -1936,7 +2027,8 @@ export default function HavenChat() {
   }
 
   async function clearChat() {
-    if (isActiveSessionLoading()) return
+    abortInFlightReply()
+    bumpSessionOpGen()
 
     const currentMessages = messages || []
     const shouldArchive = shouldArchiveLiveChat(activeSessionId, currentMessages)
@@ -1958,6 +2050,7 @@ export default function HavenChat() {
       })
     }
 
+    liveClearedRef.current = true
     resetToPreChatSync()
     setArchivesRevision((n) => n + 1)
 
@@ -1975,15 +2068,10 @@ export default function HavenChat() {
     e?.preventDefault?.()
     e?.stopPropagation?.()
     if (!session?.deletable) return
-    const deleteKey =
-      session.id === CURRENT_SESSION_ID
-        ? resolveSessionStorageKey(CURRENT_SESSION_ID, sessionRef.current.sessionId)
-        : session.id
-    if (isStorageKeyLoading(deleteKey)) return
 
     if (session.id === CURRENT_SESSION_ID) {
       const snapshot = hasUserMessages(messages || []) ? captureSessionSnapshot() : null
-
+      discardLiveAndArchives(snapshot)
       resetToPreChatSync()
       setArchivesRevision((n) => n + 1)
       track('chat_deleted', { authed: isAuthed, source: 'sidebar' })
@@ -1999,10 +2087,13 @@ export default function HavenChat() {
       return
     }
 
+    abortInFlightReply()
+    bumpSessionOpGen()
     removeChatArchive(session.id)
     setArchivesRevision((n) => n + 1)
 
-    if (activeSessionId === session.id) {
+    if (activeSessionId === session.id || activeSessionIdRef.current === session.id) {
+      liveClearedRef.current = true
       resetToPreChatSync()
     }
 
@@ -2034,6 +2125,7 @@ export default function HavenChat() {
   function persistSessionBeforeSwitch(targetSessionId) {
     if (targetSessionId === activeSessionId) return null
     if (!isAuthed) return null
+    if (liveClearedRef.current) return null
 
     const currentMessages = (messages || []).filter(
       (m) => m.role === 'user' || m.role === 'assistant',
@@ -2042,6 +2134,7 @@ export default function HavenChat() {
 
     if (shouldArchiveLiveChat(activeSessionId, currentMessages)) {
       const archiveId = sessionRef.current.sessionId
+      if (isArchiveDeleted(archiveId)) return null
       saveChatArchive({
         id: archiveId,
         title: uniquifyArchiveTitle(
@@ -2058,6 +2151,7 @@ export default function HavenChat() {
     }
 
     if (isViewingArchive(activeSessionId)) {
+      if (isArchiveDeleted(activeSessionId)) return null
       const existing = getChatArchiveById(activeSessionId)
       if (existing) {
         saveChatArchive({
@@ -2076,7 +2170,11 @@ export default function HavenChat() {
 
   async function handleSelectSession(session) {
     if (!session?.loadable) return
-    if (session.id === activeSessionId) return
+    if (session.id === activeSessionIdRef.current) return
+
+    abortInFlightReply()
+    bumpSessionOpGen()
+    const mySelect = (selectGenRef.current += 1)
 
     const parked = persistSessionBeforeSwitch(session.id)
     if (parked) {
@@ -2087,8 +2185,16 @@ export default function HavenChat() {
     }
 
     if (session.id === CURRENT_SESSION_ID) {
+      if (liveClearedRef.current) {
+        if (mySelect !== selectGenRef.current) return
+        setMessages([])
+        setChatMode(null)
+        setActiveSessionId(CURRENT_SESSION_ID)
+        return
+      }
       if (isAuthed) {
         const historyRes = await fetch('/api/chat/history')
+        if (mySelect !== selectGenRef.current) return
         const rows = historyRes.ok ? await historyRes.json() : []
         const history = (rows || []).map((m) => ({
           role: m.role === 'user' ? 'user' : 'assistant',
@@ -2103,12 +2209,18 @@ export default function HavenChat() {
         }
       }
 
+      liveClearedRef.current = false
       setActiveSessionId(CURRENT_SESSION_ID)
       return
     }
 
     const archive = getChatArchiveById(session.id)
-    if (!archive) return
+    if (!archive || isArchiveDeleted(session.id)) {
+      setArchivesRevision((n) => n + 1)
+      return
+    }
+    if (mySelect !== selectGenRef.current) return
+    liveClearedRef.current = false
 
     if (parked?.type !== 'live') {
       await sendSessionEnd()

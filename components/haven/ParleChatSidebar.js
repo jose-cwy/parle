@@ -190,7 +190,7 @@ export default function ParleChatSidebar({
                   const isRenaming = renamingId === session.id
 
                   return (
-                    <li key={session.id} className="group relative">
+                    <li key={session.id} className="group relative overflow-hidden">
                       {isRenaming ? (
                         <div className="px-2 py-1.5">
                           <input
