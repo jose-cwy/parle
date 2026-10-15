@@ -16,6 +16,7 @@ import {
   markPatternNamed,
 } from '../../../lib/parle/livingProfileCore'
 import { runHiddenThink } from '../../../lib/parle/hiddenThink'
+import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
@@ -116,14 +117,29 @@ export default async function handler(req, res) {
       }
 
       const talkMode = (modeId || 'cross') === 'talk'
+      let living = null
       let livingProfileBlock = ''
       if (settings.personalisation_enabled) {
-        let living = await getLivingProfileForUser(payload.id, {
+        living = await getLivingProfileForUser(payload.id, {
           personalisationEnabled: true,
         })
         living = overlayPreferenceKnobs(living, settings.profile)
+      }
+
+      const quality = getReplyQualitySignals({
+        userText,
+        history: recent,
+        livingProfile: living,
+        modeId: modeId || 'cross',
+      })
+
+      if (living) {
         const namingFact = talkMode ? null : pickPatternToName(living)
-        livingProfileBlock = buildLivingProfileBlock(living, { talkMode, namingFact })
+        livingProfileBlock = buildLivingProfileBlock(living, {
+          talkMode,
+          namingFact,
+          liftLength: quality.liftLength,
+        })
         if (namingFact) {
           await saveLivingProfile(payload.id, markPatternNamed(living, namingFact.id)).catch(() => {})
         }
@@ -133,8 +149,11 @@ export default async function handler(req, res) {
         userText,
         history: recent,
         modeId: modeId || 'cross',
+        quality,
       })
       const injections = [...(hiddenInjections || [])]
+      const qualityBlock = buildReplyQualityBlock(quality)
+      if (qualityBlock) injections.push(qualityBlock)
       if (thinkBlock) injections.push(thinkBlock)
 
       const completionMessages = buildChatCompletionMessages({

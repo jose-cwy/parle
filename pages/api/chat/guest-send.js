@@ -7,6 +7,7 @@ import {
 import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { runHiddenThink } from '../../../lib/parle/hiddenThink'
+import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
@@ -120,12 +121,21 @@ export default async function handler(req, res) {
         limit: 6,
       })
 
+      const quality = getReplyQualitySignals({
+        userText,
+        history: recent,
+        livingProfile: null,
+        modeId: safeModeId,
+      })
       const thinkBlock = await runHiddenThink({
         userText,
         history: recent,
         modeId: safeModeId,
+        quality,
       })
       const injections = [...(hiddenInjections || [])]
+      const qualityBlock = buildReplyQualityBlock(quality)
+      if (qualityBlock) injections.push(qualityBlock)
       if (thinkBlock) injections.push(thinkBlock)
 
       const completionMessages = buildChatCompletionMessages({

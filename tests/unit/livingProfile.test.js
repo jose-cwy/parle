@@ -100,6 +100,9 @@ test('living profile block never names a profile system', () => {
   assert.match(block, /PRIVATE ATTENTION/)
   assert.doesNotMatch(block, /your profile/i)
   assert.doesNotMatch(block, /I've learned/i)
+
+  const lifted = buildLivingProfileBlock(profile, { liftLength: true })
+  assert.match(lifted, /ignore short\/medium caps/)
 })
 
 test('public items and delete by id', () => {
