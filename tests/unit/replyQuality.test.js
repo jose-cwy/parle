@@ -4,7 +4,7 @@ const fs = require('fs')
 const path = require('path')
 const { BASE_SYSTEM_PROMPT, MODE_PROMPTS } = require('../../lib/parle/prompts')
 const { buildChatCompletionMessages } = require('../../lib/parle/chatComplete')
-const { buildThinkBlock } = require('../../lib/parle/hiddenThink')
+const { buildThinkBlock, THINK_PROMPT } = require('../../lib/parle/hiddenThink')
 const {
   wantsAnalysis,
   wantsAdvice,
@@ -149,10 +149,15 @@ test('cross sits with the story until they ask for a take', () => {
     modeId: 'cross',
   })
   assert.equal(story.sitWithStory, true)
+  assert.equal(story.earlySit, true)
+  assert.equal(story.userTurnCount, 1)
   assert.equal(story.wantsAdvice, false)
   const storyBlock = buildReplyQualityBlock(story)
+  assert.match(storyBlock, /MUST/)
   assert.match(storyBlock, /sit with the situation/)
-  assert.match(storyBlock, /Do NOT ask what they are going to do next/)
+  assert.match(storyBlock, /how do you cope with that sense of loss/)
+  assert.match(storyBlock, /have you found any small moments of relief or distraction/)
+  assert.match(storyBlock, /End on a statement/)
 
   assert.equal(wantsAdvice('what should i do'), true)
   const asked = getReplyQualitySignals({
@@ -161,9 +166,52 @@ test('cross sits with the story until they ask for a take', () => {
     modeId: 'cross',
   })
   assert.equal(asked.sitWithStory, false)
+  assert.equal(asked.earlySit, false)
   assert.equal(asked.wantsOpinion, true)
   const askedBlock = buildReplyQualityBlock(asked)
   assert.match(askedBlock, /You may take a position or give advice/)
+})
+
+test('early sit lifts after five user turns; i can\'t drops the coping thread', () => {
+  const history = []
+  for (let i = 0; i < 5; i += 1) {
+    history.push({ role: 'user', text: `update about the fight ${i}` })
+    history.push({ role: 'assistant', text: 'yeah.' })
+  }
+  const later = getReplyQualitySignals({
+    userText: 'and she still has not texted',
+    history,
+    modeId: 'cross',
+  })
+  assert.equal(later.userTurnCount, 6)
+  assert.equal(later.sitWithStory, true)
+  assert.equal(later.earlySit, false)
+
+  const refused = getReplyQualitySignals({
+    userText: "i can't",
+    history: [{ role: 'assistant', text: 'how do you cope with that sense of loss?' }],
+    modeId: 'cross',
+  })
+  assert.equal(refused.rejectedNextSteps, true)
+  assert.equal(refused.sitWithStory, true)
+  const refusedBlock = buildReplyQualityBlock(refused)
+  assert.match(refusedBlock, /MUST/)
+  assert.match(refusedBlock, /Drop that thread/)
+  assert.match(refusedBlock, /Do not continue coping/)
+
+  const idk = getReplyQualitySignals({
+    userText: "i don't know",
+    history: [],
+    modeId: 'cross',
+  })
+  assert.equal(idk.rejectedNextSteps, true)
+
+  const notRefusal = getReplyQualitySignals({
+    userText: "i know it's pathetic i just can't stop",
+    history: [],
+    modeId: 'cross',
+  })
+  assert.equal(notRefusal.rejectedNextSteps, false)
 })
 
 test('talk mode does not ask for a name unless they are talking about a person', () => {
@@ -185,7 +233,12 @@ test('base prompt teaches no parrot, name ask, and thin-situation handling', () 
   assert.match(BASE_SYSTEM_PROMPT, /you MUST ask/)
   assert.match(BASE_SYSTEM_PROMPT, /Do not ask for a name on the first/)
   assert.match(MODE_PROMPTS.cross, /Sit with the situation/)
+  assert.match(MODE_PROMPTS.cross, /understand, don't interview/)
   assert.match(MODE_PROMPTS.talk, /Mid-sentence "that's" is fine/)
+  assert.match(BASE_SYSTEM_PROMPT, /User: "i can't"/)
+  assert.match(BASE_SYSTEM_PROMPT, /how do you cope with that sense of loss/)
+  assert.match(BASE_SYSTEM_PROMPT, /have you found any small moments of relief or distraction/)
+  assert.match(BASE_SYSTEM_PROMPT, /that mix of warmth and sadness can be so intense/)
 })
 
 test('quality injection is present for completions and think stays private', () => {
@@ -202,4 +255,6 @@ test('quality injection is present for completions and think stays private', () 
   assert.match(joined, /PRIVATE REPLY QUALITY/)
   assert.match(buildThinkBlock('lift_length: yes'), /PRIVATE THINK/)
   assert.match(buildThinkBlock('lift_length: yes'), /keep the full breakdown/)
+  assert.match(THINK_PROMPT, /do not plan any question about coping/)
+  assert.match(THINK_PROMPT, /plan a statement ending/)
 })
