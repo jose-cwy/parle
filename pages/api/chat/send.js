@@ -5,6 +5,17 @@ import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getUserChatSettings } from '../../../lib/parle/preferences'
 import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
+import {
+  getLivingProfileForUser,
+  overlayPreferenceKnobs,
+  saveLivingProfile,
+} from '../../../lib/parle/livingProfile'
+import {
+  buildLivingProfileBlock,
+  pickPatternToName,
+  markPatternNamed,
+} from '../../../lib/parle/livingProfileCore'
+import { runHiddenThink } from '../../../lib/parle/hiddenThink'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
@@ -104,17 +115,40 @@ export default async function handler(req, res) {
         )
       }
 
+      const talkMode = (modeId || 'cross') === 'talk'
+      let livingProfileBlock = ''
+      if (settings.personalisation_enabled) {
+        let living = await getLivingProfileForUser(payload.id, {
+          personalisationEnabled: true,
+        })
+        living = overlayPreferenceKnobs(living, settings.profile)
+        const namingFact = talkMode ? null : pickPatternToName(living)
+        livingProfileBlock = buildLivingProfileBlock(living, { talkMode, namingFact })
+        if (namingFact) {
+          await saveLivingProfile(payload.id, markPatternNamed(living, namingFact.id)).catch(() => {})
+        }
+      }
+
+      const thinkBlock = await runHiddenThink({
+        userText,
+        history: recent,
+        modeId: modeId || 'cross',
+      })
+      const injections = [...(hiddenInjections || [])]
+      if (thinkBlock) injections.push(thinkBlock)
+
       const completionMessages = buildChatCompletionMessages({
         modeId: modeId || 'cross',
         dontTextStep,
         dontTextMessageCount,
         preferenceProfile: settings.personalisation_enabled ? settings.profile : null,
+        livingProfileBlock,
         replyFeedback,
         contextRecap: contextRecap
           ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
           : null,
         crossSessionSummary: crossSummary,
-        hiddenInjections,
+        hiddenInjections: injections,
         conversationHistory: recent,
         userText,
         images: safeImages,
@@ -122,8 +156,8 @@ export default async function handler(req, res) {
 
       if (process.env.NODE_ENV === 'development') {
         console.log(
-          '[parle chat] preference profile injected:',
-          Boolean(settings.personalisation_enabled && settings.profile),
+          '[parle chat] living profile injected:',
+          Boolean(livingProfileBlock),
         )
       }
 

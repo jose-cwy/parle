@@ -97,3 +97,10 @@ CREATE TABLE IF NOT EXISTS session_length_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_length_history_user ON session_length_history(user_id, created_at DESC);
+
+-- Encrypted living user profile (AES-GCM payload, same as chat history)
+CREATE TABLE IF NOT EXISTS user_living_profile (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  payload TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

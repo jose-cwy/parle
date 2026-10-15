@@ -6,6 +6,7 @@ import {
 } from '../../../lib/parle/guestTrainingDb'
 import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
+import { runHiddenThink } from '../../../lib/parle/hiddenThink'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
@@ -119,17 +120,26 @@ export default async function handler(req, res) {
         limit: 6,
       })
 
+      const thinkBlock = await runHiddenThink({
+        userText,
+        history: recent,
+        modeId: safeModeId,
+      })
+      const injections = [...(hiddenInjections || [])]
+      if (thinkBlock) injections.push(thinkBlock)
+
       const completionMessages = buildChatCompletionMessages({
         modeId: safeModeId,
         dontTextStep,
         dontTextMessageCount,
         preferenceProfile: null,
+        livingProfileBlock: '',
         replyFeedback,
         contextRecap: contextRecap
           ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
           : null,
         crossSessionSummary: null,
-        hiddenInjections,
+        hiddenInjections: injections,
         conversationHistory: recent,
         userText,
         images: safeImages,

@@ -1,8 +1,11 @@
 import db from '../../../lib/db'
 import { runApiPipeline } from '../../../lib/security/pipeline'
+import { encrypt, decrypt } from '../../../lib/security/encryption'
 import { openaiChatComplete } from '../../../lib/openai'
 import { SESSION_SUMMARY_PROMPT } from '../../../lib/parle/prompts'
-import { updateProfileAfterSession } from '../../../lib/parle/preferences'
+import { getOrCreateProfile, updateProfileAfterSession } from '../../../lib/parle/preferences'
+import { updateLivingProfileAfterSession } from '../../../lib/parle/livingProfile'
+import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -90,31 +93,52 @@ export default async function handler(req, res) {
 
     const memoryEnabled = Boolean(userSettings.memory_enabled)
 
-    if (memoryEnabled && (message_count || 0) > 0) {
-      let sessionTranscript = String(transcript || '').trim()
-      if (!sessionTranscript) {
-        const history = await db.query(
-          'SELECT role, text FROM chat_memory WHERE user_id = $1 ORDER BY created_at ASC',
-          [payload.id],
-        )
-        sessionTranscript = (history.rows || [])
-          .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${String(m.text || '').slice(0, 800)}`)
-          .join('\n')
-      }
-
-      if (sessionTranscript.trim()) {
-        const summary = await openaiChatComplete({
-          messages: [
-            { role: 'system', content: SESSION_SUMMARY_PROMPT },
-            { role: 'user', content: sessionTranscript.slice(0, 6000) },
-          ],
-          temperature: 0.4,
+    let sessionTranscript = String(transcript || '').trim()
+    if (!sessionTranscript && (personalisationEnabled || memoryEnabled) && (message_count || 0) > 0) {
+      const history = await db.query(
+        'SELECT role, text FROM chat_memory WHERE user_id = $1 ORDER BY created_at ASC',
+        [payload.id],
+      )
+      sessionTranscript = (history.rows || [])
+        .map((m) => {
+          const text = decrypt(m.text || '').slice(0, 800)
+          return `${m.role === 'user' ? 'User' : 'Assistant'}: ${text}`
         })
-        await db.query('UPDATE users SET last_session_summary = $1 WHERE id = $2', [
-          String(summary || '').trim(),
-          payload.id,
-        ])
-      }
+        .join('\n')
+    }
+
+    if (personalisationEnabled && (message_count || 0) > 0) {
+      const knobs = await getOrCreateProfile(payload.id)
+      const feedbackRows = await getRecentReplyFeedback({ userId: payload.id, limit: 6 }).catch(() => [])
+      await updateLivingProfileAfterSession(payload.id, {
+        signals: {
+          user_avg_message_length,
+          final_mode,
+          repeat_sentiment_detected,
+          preferred_response_length: knobs.preferred_response_length,
+          preferred_tone: knobs.preferred_tone,
+          responds_well_to_questions: knobs.responds_well_to_questions,
+          prefers_validation_over_advice: knobs.prefers_validation_over_advice,
+        },
+        transcript: sessionTranscript.slice(0, 4000),
+        hour: new Date().getHours(),
+        feedbackRows,
+      })
+    }
+
+    if (memoryEnabled && (message_count || 0) > 0 && sessionTranscript.trim()) {
+      const summary = await openaiChatComplete({
+        messages: [
+          { role: 'system', content: SESSION_SUMMARY_PROMPT },
+          { role: 'user', content: sessionTranscript.slice(0, 6000) },
+        ],
+        temperature: 0.4,
+      })
+      const plain = String(summary || '').trim()
+      await db.query('UPDATE users SET last_session_summary = $1 WHERE id = $2', [
+        plain ? encrypt(plain) : null,
+        payload.id,
+      ])
     }
 
     return res.status(200).json({ ok: true })

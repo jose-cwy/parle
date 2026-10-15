@@ -30,8 +30,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         memory_enabled: settings.memory_enabled,
         personalisation_enabled: settings.personalisation_enabled,
-        last_session_summary: settings.last_session_summary,
-        profile: settings.profile,
+        has_last_session_summary: Boolean(settings.has_last_session_summary),
         image_attach_consent: imageAttachConsent,
         onboarding_answered: onboardingAnswered,
         onboarding_reason: onboardingReason,
@@ -41,8 +40,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
           memory_enabled: true,
           personalisation_enabled: true,
-          last_session_summary: null,
-          profile: null,
+          has_last_session_summary: false,
           onboarding_answered: false,
           onboarding_reason: null,
         })

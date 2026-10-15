@@ -188,3 +188,9 @@ CREATE TABLE IF NOT EXISTS product_feedback (
   is_guest BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS user_living_profile (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  payload TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

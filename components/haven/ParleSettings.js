@@ -183,6 +183,9 @@ export function useParleSettings(isAuthed = true) {
   const [hasCache, setHasCache] = useState(() => Boolean(cached))
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [livingGroups, setLivingGroups] = useState([])
+  const [livingLoading, setLivingLoading] = useState(false)
+  const [deletingFactId, setDeletingFactId] = useState('')
   const [status, setStatus] = useState('')
   const [statusVisible, setStatusVisible] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -198,6 +201,21 @@ export function useParleSettings(isAuthed = true) {
     setPersonalisationEnabled,
     setPreferredName,
     setPreferredNameDraft,
+  }
+
+  async function loadLivingProfile() {
+    if (!isAuthed) return
+    setLivingLoading(true)
+    try {
+      const res = await fetch('/api/user/living-profile')
+      if (!res.ok) return
+      const data = await res.json()
+      setLivingGroups(Array.isArray(data?.groups) ? data.groups : [])
+    } catch {
+      setLivingGroups([])
+    } finally {
+      setLivingLoading(false)
+    }
   }
 
   function showStatus(message) {
@@ -267,6 +285,7 @@ export function useParleSettings(isAuthed = true) {
     }
 
     void syncFromServer()
+    void loadLivingProfile()
 
     return () => {
       if (syncAbortRef.current) syncAbortRef.current.abort()
@@ -406,6 +425,29 @@ export function useParleSettings(isAuthed = true) {
     }
   }
 
+  async function deleteLivingFact(id) {
+    if (!id || deletingFactId) return
+    setDeletingFactId(id)
+    try {
+      const res = await fetch('/api/user/living-profile', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLivingGroups(Array.isArray(data?.groups) ? data.groups : [])
+        showStatus('Removed.')
+      } else {
+        showStatus("couldn't save, try again")
+      }
+    } catch {
+      showStatus("couldn't save, try again")
+    } finally {
+      setDeletingFactId('')
+    }
+  }
+
   async function resetPreferences() {
     setResetting(true)
     setStatus('')
@@ -418,6 +460,7 @@ export function useParleSettings(isAuthed = true) {
       if (res.ok) {
         showStatus('Preferences reset.')
         setConfirmReset(false)
+        setLivingGroups([])
       } else {
         showStatus("couldn't save, try again")
       }
@@ -448,6 +491,10 @@ export function useParleSettings(isAuthed = true) {
     togglePersonalisation,
     saveDisplayName,
     resetPreferences,
+    livingGroups,
+    livingLoading,
+    deletingFactId,
+    deleteLivingFact,
     refreshSettings: syncFromServer,
   }
 }
@@ -478,6 +525,10 @@ export function ParleSettingsPanel({
     togglePersonalisation,
     saveDisplayName,
     resetPreferences,
+    livingGroups,
+    livingLoading,
+    deletingFactId,
+    deleteLivingFact,
   } = settings
 
   const togglesDisabled = !togglesReady || saving || savingName
@@ -549,7 +600,7 @@ export function ParleSettingsPanel({
             />
             <PrivacyToggle
               label="Personalise my experience"
-              description="parlé learns your preferences over time — like whether you prefer shorter responses or a warmer tone. Not sold or shared with advertisers. On by default."
+              description="parlé quietly attends to how you write and what you share, so replies feel more personal. Turning this off stops using it immediately. What it has is kept encrypted until you reset. Not sold or shared."
               checked={personalisationEnabled}
               disabled={togglesDisabled}
               onToggle={togglePersonalisation}
@@ -557,6 +608,40 @@ export function ParleSettingsPanel({
           </>
         )}
       </div>
+
+      {!showSkeleton && Array.isArray(livingGroups) && livingGroups.length > 0 ? (
+        <div className={cn('border-t border-border/70', compact ? 'mt-5 pt-4' : 'mt-6 pt-5')}>
+          <p className="text-[12px] font-medium text-foreground">What parlé remembers</p>
+          <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+            Encrypted on your account. You can remove anything, or reset all of it below.
+          </p>
+          <div className="mt-3 space-y-4">
+            {livingGroups.map((group) => (
+              <div key={group.label}>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{group.label}</p>
+                <ul className="mt-2 space-y-2">
+                  {(group.items || []).map((item) => (
+                    <li key={item.id} className="flex items-start justify-between gap-3">
+                      <p className="text-[12px] text-foreground leading-relaxed">{item.text}</p>
+                      <button
+                        type="button"
+                        onClick={() => deleteLivingFact?.(item.id)}
+                        disabled={deletingFactId === item.id}
+                        className="shrink-0 text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          {livingLoading ? (
+            <p className="mt-2 text-[10px] text-muted-foreground">Updating…</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className={cn('border-t border-border/70', compact ? 'mt-5 pt-4' : 'mt-6 pt-5')}>
         {!confirmReset ? (
@@ -570,7 +655,7 @@ export function ParleSettingsPanel({
         ) : (
           <div className="space-y-3">
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              This will reset what parlé has learned about you. Are you sure?
+              This will clear what parlé has learned, including people, patterns, and how you write. Are you sure?
             </p>
             <div className="flex gap-2">
               <button

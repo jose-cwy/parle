@@ -1021,7 +1021,7 @@ export default function HavenChat() {
           }
           setHistoryLoading(false)
 
-          if (context?.memory_enabled && context?.last_session_summary) {
+          if (context?.memory_enabled && context?.has_last_session_summary) {
             fetch('/api/chat/returning-opening', { method: 'POST' })
               .then((openingRes) => (openingRes.ok ? openingRes.json() : {}))
               .then((openingPayload) => {
