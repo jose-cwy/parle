@@ -149,15 +149,15 @@ test('cross sits with the story until they ask for a take', () => {
     modeId: 'cross',
   })
   assert.equal(story.sitWithStory, true)
-  assert.equal(story.earlySit, true)
+  assert.equal(story.storyPhase, 'gather')
   assert.equal(story.userTurnCount, 1)
   assert.equal(story.wantsAdvice, false)
   const storyBlock = buildReplyQualityBlock(story)
   assert.match(storyBlock, /MUST/)
-  assert.match(storyBlock, /sit with the situation/)
+  assert.match(storyBlock, /gather the situation/)
   assert.match(storyBlock, /how do you cope with that sense of loss/)
   assert.match(storyBlock, /have you found any small moments of relief or distraction/)
-  assert.match(storyBlock, /End on a statement/)
+  assert.match(storyBlock, /exactly one question about what happened/)
 
   assert.equal(wantsAdvice('what should i do'), true)
   const asked = getReplyQualitySignals({
@@ -166,26 +166,66 @@ test('cross sits with the story until they ask for a take', () => {
     modeId: 'cross',
   })
   assert.equal(asked.sitWithStory, false)
-  assert.equal(asked.earlySit, false)
+  assert.equal(asked.storyPhase, 'plan_without_story')
   assert.equal(asked.wantsOpinion, true)
   const askedBlock = buildReplyQualityBlock(asked)
-  assert.match(askedBlock, /You may take a position or give advice/)
+  assert.match(askedBlock, /do not want to share the story|Help with what to do/i)
 })
 
-test('early sit lifts after five user turns; i can\'t drops the coping thread', () => {
-  const history = []
-  for (let i = 0; i < 5; i += 1) {
-    history.push({ role: 'user', text: `update about the fight ${i}` })
-    history.push({ role: 'assistant', text: 'yeah.' })
-  }
-  const later = getReplyQualitySignals({
-    userText: 'and she still has not texted',
-    history,
+test('story phases: gather, held, skip-story, distressed, i can\'t', () => {
+  const miserable = getReplyQualitySignals({
+    userText: 'i feel miserable',
+    history: [],
     modeId: 'cross',
   })
-  assert.equal(later.userTurnCount, 6)
-  assert.equal(later.sitWithStory, true)
-  assert.equal(later.earlySit, false)
+  assert.equal(miserable.storyPhase, 'gather')
+  const miserableBlock = buildReplyQualityBlock(miserable)
+  assert.match(miserableBlock, /ask what happened/)
+  assert.match(miserableBlock, /how do you cope with that sense of loss/)
+
+  const firstDump = getReplyQualitySignals({
+    userText: 'we got into a fight and she went clubbing and now four days of silence',
+    history: [],
+    modeId: 'cross',
+  })
+  assert.equal(firstDump.storyPhase, 'gather')
+  assert.equal(firstDump.storyHeld, false)
+
+  const held = getReplyQualitySignals({
+    userText: 'and then she posted stories like nothing happened',
+    history: [
+      { role: 'user', text: 'we got into a fight and she went clubbing' },
+      { role: 'assistant', text: 'how did you find out she was out?' },
+    ],
+    modeId: 'cross',
+  })
+  assert.equal(held.storyPhase, 'held')
+  assert.equal(held.storyHeld, true)
+  const heldBlock = buildReplyQualityBlock(held)
+  assert.match(heldBlock, /enough of the situation/)
+  assert.match(heldBlock, /callback/)
+  assert.doesNotMatch(heldBlock, /gather the situation/)
+
+  const skip = getReplyQualitySignals({
+    userText: "just tell me what to do after a breakup, i don't want to talk about what happened",
+    history: [],
+    modeId: 'cross',
+  })
+  assert.equal(skip.storyPhase, 'plan_without_story')
+  assert.equal(skip.planWithoutStory, true)
+  const skipBlock = buildReplyQualityBlock(skip)
+  assert.match(skipBlock, /Do not force what happened/)
+
+  const distressed = getReplyQualitySignals({
+    userText: "i'm spiraling and i can't stop crying",
+    history: [],
+    modeId: 'cross',
+  })
+  assert.equal(distressed.storyPhase, 'gather')
+  assert.equal(distressed.distressed, true)
+  const distressedBlock = buildReplyQualityBlock(distressed)
+  assert.match(distressedBlock, /very distressed/)
+  assert.match(distressedBlock, /gather the situation/)
 
   const refused = getReplyQualitySignals({
     userText: "i can't",
@@ -193,18 +233,11 @@ test('early sit lifts after five user turns; i can\'t drops the coping thread', 
     modeId: 'cross',
   })
   assert.equal(refused.rejectedNextSteps, true)
-  assert.equal(refused.sitWithStory, true)
+  assert.equal(refused.storyPhase, 'gather')
   const refusedBlock = buildReplyQualityBlock(refused)
   assert.match(refusedBlock, /MUST/)
   assert.match(refusedBlock, /Drop that thread/)
-  assert.match(refusedBlock, /Do not continue coping/)
-
-  const idk = getReplyQualitySignals({
-    userText: "i don't know",
-    history: [],
-    modeId: 'cross',
-  })
-  assert.equal(idk.rejectedNextSteps, true)
+  assert.match(refusedBlock, /Ask about the situation instead/)
 
   const notRefusal = getReplyQualitySignals({
     userText: "i know it's pathetic i just can't stop",
@@ -232,13 +265,15 @@ test('base prompt teaches no parrot, name ask, and thin-situation handling', () 
   assert.match(BASE_SYSTEM_PROMPT, /Never generate a long answer and then cut it down/)
   assert.match(BASE_SYSTEM_PROMPT, /you MUST ask/)
   assert.match(BASE_SYSTEM_PROMPT, /Do not ask for a name on the first/)
-  assert.match(MODE_PROMPTS.cross, /Sit with the situation/)
-  assert.match(MODE_PROMPTS.cross, /understand, don't interview/)
+  assert.match(MODE_PROMPTS.cross, /Understand the situation first/)
   assert.match(MODE_PROMPTS.talk, /Mid-sentence "that's" is fine/)
   assert.match(BASE_SYSTEM_PROMPT, /User: "i can't"/)
   assert.match(BASE_SYSTEM_PROMPT, /how do you cope with that sense of loss/)
   assert.match(BASE_SYSTEM_PROMPT, /have you found any small moments of relief or distraction/)
   assert.match(BASE_SYSTEM_PROMPT, /that mix of warmth and sadness can be so intense/)
+  assert.match(BASE_SYSTEM_PROMPT, /just tell me what to do after a breakup/)
+  assert.match(BASE_SYSTEM_PROMPT, /you said earlier you were miserable/)
+  assert.match(BASE_SYSTEM_PROMPT, /how did you find out she was out/)
 })
 
 test('quality injection is present for completions and think stays private', () => {
@@ -255,6 +290,7 @@ test('quality injection is present for completions and think stays private', () 
   assert.match(joined, /PRIVATE REPLY QUALITY/)
   assert.match(buildThinkBlock('lift_length: yes'), /PRIVATE THINK/)
   assert.match(buildThinkBlock('lift_length: yes'), /keep the full breakdown/)
-  assert.match(THINK_PROMPT, /do not plan any question about coping/)
-  assert.match(THINK_PROMPT, /plan a statement ending/)
+  assert.match(THINK_PROMPT, /story_phase: gather/)
+  assert.match(THINK_PROMPT, /next question MUST be about what happened/)
+  assert.match(THINK_PROMPT, /plan_without_story/)
 })
