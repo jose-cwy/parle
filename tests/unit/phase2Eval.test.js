@@ -20,3 +20,20 @@ test('vent heuristic deducts unsolicited questions', () => {
   const good = scoreReply(scenario, 'you did everything and they just walked. infuriating.')
   assert.equal(good.deductions.includes('vent_or_no_question_failed'), false)
 })
+
+test('cross analyze cases exist and deduct invented motives', () => {
+  const analyze = SCENARIOS.find((s) => s.id === 'cross-analyze')
+  const unknown = SCENARIOS.find((s) => s.id === 'cross-analyze-unknown')
+  const quiet = SCENARIOS.find((s) => s.id === 'cross-quiet-no-motive')
+  assert.ok(analyze && unknown && quiet)
+  const invented = scoreReply(
+    analyze,
+    'asking for space after a fight often signals a need to process. if she felt overwhelmed she might be moving on in her own way.',
+  )
+  assert.equal(invented.deductions.includes('unsupported_mindread'), true)
+  const honest = scoreReply(
+    unknown,
+    'space after the fight is a fact. already done is a guess. i do not know what she meant, and neither do you yet.',
+  )
+  assert.equal(honest.deductions.includes('unsupported_mindread'), false)
+})

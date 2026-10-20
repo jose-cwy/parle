@@ -1,0 +1,153 @@
+{
+  "label": "rc-cross",
+  "think": "off",
+  "generatedAt": "2026-10-20T03:37:10.615Z",
+  "summary": {
+    "n": 4,
+    "avgScore": 9.63,
+    "avgThinkMs": 0,
+    "avgReplyMs": 1856,
+    "avgTotalMs": 1856,
+    "promptTokens": 30919,
+    "completionTokens": 281,
+    "estUsdGpt4oMini": 0.0048,
+    "byMode": {
+      "cross": {
+        "n": 4,
+        "avg": 9.63
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "cross-analyze",
+      "modeId": "cross",
+      "userText": "can you actually analyze this. did she ever mean the space thing or was she already done.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2707,
+      "totalMs": 2707,
+      "usage": {
+        "prompt_tokens": 7781,
+        "completion_tokens": 95,
+        "total_tokens": 7876,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "she asked for space after a huge fight, which is a clear action that shows she needed time away. \n\nwhether she meant it or was already done is harder to pin down. it could be that she genuinely needed to sort out her feelings after the fight. \n\nbut without more context, I can't say for sure what her intentions were. **what's clear is that you’re left in a silence that feels heavy.** \n\nhow are you holding up with the uncertainty?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.07
+      }
+    },
+    {
+      "id": "cross-analyze-unknown",
+      "modeId": "cross",
+      "userText": "be honest. analyze this. she asked for space after the fight and then went quiet. i do not know why. was she already done or just overwhelmed.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2068,
+      "totalMs": 2068,
+      "usage": {
+        "prompt_tokens": 7787,
+        "completion_tokens": 140,
+        "total_tokens": 7927,
+        "prompt_tokens_details": {
+          "cached_tokens": 7680,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "here's what we know: \n\nshe asked for space after the fight, which indicates she needed time to process her feelings or the situation. \n\nthe silence after that is a fact, but what it means isn't clear. It's possible she felt overwhelmed and needed to sort through her emotions without external pressures. \n\n**However, it could also suggest that she might be distancing herself for reasons that aren't fully about you or the fight.** \n\nwhat you don't know is what she's thinking or feeling during this quiet period. \n\nwithout her words, it's tough to pinpoint her motives, whether she’s processing or if she's already made a decision about the relationship. \n\nthat uncertainty can be really heavy to sit with.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.16
+      }
+    },
+    {
+      "id": "cross-quiet-no-motive",
+      "modeId": "cross",
+      "userText": "they went quiet after the weekend. i do not know why.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1406,
+      "totalMs": 1406,
+      "usage": {
+        "prompt_tokens": 7703,
+        "completion_tokens": 35,
+        "total_tokens": 7738,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "that silence can feel so heavy, especially when you’re left guessing.\n\nit's tough to sit with uncertainty like that. \n\nhow did you feel when you noticed they went quiet?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.15
+      }
+    },
+    {
+      "id": "cross-done-talking",
+      "modeId": "cross",
+      "userText": "anyway that's all i needed to say. i think i'm good for now.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1244,
+      "totalMs": 1244,
+      "usage": {
+        "prompt_tokens": 7648,
+        "completion_tokens": 11,
+        "total_tokens": 7659,
+        "prompt_tokens_details": {
+          "cached_tokens": 7552,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "got it. I'm here whenever you need to talk.",
+      "heuristic": {
+        "score": 8.5,
+        "deductions": [
+          "unsolicited_advice"
+        ],
+        "questions": 0,
+        "overlap": 0
+      }
+    }
+  ]
+}

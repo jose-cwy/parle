@@ -11,9 +11,11 @@ import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/par
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { checkRateLimit, sendRateLimitResponse } from '../../../lib/rateLimiter'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
 import { validateImageDataUrls } from '../../../lib/security/images'
 import {
+  getProcessingBlock,
   runChatAbuseChecks,
   trimConversationHistory,
   withChatProcessing,
@@ -38,7 +40,7 @@ function setGuestUsageHeaders(res, usage) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { tier: 'guestChat' })
+  const guard = runApiPipeline(req, res, { tier: 'guestChat', deferRateLimit: true })
   if (guard.handled) return
 
   try {
@@ -61,6 +63,17 @@ export default async function handler(req, res) {
     const safeImages = imageCheck.images
     const safeModeId = modeId || 'cross'
     const trainingSessionToken = resolveGuestSessionToken(req, sessionToken)
+
+    const processing = getProcessingBlock(req, { sessionToken: trainingSessionToken })
+    if (processing.blocked) {
+      setGuestUsageHeaders(res, processing.body)
+      return res.status(processing.status).json(processing.body)
+    }
+
+    const burst = checkRateLimit(req, { tier: 'guestChat' })
+    if (!burst.allowed) {
+      return sendRateLimitResponse(res, burst.cfg)
+    }
 
     const abuse = await runChatAbuseChecks(req, res, {
       sessionToken: trainingSessionToken,
@@ -168,19 +181,21 @@ export default async function handler(req, res) {
         extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
       })
 
-      await logGuestTrainingExchange({
-        sessionToken: trainingSessionToken,
-        modeId: safeModeId,
-        userText,
-        assistantText: reply,
-        replyKind: 'normal',
-      }).catch(() => false)
-
       return reply
     })
 
     if (lockResult.locked) {
       return res.status(429).json({ error: 'processing' })
+    }
+
+    if (lockResult.result) {
+      await logGuestTrainingExchange({
+        sessionToken: trainingSessionToken,
+        modeId: safeModeId,
+        userText,
+        assistantText: lockResult.result,
+        replyKind: 'normal',
+      }).catch(() => false)
     }
   } catch (error) {
     return handleApiError(res, error, 'chat_guest_send')

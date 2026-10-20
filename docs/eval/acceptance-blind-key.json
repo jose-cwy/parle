@@ -1,0 +1,54 @@
+{
+  "key": [
+    {
+      "id": "cross-fight-dump",
+      "left": "updated",
+      "right": "acceptance"
+    },
+    {
+      "id": "cross-analyze",
+      "left": "acceptance",
+      "right": "updated"
+    },
+    {
+      "id": "cross-done-talking",
+      "left": "updated",
+      "right": "acceptance"
+    },
+    {
+      "id": "logical-analyze-no-assume",
+      "left": "acceptance",
+      "right": "updated"
+    },
+    {
+      "id": "logical-unknown-motive",
+      "left": "updated",
+      "right": "acceptance"
+    },
+    {
+      "id": "logical-what-should-i-do",
+      "left": "acceptance",
+      "right": "updated"
+    },
+    {
+      "id": "vent-hate-happy",
+      "left": "updated",
+      "right": "acceptance"
+    },
+    {
+      "id": "vent-instagram",
+      "left": "acceptance",
+      "right": "updated"
+    },
+    {
+      "id": "vent-stacked",
+      "left": "updated",
+      "right": "acceptance"
+    },
+    {
+      "id": "emotional-closing",
+      "left": "acceptance",
+      "right": "updated"
+    }
+  ]
+}

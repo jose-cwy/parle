@@ -16,11 +16,12 @@ const { buildChatCompletionMessages } = require('../lib/parle/chatComplete')
 const { openaiChatComplete } = require('../lib/openai')
 
 function parseArgs(argv) {
-  const args = { label: 'run', think: 'off', subset: 'all' }
+  const args = { label: 'run', think: 'off', subset: 'all', ids: '' }
   for (const raw of argv.slice(2)) {
     if (raw.startsWith('--label=')) args.label = raw.slice('--label='.length)
     else if (raw.startsWith('--think=')) args.think = raw.slice('--think='.length)
     else if (raw.startsWith('--subset=')) args.subset = raw.slice('--subset='.length)
+    else if (raw.startsWith('--ids=')) args.ids = raw.slice('--ids='.length)
   }
   return args
 }
@@ -83,8 +84,12 @@ async function main() {
     process.exit(1)
   }
   const args = parseArgs(process.argv)
-  const list =
-    args.subset === 'think'
+  const idSet = args.ids
+    ? new Set(args.ids.split(',').map((s) => s.trim()).filter(Boolean))
+    : null
+  const list = idSet
+    ? SCENARIOS.filter((s) => idSet.has(s.id))
+    : args.subset === 'think'
       ? SCENARIOS.filter((s) => THINK_COMPARE_IDS.includes(s.id))
       : SCENARIOS
 

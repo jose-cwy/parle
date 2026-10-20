@@ -20,9 +20,11 @@ import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/par
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { checkRateLimit, sendRateLimitResponse } from '../../../lib/rateLimiter'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
 import { validateImageDataUrls } from '../../../lib/security/images'
 import {
+  getProcessingBlock,
   runChatAbuseChecks,
   trimConversationHistory,
   withChatProcessing,
@@ -37,7 +39,11 @@ export const config = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'userChat' })
+  const guard = runApiPipeline(req, res, {
+    requireAuth: true,
+    tier: 'userChat',
+    deferRateLimit: true,
+  })
   if (guard.handled) return
   const payload = guard.payload
 
@@ -62,6 +68,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid image attachment' })
     }
     const safeImages = imageCheck.images
+
+    const processing = getProcessingBlock(req, { userId: payload.id })
+    if (processing.blocked) {
+      return res.status(processing.status).json(processing.body)
+    }
+
+    const burst = checkRateLimit(req, { tier: 'userChat', userId: payload.id })
+    if (!burst.allowed) {
+      return sendRateLimitResponse(res, burst.cfg)
+    }
 
     const abuse = await runChatAbuseChecks(req, res, {
       userId: payload.id,
@@ -191,12 +207,16 @@ export default async function handler(req, res) {
         extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
       })
 
-      const saved = await insertChatMessage(payload.id, 'assistant', reply)
-      return { reply, messageId: saved?.id, thinkMs }
+      return { reply, thinkMs }
     })
 
     if (lockResult.locked) {
       return res.status(429).json({ error: 'processing' })
+    }
+
+    const streamed = lockResult.result || {}
+    if (streamed.reply) {
+      await insertChatMessage(payload.id, 'assistant', streamed.reply)
     }
   } catch (error) {
     return handleApiError(res, error, 'chat_send')

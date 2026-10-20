@@ -261,7 +261,7 @@ test('talk mode does not ask for a name unless they are talking about a person',
 test('base prompt teaches no parrot, name ask, and thin-situation handling', () => {
   assert.match(BASE_SYSTEM_PROMPT, /i miss them/)
   assert.match(BASE_SYSTEM_PROMPT, /what's her name, if you're ok saying/)
-  assert.match(BASE_SYSTEM_PROMPT, /that's not space/)
+  assert.match(BASE_SYSTEM_PROMPT, /that's not the version of space she described/)
   assert.match(BASE_SYSTEM_PROMPT, /Never generate a long answer and then cut it down/)
   assert.match(BASE_SYSTEM_PROMPT, /you MUST ask/)
   assert.match(BASE_SYSTEM_PROMPT, /Do not ask for a name on the first/)
@@ -305,6 +305,7 @@ test('vent mode ignores gather and name-ask', () => {
   assert.equal(vent.storyPhase, 'vent')
   const block = buildReplyQualityBlock(vent)
   assert.match(block, /Zero questions/)
+  assert.match(block, /question marks/)
   assert.doesNotMatch(block, /comfort\/understanding in the first line/)
   assert.equal(
     shouldAskPersonName({
@@ -342,4 +343,18 @@ test('logical quality forbids invented inner life', () => {
   })
   const block = buildReplyQualityBlock(logical)
   assert.match(block, /do not invent the other person's intentions/)
+  assert.match(block, /At most one question/)
+})
+
+test('cross analysis quality forbids invented motives', () => {
+  const block = buildReplyQualityBlock(
+    getReplyQualitySignals({
+      userText: 'can you actually analyze this. did she ever mean the space thing',
+      history: [],
+      modeId: 'cross',
+    }),
+  )
+  assert.match(block, /analysis stays with facts/)
+  assert.match(block, /what you do not know/)
+  assert.match(MODE_PROMPTS.cross, /do not invent motives/i)
 })

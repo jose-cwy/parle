@@ -1,0 +1,1199 @@
+{
+  "label": "acceptance",
+  "think": "off",
+  "generatedAt": "2026-10-20T03:19:44.275Z",
+  "summary": {
+    "n": 36,
+    "avgScore": 9.89,
+    "avgThinkMs": 0,
+    "avgReplyMs": 1359,
+    "avgTotalMs": 1359,
+    "promptTokens": 277925,
+    "completionTokens": 1658,
+    "estUsdGpt4oMini": 0.0427,
+    "byMode": {
+      "cross": {
+        "n": 6,
+        "avg": 9.75
+      },
+      "emotional": {
+        "n": 6,
+        "avg": 10
+      },
+      "logical": {
+        "n": 6,
+        "avg": 10
+      },
+      "vent": {
+        "n": 6,
+        "avg": 9.58
+      },
+      "stop_contact": {
+        "n": 6,
+        "avg": 10
+      },
+      "talk": {
+        "n": 6,
+        "avg": 10
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "cross-thin-miss",
+      "modeId": "cross",
+      "userText": "i miss them",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2211,
+      "totalMs": 2211,
+      "usage": {
+        "prompt_tokens": 7533,
+        "completion_tokens": 14,
+        "total_tokens": 7547,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "missing someone can feel so heavy. \n\nwhat happened between you two?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "cross-fight-dump",
+      "modeId": "cross",
+      "userText": "we got into a fight. she keeps clubbing after she said she would change. she asked for space and we have not texted in four days. yesterday she was out drinking and i found out from a story.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1039,
+      "totalMs": 1039,
+      "usage": {
+        "prompt_tokens": 7536,
+        "completion_tokens": 38,
+        "total_tokens": 7574,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "that's a tough situation. she asked for space, but then went out drinking without updating you. that feels like a betrayal of what she said.\n\nhow did you find out she was out?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.24
+      }
+    },
+    {
+      "id": "cross-analyze",
+      "modeId": "cross",
+      "userText": "can you actually analyze this. did she ever mean the space thing or was she already done.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2341,
+      "totalMs": 2341,
+      "usage": {
+        "prompt_tokens": 7554,
+        "completion_tokens": 199,
+        "total_tokens": 7753,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "let's break this down.\n\nshe asked for space right after a big fight, which often signals a need to process feelings or cool down. it doesn’t automatically mean she was done with the relationship. sometimes, people need time to think, especially after tensions rise.\n\nhowever, the context matters. if she felt overwhelmed by the fight and wanted to pull back, that could indicate she's unsure about the relationship but isn't necessarily closed off to it. on the flip side, if she was already distancing herself before the fight, then her request for space could be a sign that she was contemplating ending things.\n\nthe key here is to reflect on how she acted before the fight. did she show signs of pulling away or losing interest? if she was engaging and then suddenly asked for space, it leans more towards needing time to sort things out rather than being done. \n\nultimately, it’s hard to know definitively without her perspective. what do you think was her mindset leading up to the fight?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0.08
+      }
+    },
+    {
+      "id": "cross-skip-story-plan",
+      "modeId": "cross",
+      "userText": "just tell me what to do after a breakup, i don't want to talk about what happened",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1968,
+      "totalMs": 1968,
+      "usage": {
+        "prompt_tokens": 7439,
+        "completion_tokens": 74,
+        "total_tokens": 7513,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "no backstory needed.\n\nfirst off, **don’t text or reach out** right away. give yourself a few days to let the initial feelings settle.\n\nthen, focus on small distractions. pick a new show to binge or take a walk to clear your head.\n\nand when you're ready, maybe journal about what you're feeling. it helps to get it out without pressure.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.05
+      }
+    },
+    {
+      "id": "cross-cant",
+      "modeId": "cross",
+      "userText": "i can't",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1339,
+      "totalMs": 1339,
+      "usage": {
+        "prompt_tokens": 7574,
+        "completion_tokens": 36,
+        "total_tokens": 7610,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "that's okay. you don't have to have a way through it yet.\n\nfour days of silence is heavy, especially with her out drinking. how did you find out she was out?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "cross-done-talking",
+      "modeId": "cross",
+      "userText": "anyway that's all i needed to say. i think i'm good for now.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1075,
+      "totalMs": 1075,
+      "usage": {
+        "prompt_tokens": 7450,
+        "completion_tokens": 17,
+        "total_tokens": 7467,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "I'm glad you shared that. If you need to talk more later, I'm here.",
+      "heuristic": {
+        "score": 8.5,
+        "deductions": [
+          "unsolicited_advice"
+        ],
+        "questions": 0,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "emotional-bus",
+      "modeId": "emotional",
+      "userText": "i cried on the bus home and now i feel embarrassed like i should be over this already.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1512,
+      "totalMs": 1512,
+      "usage": {
+        "prompt_tokens": 7516,
+        "completion_tokens": 46,
+        "total_tokens": 7562,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "hey, crying on the bus doesn't make you embarrassing. you felt something real — that's why it still knocks the air out of you.\n\nit's okay to still be in it. what was going through your head while it was happening?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "emotional-kitchen",
+      "modeId": "emotional",
+      "userText": "nothing even happened today. i just miss them and it hit me in the kitchen.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1124,
+      "totalMs": 1124,
+      "usage": {
+        "prompt_tokens": 7552,
+        "completion_tokens": 40,
+        "total_tokens": 7592,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "yeah, it hits you when you least expect it, like in the kitchen where everything feels normal.\n\nmissing them can creep up and catch you off guard. \n\nwhat thought showed up when it did?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.1
+      }
+    },
+    {
+      "id": "emotional-friends-tired",
+      "modeId": "emotional",
+      "userText": "everyone's tired of me talking about it. i don't want to dump this on my friends again.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1218,
+      "totalMs": 1218,
+      "usage": {
+        "prompt_tokens": 7517,
+        "completion_tokens": 36,
+        "total_tokens": 7553,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "then dump it here. **I'm not going to get tired of you talking about it.**\n\nsay whatever you haven't said to them. what’s been weighing on you the most?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.27
+      }
+    },
+    {
+      "id": "emotional-spiral",
+      "modeId": "emotional",
+      "userText": "i'm spiraling and i can't stop crying",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1555,
+      "totalMs": 1555,
+      "usage": {
+        "prompt_tokens": 7538,
+        "completion_tokens": 36,
+        "total_tokens": 7574,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "that overwhelming feeling can hit hard, especially when the tears just keep coming.\n\nit's okay to let it out. what’s been weighing on you that’s got you feeling this way?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "emotional-held-callback",
+      "modeId": "emotional",
+      "userText": "and then she posted stories like nothing happened. i still have not heard from her.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1509,
+      "totalMs": 1509,
+      "usage": {
+        "prompt_tokens": 7604,
+        "completion_tokens": 47,
+        "total_tokens": 7651,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "stories up, you waiting in silence. that feels really painful.\n\nyou said earlier you were miserable. with her out there living life like nothing happened, how are you holding that? \n\nwhat's her name, if you're ok saying?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0.17
+      }
+    },
+    {
+      "id": "emotional-closing",
+      "modeId": "emotional",
+      "userText": "ok i think i just needed to hear that. i will try to sleep.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1036,
+      "totalMs": 1036,
+      "usage": {
+        "prompt_tokens": 7453,
+        "completion_tokens": 16,
+        "total_tokens": 7469,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "it's good that you reached out. sleep well, and take care of yourself.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.22
+      }
+    },
+    {
+      "id": "logical-still-care",
+      "modeId": "logical",
+      "userText": "they said they still care about me. that has to mean they are coming back, right?",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1429,
+      "totalMs": 1429,
+      "usage": {
+        "prompt_tokens": 7549,
+        "completion_tokens": 45,
+        "total_tokens": 7594,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "caring about you isn't the same as coming back. \n\npeople can still care and still be gone. \n\nwhat's important is how they show that care — and right now, their actions seem to be saying something different.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.42
+      }
+    },
+    {
+      "id": "logical-show-up",
+      "modeId": "logical",
+      "userText": "i think if i just show up at their place and talk it out in person they will remember why we worked.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1221,
+      "totalMs": 1221,
+      "usage": {
+        "prompt_tokens": 7553,
+        "completion_tokens": 43,
+        "total_tokens": 7596,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "showing up doesn't rewind anything. \n\na grand gesture can't bring back old feelings if they’ve already changed. \n\nyou don't actually know how they'd react to that. what are you hoping to achieve by going there?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.04
+      }
+    },
+    {
+      "id": "logical-self-blame",
+      "modeId": "logical",
+      "userText": "if i'd just been less anxious none of this would have happened. this is my fault.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1174,
+      "totalMs": 1174,
+      "usage": {
+        "prompt_tokens": 7548,
+        "completion_tokens": 58,
+        "total_tokens": 7606,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "anxiety can feel like a heavy weight, especially when things spiral out of control.\n\nbut it's important to remember that anxiety itself doesn't cause relationship issues. there are many factors at play, and assigning blame to yourself isn't fair.\n\nwhat specifically made you feel like your anxiety led to this outcome?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.03
+      }
+    },
+    {
+      "id": "logical-analyze-no-assume",
+      "modeId": "logical",
+      "userText": "be honest. analyze whether they loved me or i was convenient. we dated a year and they still cooked for me sometimes.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2159,
+      "totalMs": 2159,
+      "usage": {
+        "prompt_tokens": 7530,
+        "completion_tokens": 124,
+        "total_tokens": 7654,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "cooking for you sometimes shows a level of care, but it's not definitive proof of love. \n\nlove involves deeper emotional connections and consistent actions that reflect commitment. a year together includes moments that matter, but one habit like cooking isn't enough to determine their true feelings or intentions.\n\nyou can't conclude from just that whether you were loved or seen as convenient. **the relationship likely had layers**, but without more consistent signs of love, it’s hard to say definitively.\n\nconsider this: \n\n\"what did their actions say to you beyond the cooking?\" \n\nThat might help clarify your feelings as you reflect on the overall relationship.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.07
+      }
+    },
+    {
+      "id": "logical-what-should-i-do",
+      "modeId": "logical",
+      "userText": "what should i do this week. i keep wanting to text.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1194,
+      "totalMs": 1194,
+      "usage": {
+        "prompt_tokens": 7485,
+        "completion_tokens": 51,
+        "total_tokens": 7536,
+        "prompt_tokens_details": {
+          "cached_tokens": 7168,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "this week, try to hold off on texting.\n\ninstead, focus on finding a distraction. \n\nmaybe set a goal — like reading a book or going for a walk each day. \n\nit helps to give yourself a break from the urge to reach out.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.09
+      }
+    },
+    {
+      "id": "logical-unknown-motive",
+      "modeId": "logical",
+      "userText": "they went quiet after the weekend. i do not know why.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1140,
+      "totalMs": 1140,
+      "usage": {
+        "prompt_tokens": 7543,
+        "completion_tokens": 40,
+        "total_tokens": 7583,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "that silence can feel really heavy, especially when it comes out of nowhere.\n\nyou have no answers, and that can leave you feeling stuck. \n\nwhat happened over the weekend that might have changed things?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.04
+      }
+    },
+    {
+      "id": "vent-hate-happy",
+      "modeId": "vent",
+      "userText": "i hate that they get to be happy like nothing happened. i did everything and they just walked.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1108,
+      "totalMs": 1108,
+      "usage": {
+        "prompt_tokens": 7371,
+        "completion_tokens": 20,
+        "total_tokens": 7391,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "they walked away and now they're fine while you're left with all this. \n\nthat feels so unfair.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.23
+      }
+    },
+    {
+      "id": "vent-instagram",
+      "modeId": "vent",
+      "userText": "they're acting single on instagram and all our friends are still liking their posts. i'm actually fuming.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1109,
+      "totalMs": 1109,
+      "usage": {
+        "prompt_tokens": 7372,
+        "completion_tokens": 19,
+        "total_tokens": 7391,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "acting single on instagram while your friends cheer them on. \n\nyeah, that's infuriating.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.36
+      }
+    },
+    {
+      "id": "vent-left-on-read",
+      "modeId": "vent",
+      "userText": "and another thing they used to leave me on read for hours and i'd make excuses and i'm so done being the one who waited.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1501,
+      "totalMs": 1501,
+      "usage": {
+        "prompt_tokens": 7377,
+        "completion_tokens": 26,
+        "total_tokens": 7403,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "left on read for hours while you made excuses. \n\nyou're done being the one who waited. that feels like a breaking point.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.4
+      }
+    },
+    {
+      "id": "vent-stacked",
+      "modeId": "vent",
+      "userText": "plus they used our song on a story. like seriously.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 962,
+      "totalMs": 962,
+      "usage": {
+        "prompt_tokens": 7385,
+        "completion_tokens": 10,
+        "total_tokens": 7395,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "using your song after everything? that's beyond frustrating.",
+      "heuristic": {
+        "score": 7.5,
+        "deductions": [
+          "vent_or_no_question_failed"
+        ],
+        "questions": 1,
+        "overlap": 0.13
+      }
+    },
+    {
+      "id": "vent-done",
+      "modeId": "vent",
+      "userText": "anyway. i said it.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 973,
+      "totalMs": 973,
+      "usage": {
+        "prompt_tokens": 7378,
+        "completion_tokens": 15,
+        "total_tokens": 7393,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "good to get it out. it helps to let that heat out sometimes.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "vent-no-fix",
+      "modeId": "vent",
+      "userText": "don't fix it. i just needed to scream into the void.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1071,
+      "totalMs": 1071,
+      "usage": {
+        "prompt_tokens": 7364,
+        "completion_tokens": 30,
+        "total_tokens": 7394,
+        "prompt_tokens_details": {
+          "cached_tokens": 7296,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "screaming into the void can feel like the only thing left to do sometimes.\n\nit's heavy to carry that around, and letting it out matters.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.13
+      }
+    },
+    {
+      "id": "stop-paragraph",
+      "modeId": "stop_contact",
+      "userText": "i have a paragraph typed. i just want to ask if they miss me. one text is not a big deal.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 827,
+      "totalMs": 827,
+      "usage": {
+        "prompt_tokens": 7504,
+        "completion_tokens": 15,
+        "total_tokens": 7519,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "Good call coming here first. What were you going to say to them?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "stop-call",
+      "modeId": "stop_contact",
+      "userText": "i'm this close to calling. i won't sleep if i don't hear their voice.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1579,
+      "totalMs": 1579,
+      "usage": {
+        "prompt_tokens": 7497,
+        "completion_tokens": 55,
+        "total_tokens": 7552,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "hearing their voice feels like it could bring some comfort, but it might also just pull you back into the same cycle.\n\nremember, reaching out now could reignite old feelings or lead to more confusion.\n\nwhat do you actually need from them right now — besides the sound?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.06
+      }
+    },
+    {
+      "id": "stop-online",
+      "modeId": "stop_contact",
+      "userText": "i opened the chat. they were last active 4 minutes ago. if i send something now they will see it immediately.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2464,
+      "totalMs": 2464,
+      "usage": {
+        "prompt_tokens": 7505,
+        "completion_tokens": 42,
+        "total_tokens": 7547,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "it feels like the moment is right there, just within reach. \n\nbut sending a message because they're online doesn't mean they're wanting to hear from you. \n\nwhat are you hoping happens the second they see it?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.04
+      }
+    },
+    {
+      "id": "stop-charger",
+      "modeId": "stop_contact",
+      "userText": "i was gonna text them about the charger they still have. that is practical not emotional.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1092,
+      "totalMs": 1092,
+      "usage": {
+        "prompt_tokens": 7498,
+        "completion_tokens": 41,
+        "total_tokens": 7539,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "the charger feels like a safe excuse to reach out.\n\nbut even a practical text can open up old feelings and lead to more. \n\nif they respond dryly, how would that actually sit with you?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.25
+      }
+    },
+    {
+      "id": "stop-already-sent",
+      "modeId": "stop_contact",
+      "userText": "ok i already sent it. now i feel sick.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1232,
+      "totalMs": 1232,
+      "usage": {
+        "prompt_tokens": 7554,
+        "completion_tokens": 45,
+        "total_tokens": 7599,
+        "prompt_tokens_details": {
+          "cached_tokens": 7424,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "sending it can feel like a weight lifted, but now you're left with the uncertainty. \n\nthat sick feeling is real — it's the waiting and wondering what they'll say next. \n\nhow did you feel right before you hit send?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.13
+      }
+    },
+    {
+      "id": "stop-held",
+      "modeId": "stop_contact",
+      "userText": "fine. i deleted the draft. i still want to though.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1056,
+      "totalMs": 1056,
+      "usage": {
+        "prompt_tokens": 7521,
+        "completion_tokens": 37,
+        "total_tokens": 7558,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "it’s good you deleted it. that text feels like a small step, but it can open up a whole lot more.\n\nwhat do you think would happen if you did send it?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.06
+      }
+    },
+    {
+      "id": "talk-movie",
+      "modeId": "talk",
+      "userText": "i just watched meet joe black and i just wanna talk about it",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1245,
+      "totalMs": 1245,
+      "usage": {
+        "prompt_tokens": 8845,
+        "completion_tokens": 63,
+        "total_tokens": 8908,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "meet joe black has such a unique take on life and death. \n\nthe way death experiences human moments, like tasting peanut butter or falling in love, makes you think about how fleeting and precious life really is. it's bittersweet, especially knowing he has to take bill in the end.\n\nwhat part hit you hardest?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.09
+      }
+    },
+    {
+      "id": "talk-leave-them-out",
+      "modeId": "talk",
+      "userText": "can we not talk about them. i just don't want to sit in silence.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1153,
+      "totalMs": 1153,
+      "usage": {
+        "prompt_tokens": 8848,
+        "completion_tokens": 39,
+        "total_tokens": 8887,
+        "prompt_tokens_details": {
+          "cached_tokens": 8704,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "totally get that. sitting in silence can be heavy.\n\nsometimes it helps to fill that space with something else. maybe a show or a book?\n\nwhat else has been on your mind lately?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0.05
+      }
+    },
+    {
+      "id": "talk-playlist",
+      "modeId": "talk",
+      "userText": "couldn't sleep. put on a playlist we used to share by accident. now i feel weird but i don't want to unpack it.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1310,
+      "totalMs": 1310,
+      "usage": {
+        "prompt_tokens": 8859,
+        "completion_tokens": 62,
+        "total_tokens": 8921,
+        "prompt_tokens_details": {
+          "cached_tokens": 8704,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "accidental playlists can really pull you back into memories, can't they? \n\nit's almost like they sneak up on you, reminding you of moments you thought you could set aside. trying to avoid unpacking those feelings might make them linger longer, though. \n\nwhat else is even playing in your head right now?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "talk-no-topic",
+      "modeId": "talk",
+      "userText": "i don't even know what to say. i just didn't want to be alone in my head.",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1314,
+      "totalMs": 1314,
+      "usage": {
+        "prompt_tokens": 8851,
+        "completion_tokens": 48,
+        "total_tokens": 8899,
+        "prompt_tokens_details": {
+          "cached_tokens": 8704,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "sometimes just sitting with your thoughts can feel heavy.\n\nbeing alone in your head can amplify everything, making it all feel more intense.\n\nit’s like the quiet can bring out the loudest feelings. \n\nwhat’s been on your mind lately?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.14
+      }
+    },
+    {
+      "id": "talk-short",
+      "modeId": "talk",
+      "userText": "hey",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 965,
+      "totalMs": 965,
+      "usage": {
+        "prompt_tokens": 8833,
+        "completion_tokens": 10,
+        "total_tokens": 8843,
+        "prompt_tokens_details": {
+          "cached_tokens": 8704,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "hey there. what’s on your mind today?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "talk-analyze-film",
+      "modeId": "talk",
+      "userText": "okay analyze the ending of meet joe black for me without turning it into therapy",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1735,
+      "totalMs": 1735,
+      "usage": {
+        "prompt_tokens": 8889,
+        "completion_tokens": 121,
+        "total_tokens": 9010,
+        "prompt_tokens_details": {
+          "cached_tokens": 8192,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "the ending hits differently because it ties together themes of love, loss, and acceptance. \n\ndeath, having experienced human emotions, has to take bill back. it's a bittersweet moment where he understands the depth of human connection but can never truly belong. \n\nthe final scene, with susan and bill's goodbye, reflects that poignant mix of sadness and hope. it shows how even in loss, there's a chance for growth and moving forward. \n\nit’s like a reminder that while life is fleeting, the connections we make can leave a lasting impact. \n\nwhat part of the ending resonated with you?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.03
+      }
+    }
+  ]
+}
