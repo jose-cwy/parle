@@ -35,6 +35,12 @@ test('personalization schema, save, and reload with synthetic data', async (t) =
     return
   }
 
+  const ident = await db.query(`SELECT current_setting('neon.branch_id', true) AS branch_id`)
+  if (ident.rows[0]?.branch_id === 'br-morning-sun-apghun9g') {
+    t.skip('refusing persistence writes on the primary branch; use scripts/run-rehearsal-db-tests.js')
+    return
+  }
+
   const beforeUsers = await db.query('SELECT count(*)::int AS n FROM users')
   const beforeMemory = await db.query('SELECT count(*)::int AS n FROM chat_memory')
   const beforeLiving = await db.query('SELECT count(*)::int AS n FROM user_living_profile')

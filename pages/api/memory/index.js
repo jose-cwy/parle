@@ -2,7 +2,7 @@ import { clearUserMemory, getUserMemory, upsertUserMemory } from '../../../lib/m
 import { runApiPipeline } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { requireAuth: true })
+  const guard = runApiPipeline(req, res, { requireAuth: true, deprecated: '/api/memory' })
   if (guard.handled) return
   const payload = guard.payload
 

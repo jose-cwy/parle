@@ -1,4 +1,9 @@
--- NeonDB / Postgres schema for Heartstrings Club V1
+-- DESIRED SCHEMA SNAPSHOT (KEEP + still-deprecated REVIEW tables).
+-- Editing this file does NOT change Neon. Apply deltas with:
+--   node scripts/migrate.js --require-branch=<neon.branch_id>
+-- See docs/database.md.
+
+-- NeonDB / Postgres schema for Parlé (legacy Heartstrings Club names remain on some tables)
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -73,7 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_user_memory_updated ON user_memory(updated_at);
 CREATE INDEX IF NOT EXISTS idx_quote_favorites_user ON quote_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_letters_to_self_user_completed ON letters_to_self(user_id, is_completed);
 
--- parlé chatbot (see database/parle_chat.sql for full migration)
+-- parlé chatbot columns (database/parle_chat.sql is superseded; see docs/database.md)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_session_summary TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS memory_enabled BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS personalisation_enabled BOOLEAN NOT NULL DEFAULT TRUE;
@@ -209,3 +214,29 @@ CREATE TABLE IF NOT EXISTS session_length_history (
 
 CREATE INDEX IF NOT EXISTS idx_session_length_history_user
   ON session_length_history(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS user_preference_profile (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  preferred_response_length TEXT NOT NULL DEFAULT 'medium'
+    CHECK (preferred_response_length IN ('short', 'medium', 'long')),
+  preferred_tone TEXT NOT NULL DEFAULT 'balanced'
+    CHECK (preferred_tone IN ('warm', 'balanced', 'direct')),
+  responds_well_to_questions BOOLEAN NOT NULL DEFAULT TRUE,
+  prefers_validation_over_advice BOOLEAN NOT NULL DEFAULT TRUE,
+  average_message_length INTEGER NOT NULL DEFAULT 0,
+  average_reply_speed_seconds INTEGER NOT NULL DEFAULT 0,
+  mode_switch_count INTEGER NOT NULL DEFAULT 0,
+  most_used_mode VARCHAR(64) NOT NULL DEFAULT 'Just listen',
+  session_count INTEGER NOT NULL DEFAULT 0,
+  average_session_length_messages INTEGER NOT NULL DEFAULT 0,
+  repeat_sentiment_count INTEGER NOT NULL DEFAULT 0,
+  last_updated TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version TEXT PRIMARY KEY,
+  checksum TEXT NOT NULL,
+  applied_at TIMESTAMPTZ,
+  status TEXT NOT NULL CHECK (status IN ('applied', 'failed')),
+  error TEXT
+);
