@@ -33,13 +33,15 @@ node scripts/migrate.js --rehearsal --require-branch=<child-branch-id> [--allow-
 ```
 
 - `--rehearsal` uses **only** `REHEARSAL_DATABASE_URL` (never `DATABASE_URL`, never `--database-url=`).
-- All migrate runs refuse the primary until named-object approval.
-- Ledger: `schema_migrations` (exists on the child after rehearsal; **absent on primary**).
+- Production execution of `0003` stays **disabled** until a later `--execute-primary-0003` approval. Assembling `--authorize-primary-additive` is not enough.
+- `0001` / `0002` / destructive SQL cannot be selected on the primary 0003 path.
+- Ledger: `schema_migrations` (exists on the child after rehearsal; **absent on primary** until an approved execute).
 
 | File | Kind | Where |
 |------|------|--------|
 | `0001_keep_comments.sql` | comments | child only |
 | `0002_archive_legacy.sql` | `SET SCHEMA archive_legacy` | child only |
+| `0003_phase3_analytics.sql` | additive analytics | child rehearsed; primary not applied |
 
 ## Classification
 
@@ -136,10 +138,20 @@ API: `/api/guest/email`. Cron: `/api/cron/guest-email-followups`.
 `id`, `user_id` → `users` (SET NULL), `session_id`, `message_id`, `rating`, `reason`, `mode_id`, `is_guest`, `created_at`, `reply_excerpt`, `user_excerpt` (no longer written).  
 API: `/api/feedback`. Reader: reply-quality injection.
 
-### `product_feedback` — in-chat pulse
+### `product_feedback` — in-chat pulse / outcomes
 
-`id`, `user_id` → `users` (SET NULL), `session_id`, `variant`, `response`, `note`, `message_count`, `is_guest`, `created_at`.  
-API: `/api/feedback/product`. No product SELECT (Phase 3 later).
+`id`, `user_id` → `users` (SET NULL), `session_id`, `variant`, `response`, `note` (no longer written), `message_count`, `is_guest`, `created_at`, `dimension` (`relief` \| `clarity`; null on legacy A/B rows).  
+API: `/api/feedback/product`. `response` is NOT NULL; skip = no outcome row.
+
+### `product_events` — allowlisted product analytics
+
+`id`, `name`, `user_id`, `is_guest`, `mode_id`, `session_key` (authed session id only; guests omit), `rating`, `reason`, `dimension`, `response`, `message_count`, `created_at`.  
+Partial unique indexes: authed `conversation_started` per session, `user_activated` / `account_created` per user, `survey_shown` per user per UTC day. **No unique on `message_sent`.**  
+Intended 24-month retention; **automatic deletion is not implemented.**
+
+`users.first_activated_at` — first server-confirmed authed `message_sent`.
+
+Migration `0003_phase3_analytics.sql` is additive. **Not applied on primary** until named approval. Rehearse on the child only. Never apply `0001`/`0002` on primary.
 
 ---
 

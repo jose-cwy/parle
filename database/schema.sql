@@ -194,6 +194,8 @@ CREATE TABLE IF NOT EXISTS product_feedback (
   is_guest BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE product_feedback ADD COLUMN IF NOT EXISTS dimension VARCHAR(16);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_activated_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS user_living_profile (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -231,6 +233,21 @@ CREATE TABLE IF NOT EXISTS user_preference_profile (
   average_session_length_messages INTEGER NOT NULL DEFAULT 0,
   repeat_sentiment_count INTEGER NOT NULL DEFAULT 0,
   last_updated TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS product_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(64) NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  is_guest BOOLEAN NOT NULL DEFAULT FALSE,
+  mode_id VARCHAR(64),
+  session_key VARCHAR(64),
+  rating VARCHAR(16),
+  reason VARCHAR(64),
+  dimension VARCHAR(16),
+  response VARCHAR(64),
+  message_count INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS schema_migrations (

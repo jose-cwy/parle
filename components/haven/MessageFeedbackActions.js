@@ -3,7 +3,14 @@ import { ThumbsDown, ThumbsUp } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { getGuestSessionToken } from '../../lib/parle/guestSessionToken'
 
-const DOWN_REASONS = ['felt too generic', 'not what i needed', 'missed the point']
+const DOWN_REASONS = [
+  { id: 'didnt_understand', label: "Didn't understand me" },
+  { id: 'too_much_advice', label: 'Too much advice' },
+  { id: 'too_many_questions', label: 'Asked too many questions' },
+  { id: 'made_assumptions', label: 'Made assumptions' },
+  { id: 'too_repetitive', label: 'Too repetitive' },
+  { id: 'other', label: 'Other' },
+]
 
 async function submitMessageFeedback({
   messageId,
@@ -118,12 +125,12 @@ export default function MessageFeedbackActions({
         >
           {DOWN_REASONS.map((reason) => (
             <button
-              key={reason}
+              key={reason.id}
               type="button"
               className="parle-msg-feedback__pill"
-              onClick={() => dismissReasons(reason)}
+              onClick={() => dismissReasons(reason.id)}
             >
-              {reason}
+              {reason.label}
             </button>
           ))}
         </div>

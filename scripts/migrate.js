@@ -20,6 +20,8 @@ const {
 } = require('./rehearsalEnv')
 
 const ADVISORY_LOCK_KEY = 872451901
+const PRIMARY_ADDITIVE_MIGRATION = '0003_phase3_analytics.sql'
+const EXPECTED_0003_CHECKSUM = '611daa96f31d10b73f5f86ea7aaaa39441ae1cd7234461e77da416180decf51a'
 
 function parseArgs(argv, env = process.env) {
   return parseRehearsalFlags(argv, env)
@@ -27,6 +29,24 @@ function parseArgs(argv, env = process.env) {
 
 function checksum(contents) {
   return crypto.createHash('sha256').update(contents).digest('hex')
+}
+
+function sqlIsAdditive(sql) {
+  const raw = String(sql || '')
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('--'))
+    .join('\n')
+  if (/--\s*destructive\b/i.test(String(sql || ''))) return false
+  if (/\bSET\s+SCHEMA\b/i.test(raw)) return false
+  if (/\bTRUNCATE\b/i.test(raw)) return false
+  if (/\bDELETE\s+FROM\b/i.test(raw)) return false
+  if (/\bDROP\s+(TABLE|SCHEMA|DATABASE|COLUMN)\b/i.test(raw)) return false
+  return true
+}
+
+function isForbiddenPrimaryMigration(version) {
+  const name = String(version || '')
+  return name.startsWith('0001_') || name.startsWith('0002_') || name.includes('archive_legacy')
 }
 
 function loadMigrations(dir) {
@@ -59,6 +79,47 @@ async function readIdentity(client) {
   return result.rows[0] || {}
 }
 
+function assertAuthorizedPrimary0003(args, migrations = []) {
+  if (!args.authorizePrimaryAdditive) {
+    throw new Error('Refusing: --authorize-primary-additive is required for the 0003 primary path')
+  }
+  if (args.allowDestructive) {
+    throw new Error('Refusing: --allow-destructive is not permitted on the 0003 primary path')
+  }
+  if (args.migration !== PRIMARY_ADDITIVE_MIGRATION) {
+    throw new Error(`Refusing: only ${PRIMARY_ADDITIVE_MIGRATION} may be authorized for primary`)
+  }
+  if (isForbiddenPrimaryMigration(args.migration)) {
+    throw new Error(`Refusing to select ${args.migration} as an authorized additive migration`)
+  }
+  if (!args.expectedChecksum) {
+    throw new Error('Refusing: --expected-checksum is required for the 0003 primary path')
+  }
+  if (args.expectedChecksum !== EXPECTED_0003_CHECKSUM) {
+    throw new Error('Refusing: --expected-checksum does not match the approved 0003 hash')
+  }
+  const migration = migrations.find((row) => row.version === PRIMARY_ADDITIVE_MIGRATION)
+  if (!migration) {
+    throw new Error('Refusing: 0003_phase3_analytics.sql is missing')
+  }
+  if (migration.checksum !== EXPECTED_0003_CHECKSUM) {
+    throw new Error('Refusing: on-disk 0003 checksum does not match the approved hash')
+  }
+  if (migration.checksum !== args.expectedChecksum) {
+    throw new Error(`Checksum mismatch for ${migration.version}`)
+  }
+  if (migration.destructive || !sqlIsAdditive(migration.sql)) {
+    throw new Error('Refusing non-additive 0003')
+  }
+  if (args.rehearsePrimaryAuthorization) {
+    if (args.intendedPrimaryBranch !== PRIMARY_BRANCH_ID) {
+      throw new Error(`Rehearsal must name intended primary ${PRIMARY_BRANCH_ID}`)
+    }
+  } else if (args.requireBranch !== PRIMARY_BRANCH_ID) {
+    throw new Error(`Refusing: --require-branch must be ${PRIMARY_BRANCH_ID} for primary 0003`)
+  }
+}
+
 function assertSafeIdentity(identity, args) {
   if (!identity.branch_id || !identity.project_id) {
     throw new Error('Could not confirm Neon branch identity (empty project_id or branch_id)')
@@ -66,11 +127,47 @@ function assertSafeIdentity(identity, args) {
   if (identity.project_id !== EXPECTED_PROJECT_ID) {
     throw new Error(`Refusing to migrate unexpected project_id ${identity.project_id}`)
   }
-  if (identity.branch_id === PRIMARY_BRANCH_ID) {
-    throw new Error('Refusing all migrations on the audited primary until named-object approval')
+  if (args.executePrimary0003 && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
+    throw new Error('Refusing --execute-primary-0003 with rehearsal flags')
+  }
+  if (args.executePrimary0003 && args.databaseUrlFlag) {
+    throw new Error('Refusing --execute-primary-0003 with --database-url= (use DATABASE_URL only)')
   }
   if (args.rehearsal && identity.branch_id === PRIMARY_BRANCH_ID) {
     throw new Error('Refusing --rehearsal against the audited primary branch')
+  }
+  if (args.rehearsePrimaryAuthorization) {
+    if (!args.rehearsal) {
+      throw new Error('--rehearse-primary-authorization requires --rehearsal')
+    }
+    if (identity.branch_id === PRIMARY_BRANCH_ID) {
+      throw new Error('Refusing primary-authorization rehearsal against the audited primary')
+    }
+    if (args.executePrimary0003) {
+      throw new Error('Refusing to mix --execute-primary-0003 with rehearsal')
+    }
+  }
+
+  if (identity.branch_id === PRIMARY_BRANCH_ID) {
+    if (args.identityOnly) return
+    if (!args.executePrimary0003) {
+      throw new Error(
+        'Primary execution is disabled until explicit --execute-primary-0003 approval' +
+          (args.authorizePrimaryAdditive
+            ? ' (--authorize-primary-additive is assembled but not executable)'
+            : ''),
+      )
+    }
+    if (args.requireBranch !== PRIMARY_BRANCH_ID) {
+      throw new Error(
+        `Branch mismatch: connected ${identity.branch_id} vs required ${args.requireBranch}`,
+      )
+    }
+    return
+  }
+
+  if (args.executePrimary0003) {
+    throw new Error('Refusing --execute-primary-0003 against a non-primary branch')
   }
   if (!args.identityOnly && identity.branch_id !== args.requireBranch) {
     throw new Error(
@@ -132,6 +229,13 @@ async function main() {
       return
     }
 
+    if (args.executePrimary0003 || args.rehearsePrimaryAuthorization) {
+      assertAuthorizedPrimary0003(args, migrations)
+    }
+    if (args.executePrimary0003 && args.dryRun) {
+      throw new Error('Refusing --dry-run on the primary 0003 execute path')
+    }
+
     const lock = await client.query('SELECT pg_try_advisory_lock($1) AS ok', [ADVISORY_LOCK_KEY])
     if (!lock.rows[0].ok) {
       throw new Error('Another migration is running (advisory lock held)')
@@ -143,6 +247,18 @@ async function main() {
     const byVersion = new Map(applied.rows.map((row) => [row.version, row]))
 
     for (const migration of migrations) {
+      if (args.migration && migration.version !== args.migration) {
+        continue
+      }
+      if (args.migration && args.expectedChecksum && migration.checksum !== args.expectedChecksum) {
+        throw new Error(`Checksum mismatch for ${migration.version}`)
+      }
+      if (args.migration && !sqlIsAdditive(migration.sql)) {
+        throw new Error(`Refusing non-additive migration ${migration.version}`)
+      }
+      if (isForbiddenPrimaryMigration(migration.version) && args.migration) {
+        throw new Error(`Refusing to select ${migration.version} as an authorized additive migration`)
+      }
       if (migration.destructive && !args.allowDestructive) {
         console.log('SKIP_DESTRUCTIVE', migration.version)
         continue
@@ -215,9 +331,15 @@ module.exports = {
   parseArgs,
   checksum,
   loadMigrations,
+  sqlIsAdditive,
+  isForbiddenPrimaryMigration,
+  assertAuthorizedPrimary0003,
+  assertSafeIdentity,
   ADVISORY_LOCK_KEY,
   PRIMARY_BRANCH_ID,
   EXPECTED_PROJECT_ID,
+  PRIMARY_ADDITIVE_MIGRATION,
+  EXPECTED_0003_CHECKSUM,
 }
 
 if (require.main === module) {

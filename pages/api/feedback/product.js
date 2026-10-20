@@ -1,50 +1,116 @@
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { insertProductFeedback } from '../../../lib/parle/feedbackDb'
+import {
+  hasSurveyBeenShownToday,
+  recordProductEvent,
+} from '../../../lib/parle/productEvents'
 
-const ALLOWED_VARIANTS = new Set(['A', 'B'])
-const ALLOWED_RESPONSES = new Set([
-  'helping',
-  'a little',
-  'not really',
-  'yes',
-  'maybe',
-  'probably not',
-])
+const ALLOWED_ACTIONS = new Set(['status', 'shown', 'skip', 'answer'])
+const ALLOWED_DIMENSIONS = new Set(['relief', 'clarity', 'all'])
+const ALLOWED_RESPONSES = {
+  relief: new Set(['better', 'same', 'worse']),
+  clarity: new Set(['clearer', 'same', 'less_clear']),
+}
 
 export default async function handler(req, res) {
   const guard = runApiPipeline(req, res, { tier: 'default' })
   if (guard.handled) return
+
+  if (req.method === 'GET') {
+    const askedToday = guard.payload?.id ? await hasSurveyBeenShownToday(guard.payload.id) : false
+    return res.status(200).json({ askedToday })
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).end()
   }
 
   const {
+    action,
     session_id: sessionId,
-    variant,
+    dimension,
     response,
-    note,
     message_count: messageCount,
+    mode_id: modeId,
     is_guest: isGuest,
   } = req.body || {}
 
-  const safeVariant = String(variant || '').trim().toUpperCase()
-  const safeResponse = String(response || '').trim().toLowerCase()
-  const safeSessionId = String(sessionId || '').trim()
-
-  if (!safeSessionId || !ALLOWED_VARIANTS.has(safeVariant) || !ALLOWED_RESPONSES.has(safeResponse)) {
+  const safeAction = String(action || 'answer').trim().toLowerCase()
+  if (!ALLOWED_ACTIONS.has(safeAction)) {
     return res.status(400).json({ error: 'Invalid product feedback' })
   }
 
+  const userId = guard.payload?.id || null
+  const guest = Boolean(isGuest) || !userId
+  const safeSession = String(sessionId || '').trim()
+  const safeDimension = String(dimension || '').trim().toLowerCase()
+
   try {
+    if (safeAction === 'status') {
+      const askedToday = userId ? await hasSurveyBeenShownToday(userId) : false
+      return res.status(200).json({ askedToday })
+    }
+
+    if (safeAction === 'shown') {
+      if (userId) {
+        const askedToday = await hasSurveyBeenShownToday(userId)
+        if (askedToday) return res.status(200).json({ ok: true, askedToday: true })
+      }
+      await recordProductEvent({
+        name: 'survey_shown',
+        userId,
+        isGuest: guest,
+        sessionKey: userId ? safeSession : null,
+        modeId,
+      })
+      return res.status(200).json({ ok: true })
+    }
+
+    if (safeAction === 'skip') {
+      if (safeDimension && !ALLOWED_DIMENSIONS.has(safeDimension)) {
+        return res.status(400).json({ error: 'Invalid product feedback' })
+      }
+      await recordProductEvent({
+        name: 'survey_skipped',
+        userId,
+        isGuest: guest,
+        sessionKey: userId ? safeSession : null,
+        dimension: safeDimension || 'all',
+        modeId,
+      })
+      return res.status(200).json({ ok: true })
+    }
+
+    if (!ALLOWED_DIMENSIONS.has(safeDimension) || safeDimension === 'all') {
+      return res.status(400).json({ error: 'Invalid product feedback' })
+    }
+    const safeResponse = String(response || '').trim().toLowerCase()
+    if (!ALLOWED_RESPONSES[safeDimension].has(safeResponse)) {
+      return res.status(400).json({ error: 'Invalid product feedback' })
+    }
+    if (!safeSession) {
+      return res.status(400).json({ error: 'Invalid product feedback' })
+    }
+
     await insertProductFeedback({
-      userId: guard.payload?.id || null,
-      sessionId: safeSessionId,
-      variant: safeVariant,
+      userId,
+      sessionId: safeSession,
+      variant: null,
       response: safeResponse,
-      note,
+      note: null,
       messageCount,
-      isGuest: Boolean(isGuest) || !guard.payload?.id,
+      isGuest: guest,
+      dimension: safeDimension,
+    })
+    await recordProductEvent({
+      name: 'feedback_outcome',
+      userId,
+      isGuest: guest,
+      sessionKey: userId ? safeSession : null,
+      dimension: safeDimension,
+      response: safeResponse,
+      modeId,
+      messageCount,
     })
     return res.status(200).json({ ok: true })
   } catch (error) {

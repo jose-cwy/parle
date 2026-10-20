@@ -87,7 +87,20 @@ function urlFromVercelCli() {
   const tmp = path.join(os.tmpdir(), `parle-vercel-prod-env-${Date.now()}`)
   const result = spawnSync(
     'npx',
-    ['--yes', 'vercel@41', 'env', 'pull', tmp, '--environment', 'production', '--yes'],
+    [
+      '--yes',
+      'vercel',
+      'env',
+      'pull',
+      tmp,
+      '--environment',
+      'production',
+      '--yes',
+      '--scope',
+      'josz',
+      '--project',
+      'parle',
+    ],
     { encoding: 'utf8', timeout: 25000, shell: true },
   )
   try {

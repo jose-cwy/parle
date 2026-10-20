@@ -6,6 +6,11 @@ const {
   checksum,
   loadMigrations,
   PRIMARY_BRANCH_ID,
+  assertAuthorizedPrimary0003,
+  assertSafeIdentity,
+  EXPECTED_0003_CHECKSUM,
+  PRIMARY_ADDITIVE_MIGRATION,
+  EXPECTED_PROJECT_ID,
 } = require('../../scripts/migrate')
 
 test('parseArgs requires explicit flags', () => {
@@ -64,4 +69,113 @@ test('loadMigrations finds numbered SQL files', () => {
   const list = loadMigrations(path.join(__dirname, '../../database/migrations'))
   assert.ok(list.some((m) => m.version === '0001_keep_comments.sql'))
   assert.ok(list.some((m) => m.version === '0002_archive_legacy.sql' && m.destructive))
+  assert.ok(list.some((m) => m.version === '0003_phase3_analytics.sql' && !m.destructive))
+})
+
+test('primary-looking flags still parse without enabling primary writes', () => {
+  const args = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--authorize-primary-additive',
+      '--migration=0003_phase3_analytics.sql',
+      '--require-branch=br-morning-sun-apghun9g',
+    ],
+    { DATABASE_URL: 'postgres://primary.example/neondb' },
+  )
+  assert.equal(args.authorizePrimaryAdditive, true)
+  assert.equal(args.executePrimary0003, false)
+  assert.equal(args.migration, '0003_phase3_analytics.sql')
+  assert.equal(args.requireBranch, 'br-morning-sun-apghun9g')
+})
+
+test('authorized primary 0003 bundle requires filename, checksum, and primary branch', () => {
+  const migrations = loadMigrations(path.join(__dirname, '../../database/migrations'))
+  const onDisk = migrations.find((row) => row.version === PRIMARY_ADDITIVE_MIGRATION)
+  assert.equal(onDisk.checksum, EXPECTED_0003_CHECKSUM)
+
+  const ok = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--authorize-primary-additive',
+      `--migration=${PRIMARY_ADDITIVE_MIGRATION}`,
+      `--expected-checksum=${EXPECTED_0003_CHECKSUM}`,
+      `--require-branch=${PRIMARY_BRANCH_ID}`,
+    ],
+    { DATABASE_URL: 'postgres://primary.example/neondb' },
+  )
+  assert.doesNotThrow(() => assertAuthorizedPrimary0003(ok, migrations))
+
+  const wrongFile = { ...ok, migration: '0001_keep_comments.sql' }
+  assert.throws(() => assertAuthorizedPrimary0003(wrongFile, migrations), /only 0003/)
+
+  const wrongSum = { ...ok, expectedChecksum: 'abc' }
+  assert.throws(() => assertAuthorizedPrimary0003(wrongSum, migrations), /approved 0003 hash/)
+
+  const destructive = { ...ok, allowDestructive: true }
+  assert.throws(() => assertAuthorizedPrimary0003(destructive, migrations), /allow-destructive/)
+})
+
+test('primary execution stays disabled without --execute-primary-0003', () => {
+  const identity = {
+    project_id: EXPECTED_PROJECT_ID,
+    branch_id: PRIMARY_BRANCH_ID,
+  }
+  const assembled = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--authorize-primary-additive',
+      `--migration=${PRIMARY_ADDITIVE_MIGRATION}`,
+      `--expected-checksum=${EXPECTED_0003_CHECKSUM}`,
+      `--require-branch=${PRIMARY_BRANCH_ID}`,
+    ],
+    { DATABASE_URL: 'postgres://primary.example/neondb' },
+  )
+  assert.throws(
+    () => assertSafeIdentity(identity, assembled),
+    /Primary execution is disabled/,
+  )
+  assert.doesNotThrow(() => assertSafeIdentity(identity, { ...assembled, identityOnly: true }))
+})
+
+test('primary-authorization rehearsal names the real primary and refuses execute', () => {
+  const migrations = loadMigrations(path.join(__dirname, '../../database/migrations'))
+  const args = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--rehearsal',
+      '--rehearse-primary-authorization',
+      '--authorize-primary-additive',
+      `--migration=${PRIMARY_ADDITIVE_MIGRATION}`,
+      `--expected-checksum=${EXPECTED_0003_CHECKSUM}`,
+      '--require-branch=br-misty-recipe-apcj8oyo',
+      `--intended-primary-branch=${PRIMARY_BRANCH_ID}`,
+    ],
+    { REHEARSAL_DATABASE_URL: 'postgres://child.example/neondb' },
+  )
+  assert.doesNotThrow(() => assertAuthorizedPrimary0003(args, migrations))
+  assert.doesNotThrow(() =>
+    assertSafeIdentity(
+      { project_id: EXPECTED_PROJECT_ID, branch_id: 'br-misty-recipe-apcj8oyo' },
+      args,
+    ),
+  )
+  assert.throws(
+    () =>
+      assertSafeIdentity(
+        { project_id: EXPECTED_PROJECT_ID, branch_id: PRIMARY_BRANCH_ID },
+        args,
+      ),
+    /rehearsal against the audited primary/,
+  )
+  assert.throws(
+    () => assertSafeIdentity(
+      { project_id: EXPECTED_PROJECT_ID, branch_id: 'br-misty-recipe-apcj8oyo' },
+      { ...args, executePrimary0003: true },
+    ),
+    /execute-primary-0003 with rehearsal/,
+  )
 })

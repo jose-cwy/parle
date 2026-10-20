@@ -1,11 +1,15 @@
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { insertMessageFeedback } from '../../../lib/parle/feedbackDb'
+import { recordProductEvent } from '../../../lib/parle/productEvents'
 
 const ALLOWED_RATINGS = new Set(['up', 'down'])
 const ALLOWED_REASONS = new Set([
-  'felt too generic',
-  'not what i needed',
-  'missed the point',
+  'didnt_understand',
+  'too_much_advice',
+  'too_many_questions',
+  'made_assumptions',
+  'too_repetitive',
+  'other',
 ])
 
 export default async function handler(req, res) {
@@ -47,6 +51,15 @@ export default async function handler(req, res) {
       reason: safeReason,
       modeId,
       isGuest: Boolean(isGuest) || !guard.payload?.id,
+    })
+    await recordProductEvent({
+      name: 'feedback_thumbs',
+      userId: guard.payload?.id || null,
+      isGuest: Boolean(isGuest) || !guard.payload?.id,
+      modeId,
+      sessionKey: guard.payload?.id ? sessionId : null,
+      rating: safeRating,
+      reason: safeReason,
     })
     return res.status(200).json({ ok: true })
   } catch (error) {

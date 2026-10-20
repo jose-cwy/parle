@@ -22,6 +22,7 @@ import {
   logMemoryDiag,
   resolveCrossSessionSummary,
 } from '../../../lib/parle/crossSessionMemory'
+import { recordAuthedChatActivity } from '../../../lib/parle/productEvents'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
@@ -63,6 +64,7 @@ export default async function handler(req, res) {
       crossSessionSummary,
       hiddenInjections,
       isNewSession,
+      sessionId,
       images,
       isEdit,
       dbKeepCount,
@@ -98,6 +100,12 @@ export default async function handler(req, res) {
     if (containsCrisisLanguage(userText)) {
       await insertChatMessage(payload.id, 'user', userText)
       await insertChatMessage(payload.id, 'assistant', CRISIS_SAFETY_REPLY)
+      await recordAuthedChatActivity({
+        userId: payload.id,
+        modeId: modeId || 'cross',
+        sessionKey: sessionId,
+        isNewSession: Boolean(isNewSession),
+      }).catch(() => null)
       return res.status(200).json({ reply: CRISIS_SAFETY_REPLY, safety: true })
     }
 
@@ -240,6 +248,12 @@ export default async function handler(req, res) {
     if (streamed.reply) {
       await insertChatMessage(payload.id, 'assistant', streamed.reply)
     }
+    await recordAuthedChatActivity({
+      userId: payload.id,
+      modeId: modeId || 'cross',
+      sessionKey: sessionId,
+      isNewSession: Boolean(isNewSession),
+    }).catch(() => null)
   } catch (error) {
     return handleApiError(res, error, 'chat_send')
   }

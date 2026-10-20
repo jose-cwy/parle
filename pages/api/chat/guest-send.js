@@ -10,6 +10,7 @@ import { runHiddenThink } from '../../../lib/parle/hiddenThink'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
 import { getModeLabel } from '../../../lib/parle/modes'
+import { recordGuestChatActivity } from '../../../lib/parle/productEvents'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { checkRateLimit, sendRateLimitResponse } from '../../../lib/rateLimiter'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
@@ -197,6 +198,7 @@ export default async function handler(req, res) {
         assistantText: lockResult.result,
         replyKind: 'normal',
       }).catch(() => false)
+      await recordGuestChatActivity({ modeId: safeModeId }).catch(() => null)
     }
   } catch (error) {
     return handleApiError(res, error, 'chat_guest_send')

@@ -1,52 +1,41 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { getGuestSessionToken } from '../../lib/parle/guestSessionToken'
 
-const PULSE_SHOWN_KEY = 'parle_product_pulse_shown'
-const PULSE_VARIANT_KEY = 'parle_product_pulse_variant'
+const GUEST_SHOWN_DAY_KEY = 'parle_outcome_survey_day'
 
-const VARIANTS = {
-  A: {
-    question: 'is parlé helping right now?',
-    options: ['helping', 'a little', 'not really'],
-    negative: 'not really',
-  },
-  B: {
-    question: "would you come back next time you're stuck?",
-    options: ['yes', 'maybe', 'probably not'],
-    negative: 'probably not',
-  },
+export function utcDayKey(now = new Date()) {
+  return now.toISOString().slice(0, 10)
 }
 
-function pickVariant() {
-  return Math.random() < 0.5 ? 'A' : 'B'
-}
-
-export function wasProductPulseShown() {
-  if (typeof window === 'undefined') return true
+export function wasOutcomeSurveyShownToday() {
+  if (typeof window === 'undefined') return false
   try {
-    return sessionStorage.getItem(PULSE_SHOWN_KEY) === '1'
+    return localStorage.getItem(GUEST_SHOWN_DAY_KEY) === utcDayKey()
   } catch {
     return false
   }
 }
 
-export function markProductPulseShown(variant) {
+export function markOutcomeSurveyShownToday() {
   if (typeof window === 'undefined') return
   try {
-    sessionStorage.setItem(PULSE_SHOWN_KEY, '1')
-    if (variant) sessionStorage.setItem(PULSE_VARIANT_KEY, variant)
+    localStorage.setItem(GUEST_SHOWN_DAY_KEY, utcDayKey())
   } catch {
     /* ignore */
   }
 }
 
-function getStoredVariant() {
-  if (typeof window === 'undefined') return null
+async function postProduct(body) {
   try {
-    return sessionStorage.getItem(PULSE_VARIANT_KEY)
+    await fetch('/api/feedback/product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+    })
   } catch {
-    return null
+    /* ignore */
   }
 }
 
@@ -54,74 +43,47 @@ export default function ProductPulseCard({
   visible,
   sessionId,
   messageCount,
+  modeId,
   isGuest,
   onDismiss,
 }) {
   const reduceMotion = useReducedMotion()
-  const [variant] = useState(() => getStoredVariant() || pickVariant())
-  const config = useMemo(() => VARIANTS[variant] || VARIANTS.A, [variant])
+  const [step, setStep] = useState('relief')
   const [submitting, setSubmitting] = useState(false)
-  const [response, setResponse] = useState(null)
-  const [note, setNote] = useState('')
-  const [showNote, setShowNote] = useState(false)
 
-  useEffect(() => {
-    if (visible) markProductPulseShown(variant)
-  }, [visible, variant])
-
-  async function save({ responseValue, noteValue }) {
-    try {
-      await fetch('/api/feedback/product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          session_id: sessionId || (isGuest ? getGuestSessionToken() : 'unknown'),
-          variant,
-          response: responseValue,
-          note: noteValue || undefined,
-          message_count: messageCount,
-          is_guest: Boolean(isGuest),
-        }),
-      })
-    } catch {
-      /* ignore */
-    }
+  const payload = {
+    session_id: sessionId || (isGuest ? getGuestSessionToken() : ''),
+    message_count: messageCount,
+    mode_id: modeId,
+    is_guest: Boolean(isGuest),
   }
 
-  async function handleOption(option) {
-    if (submitting) return
-    setResponse(option)
+  async function finish() {
+    onDismiss?.()
+  }
 
-    if (option === config.negative) {
-      setShowNote(true)
+  async function submitAnswer(dimension, response) {
+    if (submitting) return
+    setSubmitting(true)
+    await postProduct({ ...payload, action: 'answer', dimension, response })
+    setSubmitting(false)
+    if (dimension === 'relief') {
+      setStep('clarity')
       return
     }
-
-    setSubmitting(true)
-    await save({ responseValue: option })
-    setSubmitting(false)
-    onDismiss?.()
+    await finish()
   }
 
-  async function sendNote() {
-    if (submitting || !response) return
+  async function skip(dimension) {
+    if (submitting) return
     setSubmitting(true)
-    await save({ responseValue: response, noteValue: note })
+    await postProduct({ ...payload, action: 'skip', dimension })
     setSubmitting(false)
-    onDismiss?.()
-  }
-
-  async function skipNote() {
-    if (submitting || !response) return
-    setSubmitting(true)
-    await save({ responseValue: response })
-    setSubmitting(false)
-    onDismiss?.()
-  }
-
-  function skip() {
-    onDismiss?.()
+    if (dimension === 'relief' || dimension === 'all') {
+      await finish()
+      return
+    }
+    await finish()
   }
 
   return (
@@ -134,19 +96,19 @@ export default function ProductPulseCard({
           exit={reduceMotion ? undefined : { y: '100%', opacity: 0 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           role="dialog"
-          aria-label="Quick feedback"
+          aria-label="Optional check-in"
         >
-          <p className="parle-product-pulse__question">{config.question}</p>
-          {!showNote ? (
+          {step === 'relief' ? (
             <>
+              <p className="parle-product-pulse__question">After talking, do you feel…</p>
               <div className="parle-product-pulse__options">
-                {config.options.map((option) => (
+                {['better', 'same', 'worse'].map((option) => (
                   <button
                     key={option}
                     type="button"
                     className="parle-product-pulse__option"
                     disabled={submitting}
-                    onClick={() => handleOption(option)}
+                    onClick={() => submitAnswer('relief', option)}
                   >
                     {option}
                   </button>
@@ -155,30 +117,45 @@ export default function ProductPulseCard({
               <button
                 type="button"
                 className="parle-product-pulse__skip"
-                onClick={skip}
+                onClick={() => skip('all')}
                 disabled={submitting}
               >
                 skip
               </button>
             </>
           ) : (
-            <div className="parle-product-pulse__followup">
-              <textarea
-                className="parle-product-pulse__textarea"
-                rows={2}
-                placeholder="what would help more? (optional)"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-              <div className="parle-product-pulse__followup-actions">
-                <button type="button" className="parle-product-pulse__link" onClick={sendNote}>
-                  send
-                </button>
-                <button type="button" className="parle-product-pulse__link" onClick={skipNote}>
-                  skip
-                </button>
+            <>
+              <p className="parle-product-pulse__question">
+                {modeId === 'vent'
+                  ? 'If you wanted to sort things out, is your situation clearer? Skip if you only needed to vent.'
+                  : 'Do you understand your situation…'}
+              </p>
+              <div className="parle-product-pulse__options">
+                {[
+                  ['clearer', 'clearer'],
+                  ['same', 'same'],
+                  ['less_clear', 'less clear'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className="parle-product-pulse__option"
+                    disabled={submitting}
+                    onClick={() => submitAnswer('clarity', value)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-            </div>
+              <button
+                type="button"
+                className="parle-product-pulse__skip"
+                onClick={() => skip('clarity')}
+                disabled={submitting}
+              >
+                skip
+              </button>
+            </>
           )}
         </motion.div>
       ) : null}
@@ -186,4 +163,4 @@ export default function ProductPulseCard({
   )
 }
 
-export { PULSE_SHOWN_KEY }
+export { GUEST_SHOWN_DAY_KEY }

@@ -10,7 +10,11 @@ import { track } from '../../lib/events'
 import ChatInputBar from './ChatInputBar'
 import GuestConsentBanner from './GuestConsentBanner'
 import MessageFeedbackActions from './MessageFeedbackActions'
-import ProductPulseCard, { wasProductPulseShown } from './ProductPulseCard'
+import ProductPulseCard, {
+  markOutcomeSurveyShownToday,
+  wasOutcomeSurveyShownToday,
+} from './ProductPulseCard'
+import surveyEnding from '../../lib/parle/surveyEnding'
 import {
   getChatReturnPath,
   navigateAwayFromChat,
@@ -1181,23 +1185,6 @@ export default function HavenChat() {
     }
   }, [messages, thinking])
 
-  useEffect(() => {
-    if (historyLoading || wasProductPulseShown()) return undefined
-
-    const intervalId = window.setInterval(() => {
-      if (wasProductPulseShown() || productPulseVisible) return
-      if (thinking || String(text || '').trim()) return
-
-      const userCount = (messagesRef.current || []).filter((m) => m.role === 'user').length
-      if (userCount < 4) return
-      if (!lastAssistantDoneAtRef.current) return
-      if (Date.now() - lastAssistantDoneAtRef.current < 50000) return
-
-      setProductPulseVisible(true)
-    }, 8000)
-
-    return () => window.clearInterval(intervalId)
-  }, [historyLoading, productPulseVisible, thinking, text])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -1489,6 +1476,7 @@ export default function HavenChat() {
       dontTextMessageCount: session.stopContactMessageCount,
       hiddenInjections: injections,
       isNewSession: isAuthed && isNewSession && !isEdit,
+      sessionId: session.sessionId,
       messages: toApiHistory(nextMessages.slice(0, -1)),
       images,
       ...(isEdit && isAuthed ? { isEdit: true, dbKeepCount } : {}),
@@ -1644,6 +1632,7 @@ export default function HavenChat() {
         maybeAutoTitleSession(withReply)
       }
       track('chat_reply', { authed: isAuthed, safety: false, edit: isEdit })
+      void maybeOfferOutcomeSurvey(withReply, mode.id, isEdit)
       track('chat_perf', {
         authed: isAuthed,
         thinkMs: Number.isFinite(thinkMs) ? thinkMs : undefined,
@@ -1680,6 +1669,7 @@ export default function HavenChat() {
         maybeAutoTitleSession(withReply)
       }
       track('chat_reply', { authed: isAuthed, safety: Boolean(data?.safety), edit: isEdit })
+      void maybeOfferOutcomeSurvey(withReply, mode.id, isEdit)
 
       if (isAuthed && !isEdit && isViewingStorageKey(storageKey)) {
         await fetch('/api/gamification/progress', {
@@ -1983,7 +1973,44 @@ export default function HavenChat() {
     lastRecapAt.current = 0
     greetingPickRef.current = false
     setEmptyGreeting('')
+    setProductPulseVisible(false)
     sessionRef.current = createSessionState()
+  }
+
+  async function maybeOfferOutcomeSurvey(nextMessages, modeId, isEdit) {
+    if (isEdit || productPulseVisible || thinking) return
+    if (String(text || '').trim()) return
+    const userMessages = (nextMessages || []).filter((m) => m.role === 'user')
+    if (userMessages.length < 2) return
+    const lastUser = [...userMessages].reverse()[0]
+    if (!surveyEnding.isSurveyConversationEnding(lastUser?.text)) return
+    if (wasOutcomeSurveyShownToday()) return
+    if (isAuthed) {
+      try {
+        const statusRes = await fetch('/api/feedback/product', { credentials: 'same-origin' })
+        const status = statusRes.ok ? await statusRes.json() : {}
+        if (status.askedToday) {
+          markOutcomeSurveyShownToday()
+          return
+        }
+      } catch {
+        /* still try to show */
+      }
+    }
+    markOutcomeSurveyShownToday()
+    await fetch('/api/feedback/product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        action: 'shown',
+        session_id: isAuthed ? sessionRef.current.sessionId : getGuestSessionToken(),
+        mode_id: modeId,
+        is_guest: !isAuthed,
+        message_count: userMessages.length,
+      }),
+    }).catch(() => null)
+    setProductPulseVisible(true)
   }
 
   function discardLiveAndArchives(snapshot) {
@@ -2447,6 +2474,7 @@ export default function HavenChat() {
                   : getGuestSessionToken()
               }
               messageCount={userMessageCount}
+              modeId={chatMode?.id || pendingModeId}
               isGuest={!isAuthed}
               onDismiss={() => setProductPulseVisible(false)}
             />
