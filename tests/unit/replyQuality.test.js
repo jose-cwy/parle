@@ -154,10 +154,10 @@ test('cross sits with the story until they ask for a take', () => {
   assert.equal(story.wantsAdvice, false)
   const storyBlock = buildReplyQualityBlock(story)
   assert.match(storyBlock, /MUST/)
-  assert.match(storyBlock, /gather the situation/)
+  assert.match(storyBlock, /comfort\/understanding/)
   assert.match(storyBlock, /how do you cope with that sense of loss/)
   assert.match(storyBlock, /have you found any small moments of relief or distraction/)
-  assert.match(storyBlock, /exactly one question about what happened/)
+  assert.match(storyBlock, /at most one situation question/)
 
   assert.equal(wantsAdvice('what should i do'), true)
   const asked = getReplyQualitySignals({
@@ -180,7 +180,7 @@ test('story phases: gather, held, skip-story, distressed, i can\'t', () => {
   })
   assert.equal(miserable.storyPhase, 'gather')
   const miserableBlock = buildReplyQualityBlock(miserable)
-  assert.match(miserableBlock, /ask what happened/)
+  assert.match(miserableBlock, /comfort\/understanding/)
   assert.match(miserableBlock, /how do you cope with that sense of loss/)
 
   const firstDump = getReplyQualitySignals({
@@ -225,7 +225,7 @@ test('story phases: gather, held, skip-story, distressed, i can\'t', () => {
   assert.equal(distressed.distressed, true)
   const distressedBlock = buildReplyQualityBlock(distressed)
   assert.match(distressedBlock, /very distressed/)
-  assert.match(distressedBlock, /gather the situation/)
+  assert.match(distressedBlock, /ask about the situation/)
 
   const refused = getReplyQualitySignals({
     userText: "i can't",
@@ -265,7 +265,7 @@ test('base prompt teaches no parrot, name ask, and thin-situation handling', () 
   assert.match(BASE_SYSTEM_PROMPT, /Never generate a long answer and then cut it down/)
   assert.match(BASE_SYSTEM_PROMPT, /you MUST ask/)
   assert.match(BASE_SYSTEM_PROMPT, /Do not ask for a name on the first/)
-  assert.match(MODE_PROMPTS.cross, /Understand the situation first/)
+  assert.match(MODE_PROMPTS.cross, /Comfort and understanding first/)
   assert.match(MODE_PROMPTS.talk, /Mid-sentence "that's" is fine/)
   assert.match(BASE_SYSTEM_PROMPT, /User: "i can't"/)
   assert.match(BASE_SYSTEM_PROMPT, /how do you cope with that sense of loss/)
@@ -291,6 +291,55 @@ test('quality injection is present for completions and think stays private', () 
   assert.match(buildThinkBlock('lift_length: yes'), /PRIVATE THINK/)
   assert.match(buildThinkBlock('lift_length: yes'), /keep the full breakdown/)
   assert.match(THINK_PROMPT, /story_phase: gather/)
-  assert.match(THINK_PROMPT, /next question MUST be about what happened/)
+  assert.match(THINK_PROMPT, /comfort first/)
   assert.match(THINK_PROMPT, /plan_without_story/)
+})
+
+test('vent mode ignores gather and name-ask', () => {
+  const vent = getReplyQualitySignals({
+    userText: 'we got into a fight and she went clubbing and now four days of silence',
+    history: [],
+    modeId: 'vent',
+  })
+  assert.equal(vent.sitWithStory, false)
+  assert.equal(vent.storyPhase, 'vent')
+  const block = buildReplyQualityBlock(vent)
+  assert.match(block, /Zero questions/)
+  assert.doesNotMatch(block, /comfort\/understanding in the first line/)
+  assert.equal(
+    shouldAskPersonName({
+      userText: 'still no text from her',
+      history: [
+        { role: 'user', text: 'she needed space' },
+        { role: 'assistant', text: 'yeah.' },
+        { role: 'user', text: 'and she went clubbing' },
+        { role: 'assistant', text: 'that does not match space.' },
+      ],
+      modeId: 'vent',
+    }),
+    false,
+  )
+})
+
+test('closed turn skips the interview', () => {
+  const closed = getReplyQualitySignals({
+    userText: "anyway that's all i needed to say. i think i'm good for now.",
+    history: [{ role: 'user', text: 'we fought' }, { role: 'assistant', text: 'yeah.' }],
+    modeId: 'cross',
+  })
+  assert.equal(closed.storyPhase, 'close')
+  assert.equal(closed.closedTurn, true)
+  const block = buildReplyQualityBlock(closed)
+  assert.match(block, /closed the turn/)
+  assert.doesNotMatch(block, /at most one situation question/)
+})
+
+test('logical quality forbids invented inner life', () => {
+  const logical = getReplyQualitySignals({
+    userText: 'did they ever actually love me',
+    history: [],
+    modeId: 'logical',
+  })
+  const block = buildReplyQualityBlock(logical)
+  assert.match(block, /do not invent the other person's intentions/)
 })

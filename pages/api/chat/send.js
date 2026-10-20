@@ -152,7 +152,7 @@ export default async function handler(req, res) {
         modeId: modeId || 'cross',
         quality,
       })
-      const thinkMs = Date.now() - thinkStarted
+      const thinkMs = thinkBlock ? Date.now() - thinkStarted : 0
       const injections = [...(hiddenInjections || [])]
       const qualityBlock = buildReplyQualityBlock(quality)
       if (qualityBlock) injections.push(qualityBlock)

@@ -1,0 +1,186 @@
+{
+  "key": [
+    {
+      "id": "cross-thin-miss",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "cross-fight-dump",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "cross-analyze",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "cross-skip-story-plan",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "cross-cant",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "cross-done-talking",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "emotional-bus",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "emotional-kitchen",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "emotional-friends-tired",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "emotional-spiral",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "emotional-held-callback",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "emotional-closing",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "logical-still-care",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "logical-show-up",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "logical-self-blame",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "logical-analyze-no-assume",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "logical-what-should-i-do",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "logical-unknown-motive",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "vent-hate-happy",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "vent-instagram",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "vent-left-on-read",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "vent-stacked",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "vent-done",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "vent-no-fix",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "stop-paragraph",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "stop-call",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "stop-online",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "stop-charger",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "stop-already-sent",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "stop-held",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "talk-movie",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "talk-leave-them-out",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "talk-playlist",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "talk-no-topic",
+      "left": "updated",
+      "right": "baseline"
+    },
+    {
+      "id": "talk-short",
+      "left": "baseline",
+      "right": "updated"
+    },
+    {
+      "id": "talk-analyze-film",
+      "left": "updated",
+      "right": "baseline"
+    }
+  ],
+  "a": "docs/eval/baseline.json",
+  "b": "docs/eval/updated.json"
+}

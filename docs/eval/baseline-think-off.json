@@ -1,0 +1,417 @@
+{
+  "label": "baseline-think-off",
+  "think": "off",
+  "generatedAt": "2026-10-20T03:00:08.601Z",
+  "summary": {
+    "n": 12,
+    "avgScore": 9.79,
+    "avgThinkMs": 0,
+    "avgReplyMs": 1384,
+    "avgTotalMs": 1384,
+    "promptTokens": 86779,
+    "completionTokens": 689,
+    "estUsdGpt4oMini": 0.0134,
+    "byMode": {
+      "cross": {
+        "n": 4,
+        "avg": 10
+      },
+      "emotional": {
+        "n": 2,
+        "avg": 10
+      },
+      "logical": {
+        "n": 2,
+        "avg": 10
+      },
+      "vent": {
+        "n": 2,
+        "avg": 8.75
+      },
+      "stop_contact": {
+        "n": 1,
+        "avg": 10
+      },
+      "talk": {
+        "n": 1,
+        "avg": 10
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "cross-thin-miss",
+      "modeId": "cross",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1656,
+      "totalMs": 1656,
+      "usage": {
+        "prompt_tokens": 7154,
+        "completion_tokens": 17,
+        "total_tokens": 7171,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "yeah, that feeling can hit hard out of nowhere.\n\nwhat happened between you two?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "cross-fight-dump",
+      "modeId": "cross",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1461,
+      "totalMs": 1461,
+      "usage": {
+        "prompt_tokens": 7157,
+        "completion_tokens": 59,
+        "total_tokens": 7216,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "it sounds like her asking for space came right after a big fight, and then she went out drinking instead of reaching out to you. that’s a tough pill to swallow, especially when it feels like she’s not following through on her promises.\n\nhow did you find out she was out drinking?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.19
+      }
+    },
+    {
+      "id": "cross-analyze",
+      "modeId": "cross",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2447,
+      "totalMs": 2447,
+      "usage": {
+        "prompt_tokens": 7128,
+        "completion_tokens": 215,
+        "total_tokens": 7343,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "it's tough to say definitively without knowing her perspective, but here’s how to think about it:\n\nwhen someone asks for space after a big fight, it could mean a few things. \n\n**First**, she might genuinely need time to process her feelings. The fight about clubbing likely stirred up a lot of emotions and she could feel overwhelmed. \n\n**Second**, if she’s going out and engaging in activities she knows upset you, it can feel like she’s signaling that she’s moving on or prioritizing her own needs over the relationship. That’s not necessarily about being \"done\" but it does raise questions about her commitment at that moment.\n\n**Third**, if she didn’t communicate clearly what “space” meant to her, it can leave you guessing. Does she want to reconnect later, or is she looking for a more permanent distance? \n\nIt’s important to consider how her actions align with her words. If she's out clubbing while asking for space, that might suggest she’s processing things differently than you are.\n\nhow did she explain her need for space?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0.06
+      }
+    },
+    {
+      "id": "cross-done-talking",
+      "modeId": "cross",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1056,
+      "totalMs": 1056,
+      "usage": {
+        "prompt_tokens": 7155,
+        "completion_tokens": 26,
+        "total_tokens": 7181,
+        "prompt_tokens_details": {
+          "cached_tokens": 6912,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "if you’re feeling okay for now, that’s totally fine.\n\njust know I’m here if you want to share more later.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "emotional-bus",
+      "modeId": "emotional",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1030,
+      "totalMs": 1030,
+      "usage": {
+        "prompt_tokens": 7127,
+        "completion_tokens": 38,
+        "total_tokens": 7165,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "hey, crying on the bus doesn't make you embarrassing. you felt something real — that's why it still knocks the air out of you.\n\nwhat was going through your head while it was happening?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "emotional-spiral",
+      "modeId": "emotional",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1162,
+      "totalMs": 1162,
+      "usage": {
+        "prompt_tokens": 7149,
+        "completion_tokens": 37,
+        "total_tokens": 7186,
+        "prompt_tokens_details": {
+          "cached_tokens": 7040,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "hey, it sounds like everything is just crashing down right now. \n\nit's okay to let those feelings out. what's been pushing you over the edge? what brought up all this emotion?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "logical-analyze-no-assume",
+      "modeId": "logical",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 2233,
+      "totalMs": 2233,
+      "usage": {
+        "prompt_tokens": 7084,
+        "completion_tokens": 147,
+        "total_tokens": 7231,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "a year is a significant amount of time. \n\nthe cooking suggests they cared, but love is more than just actions. it’s about the **depth of connection** and emotional investment.\n\nif you felt like an afterthought or if they often prioritized other things over you, it might lean towards convenience. love typically involves mutual effort, prioritizing each other's needs, and genuine emotional support.\n\nto assess this honestly, ask yourself:\n\n\"did they show up for me when it mattered?\"\n\nif the answer leans towards no, it might indicate you were convenient for them. consider this:\n\nnext time you think about it, reflect on specific moments where you felt truly valued versus moments where you felt overlooked.\n\nthat's where you might find your clarity.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.06
+      }
+    },
+    {
+      "id": "logical-unknown-motive",
+      "modeId": "logical",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1158,
+      "totalMs": 1158,
+      "usage": {
+        "prompt_tokens": 7098,
+        "completion_tokens": 43,
+        "total_tokens": 7141,
+        "prompt_tokens_details": {
+          "cached_tokens": 6912,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "it's tough when someone just goes quiet without explanation. \n\nthat silence can feel like a weight, especially when you’re left wondering what happened. \n\nwhat was going on over the weekend that might have led to this?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0.07
+      }
+    },
+    {
+      "id": "vent-hate-happy",
+      "modeId": "vent",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1038,
+      "totalMs": 1038,
+      "usage": {
+        "prompt_tokens": 7065,
+        "completion_tokens": 31,
+        "total_tokens": 7096,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "you did everything and they just walked away. now they're out there living their life as if none of it mattered. \n\nwhat happened right before they left?",
+      "heuristic": {
+        "score": 7.5,
+        "deductions": [
+          "vent_or_no_question_failed"
+        ],
+        "questions": 1,
+        "overlap": 0.33
+      }
+    },
+    {
+      "id": "vent-no-fix",
+      "modeId": "vent",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1232,
+      "totalMs": 1232,
+      "usage": {
+        "prompt_tokens": 7058,
+        "completion_tokens": 26,
+        "total_tokens": 7084,
+        "prompt_tokens_details": {
+          "cached_tokens": 6912,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "screaming into the void is sometimes all you can do. \n\nit feels heavy when you just need to let it out.",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 0,
+        "overlap": 0.33
+      }
+    },
+    {
+      "id": "stop-paragraph",
+      "modeId": "stop_contact",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 891,
+      "totalMs": 891,
+      "usage": {
+        "prompt_tokens": 7130,
+        "completion_tokens": 15,
+        "total_tokens": 7145,
+        "prompt_tokens_details": {
+          "cached_tokens": 6144,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "Good call coming here first. What were you going to say to them?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 1,
+        "overlap": 0
+      }
+    },
+    {
+      "id": "talk-leave-them-out",
+      "modeId": "talk",
+      "think": "off",
+      "thinkMs": 0,
+      "replyMs": 1242,
+      "totalMs": 1242,
+      "usage": {
+        "prompt_tokens": 8474,
+        "completion_tokens": 35,
+        "total_tokens": 8509,
+        "prompt_tokens_details": {
+          "cached_tokens": 8192,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "model": "gpt-4o-mini",
+      "reply": "sure, we can leave them out of it.\n\nsometimes it helps to just fill the space with something else, right? what’s been on your mind lately, besides them?",
+      "heuristic": {
+        "score": 10,
+        "deductions": [],
+        "questions": 2,
+        "overlap": 0.16
+      }
+    }
+  ]
+}
