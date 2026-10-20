@@ -164,6 +164,7 @@ export default async function handler(req, res) {
           ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
           : null,
         crossSessionSummary: null,
+        memoryEnabled: false,
         hiddenInjections: injections,
         conversationHistory: recent,
         userText,

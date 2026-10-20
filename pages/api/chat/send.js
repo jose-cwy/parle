@@ -12,10 +12,16 @@ import {
 } from '../../../lib/parle/livingProfile'
 import {
   buildLivingProfileBlock,
+  factsForInjection,
   pickPatternToName,
   markPatternNamed,
 } from '../../../lib/parle/livingProfileCore'
 import { runHiddenThink } from '../../../lib/parle/hiddenThink'
+import {
+  inspectMemoryContext,
+  logMemoryDiag,
+  resolveCrossSessionSummary,
+} from '../../../lib/parle/crossSessionMemory'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
 import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
@@ -111,8 +117,11 @@ export default async function handler(req, res) {
 
       const settings = await getUserChatSettings(payload.id)
       const replyFeedback = await getRecentReplyFeedback({ userId: payload.id, limit: 6 })
-      const crossSummary =
-        isNewSession && settings.memory_enabled ? settings.last_session_summary : crossSessionSummary
+      const crossSummary = resolveCrossSessionSummary({
+        memoryEnabled: settings.memory_enabled,
+        lastSessionSummary: settings.last_session_summary,
+        clientSummary: crossSessionSummary,
+      })
 
       let recent
       if (isEdit && Array.isArray(clientMessages)) {
@@ -133,6 +142,7 @@ export default async function handler(req, res) {
       }
 
       const talkMode = (modeId || 'cross') === 'talk'
+      const conversationRecall = Boolean(settings.memory_enabled)
       let living = null
       let livingProfileBlock = ''
       if (settings.personalisation_enabled) {
@@ -140,6 +150,12 @@ export default async function handler(req, res) {
           personalisationEnabled: true,
         })
         living = overlayPreferenceKnobs(living, settings.profile)
+        if (living && !conversationRecall) {
+          living = {
+            ...living,
+            facts: factsForInjection(living, { conversationRecall: false }),
+          }
+        }
       }
 
       const quality = getReplyQualitySignals({
@@ -150,11 +166,12 @@ export default async function handler(req, res) {
       })
 
       if (living) {
-        const namingFact = talkMode ? null : pickPatternToName(living)
+        const namingFact = talkMode || !conversationRecall ? null : pickPatternToName(living)
         livingProfileBlock = buildLivingProfileBlock(living, {
           talkMode,
           namingFact,
           liftLength: quality.liftLength,
+          conversationRecall,
         })
         if (namingFact) {
           await saveLivingProfile(payload.id, markPatternNamed(living, namingFact.id)).catch(() => {})
@@ -185,18 +202,23 @@ export default async function handler(req, res) {
           ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
           : null,
         crossSessionSummary: crossSummary,
+        memoryEnabled: settings.memory_enabled,
         hiddenInjections: injections,
         conversationHistory: recent,
         userText,
         images: safeImages,
       })
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[parle chat] living profile injected:',
-          Boolean(livingProfileBlock),
-        )
-      }
+      logMemoryDiag(
+        inspectMemoryContext({
+          memoryEnabled: settings.memory_enabled,
+          lastSessionSummary: settings.last_session_summary,
+          resolvedSummary: crossSummary,
+          isNewSession,
+          history: recent,
+          livingProfileBlock,
+        }),
+      )
 
       const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
 
