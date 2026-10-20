@@ -1,19 +1,14 @@
 import { processGuestEmailFollowups } from '../../../lib/parle/processGuestEmailFollowups'
+import { authorizeCron } from '../../../lib/parle/cronAuth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).end()
   }
 
-  const secret = process.env.CRON_SECRET
-  if (secret) {
-    const provided =
-      req.headers.authorization?.replace(/^Bearer\s+/i, '') ||
-      req.query?.secret ||
-      req.body?.secret
-    if (provided !== secret) {
-      return res.status(401).json({ error: 'Unauthorized' })
-    }
+  const auth = authorizeCron(req)
+  if (!auth.ok) {
+    return res.status(auth.status).json(auth.body)
   }
 
   try {

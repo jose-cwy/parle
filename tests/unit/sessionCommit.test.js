@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { shouldIgnoreCommit } = require('../../lib/parle/sessionCommit')
+const { shouldIgnoreCommit, shouldReplaceHistoryWithServer } = require('../../lib/parle/sessionCommit')
 
 test('stale generation tokens are ignored', () => {
   assert.equal(
@@ -31,5 +31,17 @@ test('deleted archive ids are ignored even with matching gen', () => {
       currentOpGen: 3,
     }),
     false,
+  )
+})
+
+test('empty local chat can take server history', () => {
+  assert.equal(
+    shouldReplaceHistoryWithServer({
+      hasPendingReply: false,
+      localHasUserMessages: false,
+      localCount: 0,
+      serverCount: 3,
+    }),
+    true,
   )
 })

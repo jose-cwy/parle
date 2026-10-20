@@ -145,12 +145,14 @@ export default async function handler(req, res) {
         }
       }
 
+      const thinkStarted = Date.now()
       const thinkBlock = await runHiddenThink({
         userText,
         history: recent,
         modeId: modeId || 'cross',
         quality,
       })
+      const thinkMs = Date.now() - thinkStarted
       const injections = [...(hiddenInjections || [])]
       const qualityBlock = buildReplyQualityBlock(quality)
       if (qualityBlock) injections.push(qualityBlock)
@@ -186,10 +188,11 @@ export default async function handler(req, res) {
         messages: completionMessages,
         temperature: 0.65,
         fallbackReply,
+        extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
       })
 
-      await insertChatMessage(payload.id, 'assistant', reply)
-      return reply
+      const saved = await insertChatMessage(payload.id, 'assistant', reply)
+      return { reply, messageId: saved?.id, thinkMs }
     })
 
     if (lockResult.locked) {

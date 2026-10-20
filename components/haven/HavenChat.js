@@ -39,7 +39,7 @@ import {
   pruneArchivesMatchingMessages,
   isArchiveDeleted,
 } from '../../lib/parle/chatArchives'
-import { shouldIgnoreCommit } from '../../lib/parle/sessionCommit'
+import { shouldIgnoreCommit, shouldReplaceHistoryWithServer } from '../../lib/parle/sessionCommit'
 import {
   clearLiveSessionMeta,
   getPreferredModeId,
@@ -106,6 +106,15 @@ function countPersistedBefore(messages, index) {
   return count
 }
 
+function mapServerHistory(rows) {
+  return (rows || []).map((m) => ({
+    id: m.id != null ? String(m.id) : createMessageId(),
+    role: m.role === 'user' ? 'user' : 'assistant',
+    text: m.text,
+    at: m.created_at ? new Date(m.created_at).getTime() : undefined,
+  }))
+}
+
 function toApiHistory(messages) {
   return (messages || [])
     .filter((m) => m.role === 'user' || (m.role === 'assistant' && !isEphemeralAssistant(m)))
@@ -116,9 +125,9 @@ function createUserMessage(text, at = Date.now()) {
   return { id: createMessageId(), role: 'user', text, at }
 }
 
-function createAssistantMessage(text, { ephemeral = false, at = Date.now(), modeId } = {}) {
+function createAssistantMessage(text, { ephemeral = false, at = Date.now(), modeId, id } = {}) {
   return {
-    id: createMessageId(),
+    id: id || createMessageId(),
     role: 'assistant',
     text,
     at,
@@ -250,7 +259,7 @@ function GuestUsageHint({ remaining }) {
     <div className="parle-chat__composer-notice" role="status">
       <div className="parle-chat__composer-notice-bar">
         <p className="parle-chat__composer-notice-text">
-          {remaining} {remaining === 1 ? 'message' : 'messages'} left today. Don&apos;t end the conversation here.
+          {remaining} {remaining === 1 ? 'message' : 'messages'} left until {formatGuestUsageResetTime()}. Don&apos;t end the conversation here.
         </p>
         <Link href="/register" className="parle-chat__composer-notice-action">
           Sign up
@@ -369,7 +378,7 @@ async function consumeChatStream(res, onUpdate, signal) {
         }
         if (payload.done) {
           reply = payload.reply || reply
-          onUpdate(reply)
+          onUpdate(reply, payload)
         }
       }
     }
@@ -629,7 +638,6 @@ function Bubble({
   messageIndex,
   thinking,
   isAuthed,
-  userExcerpt,
   onEditUserMessage,
   onResendUserMessage,
   onBranchChange,
@@ -660,8 +668,6 @@ function Bubble({
             modeId={msg.modeId}
             isAuthed={isAuthed}
             disabled={thinking}
-            replyExcerpt={msg.text}
-            userExcerpt={userExcerpt}
           />
         ) : null}
       </article>
@@ -1018,14 +1024,16 @@ export default function HavenChat() {
           setImageAttachConsent(Boolean(context?.image_attach_consent))
           setOnboardingAnswered(Boolean(context?.onboarding_answered))
 
-          const history = (rows || []).map((m) => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            text: m.text,
-            at: m.created_at ? new Date(m.created_at).getTime() : undefined,
-          }))
+          const history = mapServerHistory(rows)
 
           if (history.length > 0) {
-            if (!pendingReplyRef.current) {
+            const applyServer = shouldReplaceHistoryWithServer({
+              hasPendingReply: Boolean(pendingReplyRef.current),
+              localHasUserMessages: hasUserMessages(messagesRef.current),
+              localCount: (messagesRef.current || []).length,
+              serverCount: history.length,
+            })
+            if (applyServer) {
               setMessages(history)
               setIsNewSession(false)
               setActiveSessionId(CURRENT_SESSION_ID)
@@ -1561,10 +1569,14 @@ export default function HavenChat() {
       ], { chatModeId: mode.id, opGen })
 
       let finalReply = ''
+      const streamMeta = {}
+      const thinkMs = Number(res.headers.get('X-Parle-Think-Ms'))
       try {
         finalReply = await consumeChatStream(
           res,
-          (replyText) => {
+          (replyText, payload) => {
+            if (payload?.messageId != null) streamMeta.messageId = String(payload.messageId)
+            if (payload?.ttfbMs != null) streamMeta.ttfbMs = payload.ttfbMs
             commitMessages(storageKey, (prev) =>
               (prev || []).map((m) =>
                 m.at === assistantAt ? { ...m, text: replyText, modeId: mode.id } : m,
@@ -1574,19 +1586,45 @@ export default function HavenChat() {
           controller.signal,
         )
       } catch (error) {
-        if (error?.name === 'AbortError') return
+        if (error?.name === 'AbortError') {
+          commitMessages(
+            storageKey,
+            (prev) => {
+              const list = [...(prev || [])]
+              const last = list[list.length - 1]
+              if (
+                last?.role === 'assistant' &&
+                last.at === assistantAt &&
+                !String(last.text || '').trim()
+              ) {
+                list.pop()
+              }
+              return list
+            },
+            { chatModeId: mode.id, opGen },
+          )
+          return
+        }
         throw error
       }
 
       const replyMessage = createAssistantMessage(finalReply || '', {
         at: assistantAt,
         modeId: mode.id,
+        ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
       })
       const withReply = [...nextMessages, replyMessage]
       if (finalReply) {
         commitMessages(storageKey, (prev) => {
           const mapped = (prev || []).map((m) =>
-            m.at === assistantAt ? { ...m, text: finalReply, modeId: mode.id } : m,
+            m.at === assistantAt
+              ? {
+                  ...m,
+                  text: finalReply,
+                  modeId: mode.id,
+                  ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
+                }
+              : m,
           )
           return isEdit && typeof editMessageIndex === 'number'
             ? syncBranchTail(mapped, editMessageIndex)
@@ -1606,6 +1644,11 @@ export default function HavenChat() {
         maybeAutoTitleSession(withReply)
       }
       track('chat_reply', { authed: isAuthed, safety: false, edit: isEdit })
+      track('chat_perf', {
+        authed: isAuthed,
+        thinkMs: Number.isFinite(thinkMs) ? thinkMs : undefined,
+        ttfbMs: streamMeta.ttfbMs,
+      })
 
       if (isAuthed && !isEdit && isViewingStorageKey(storageKey)) {
         await fetch('/api/gamification/progress', {
@@ -2196,11 +2239,7 @@ export default function HavenChat() {
         const historyRes = await fetch('/api/chat/history')
         if (mySelect !== selectGenRef.current) return
         const rows = historyRes.ok ? await historyRes.json() : []
-        const history = (rows || []).map((m) => ({
-          role: m.role === 'user' ? 'user' : 'assistant',
-          text: m.text,
-          at: m.created_at ? new Date(m.created_at).getTime() : undefined,
-        }))
+        const history = mapServerHistory(rows)
         setMessages(history)
         if (history.length) {
           restoreLiveSessionFromMeta(loadLiveSessionMeta(), { history })
@@ -2334,10 +2373,6 @@ export default function HavenChat() {
                 ) {
                   return null
                 }
-                const priorUser =
-                  m.role === 'assistant'
-                    ? [...(messages || []).slice(0, i)].reverse().find((row) => row.role === 'user')
-                    : null
                 return (
                   <Bubble
                     key={m.id || `${m.role}-${i}-${m.text.slice(0, 8)}`}
@@ -2345,7 +2380,6 @@ export default function HavenChat() {
                     messageIndex={i}
                     thinking={thinking}
                     isAuthed={isAuthed}
-                    userExcerpt={priorUser?.text || ''}
                     onEditUserMessage={editUserMessage}
                     onResendUserMessage={resendUserMessage}
                     onBranchChange={switchMessageBranch}

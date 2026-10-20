@@ -3,6 +3,19 @@ import { getUserChatSettings } from '../../../lib/parle/preferences'
 import { updateUserSettings } from '../../../lib/parle/userSettings'
 import { runApiPipeline } from '../../../lib/security/pipeline'
 
+let consentColumnReady = null
+
+async function ensureImageAttachConsentColumn() {
+  if (!consentColumnReady) {
+    consentColumnReady = db
+      .query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_attach_consent_at TIMESTAMPTZ')
+      .catch((error) => {
+        console.error('image_attach_consent_schema_error', error?.message)
+      })
+  }
+  return consentColumnReady
+}
+
 export default async function handler(req, res) {
   const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
   if (guard.handled) return
@@ -10,6 +23,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
+      await ensureImageAttachConsentColumn()
       const settings = await getUserChatSettings(payload.id)
       let imageAttachConsent = false
       let onboardingAnswered = false
@@ -65,6 +79,7 @@ export default async function handler(req, res) {
         const updated = await updateUserSettings(payload.id, privacyPatch)
         if (image_attach_consent === true) {
           try {
+            await ensureImageAttachConsentColumn()
             await db.query(
               'UPDATE users SET image_attach_consent_at = now() WHERE id = $1',
               [payload.id],
@@ -91,6 +106,7 @@ export default async function handler(req, res) {
 
     if (image_attach_consent === true) {
       try {
+        await ensureImageAttachConsentColumn()
         await db.query(
           'UPDATE users SET image_attach_consent_at = now() WHERE id = $1',
           [payload.id],

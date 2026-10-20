@@ -127,12 +127,14 @@ export default async function handler(req, res) {
         livingProfile: null,
         modeId: safeModeId,
       })
+      const thinkStarted = Date.now()
       const thinkBlock = await runHiddenThink({
         userText,
         history: recent,
         modeId: safeModeId,
         quality,
       })
+      const thinkMs = Date.now() - thinkStarted
       const injections = [...(hiddenInjections || [])]
       const qualityBlock = buildReplyQualityBlock(quality)
       if (qualityBlock) injections.push(qualityBlock)
@@ -163,6 +165,7 @@ export default async function handler(req, res) {
         messages: completionMessages,
         temperature: 0.65,
         fallbackReply,
+        extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
       })
 
       await logGuestTrainingExchange({

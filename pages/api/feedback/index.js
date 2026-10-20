@@ -22,8 +22,6 @@ export default async function handler(req, res) {
     reason,
     session_id: sessionId,
     mode_id: modeId,
-    reply_excerpt: replyExcerpt,
-    user_excerpt: userExcerpt,
     is_guest: isGuest,
   } = req.body || {}
 
@@ -48,8 +46,6 @@ export default async function handler(req, res) {
       rating: safeRating,
       reason: safeReason,
       modeId,
-      replyExcerpt,
-      userExcerpt,
       isGuest: Boolean(isGuest) || !guard.payload?.id,
     })
     return res.status(200).json({ ok: true })

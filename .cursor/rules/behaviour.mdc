@@ -1,0 +1,9 @@
+---
+description: Behaviour
+alwaysApply: true
+---
+
+# Behaviour
+
+Implement only the approved phase. Before editing, list the files you intend to modify. After implementation, run all relevant checks, explain any failures, and provide a change summary, test evidence, unresolved issues, and manual verification steps. Do not silently refactor unrelated code or claim a bug is fixed without testing it.
+

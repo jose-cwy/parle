@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   try {
     const result = await db.query(
-      `SELECT session_id, created_at, starting_mode, final_mode, message_count
+      `SELECT session_id, created_at, final_mode, message_count
        FROM session_signals
        WHERE user_id = $1
        ORDER BY created_at DESC

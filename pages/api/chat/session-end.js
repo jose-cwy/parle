@@ -41,46 +41,55 @@ export default async function handler(req, res) {
     const trainingEligible = true
 
     if (personalisationEnabled) {
-      await db.query(
-        `INSERT INTO session_signals
-          (session_id, user_id, message_count, user_avg_message_length, avg_reply_gap_seconds,
-           mode_switches, final_mode, silence_after_response_count, repeat_sentiment_detected,
-           session_length_minutes, training_eligible)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-         ON CONFLICT (session_id) DO UPDATE SET
-           message_count = EXCLUDED.message_count,
-           user_avg_message_length = EXCLUDED.user_avg_message_length,
-           avg_reply_gap_seconds = EXCLUDED.avg_reply_gap_seconds,
-           mode_switches = EXCLUDED.mode_switches,
-           final_mode = EXCLUDED.final_mode,
-           silence_after_response_count = EXCLUDED.silence_after_response_count,
-           repeat_sentiment_detected = EXCLUDED.repeat_sentiment_detected,
-           session_length_minutes = EXCLUDED.session_length_minutes,
-           training_eligible = EXCLUDED.training_eligible`,
-        [
-          sessionId,
-          payload.id,
-          message_count || 0,
-          user_avg_message_length || 0,
-          avg_reply_gap_seconds || 0,
-          mode_switches || 0,
-          final_mode || null,
-          silence_after_response_count || 0,
-          Boolean(repeat_sentiment_detected),
-          session_length_minutes || 0,
-          trainingEligible,
-        ],
-      )
+      try {
+        await db.query(
+          `INSERT INTO session_signals
+            (session_id, user_id, message_count, user_avg_message_length, avg_reply_gap_seconds,
+             mode_switches, final_mode, silence_after_response_count, repeat_sentiment_detected,
+             session_length_minutes, training_eligible)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+           ON CONFLICT (session_id) DO UPDATE SET
+             message_count = EXCLUDED.message_count,
+             user_avg_message_length = EXCLUDED.user_avg_message_length,
+             avg_reply_gap_seconds = EXCLUDED.avg_reply_gap_seconds,
+             mode_switches = EXCLUDED.mode_switches,
+             final_mode = EXCLUDED.final_mode,
+             silence_after_response_count = EXCLUDED.silence_after_response_count,
+             repeat_sentiment_detected = EXCLUDED.repeat_sentiment_detected,
+             session_length_minutes = EXCLUDED.session_length_minutes,
+             training_eligible = EXCLUDED.training_eligible`,
+          [
+            sessionId,
+            payload.id,
+            message_count || 0,
+            user_avg_message_length || 0,
+            avg_reply_gap_seconds || 0,
+            mode_switches || 0,
+            final_mode || null,
+            silence_after_response_count || 0,
+            Boolean(repeat_sentiment_detected),
+            session_length_minutes || 0,
+            trainingEligible,
+          ],
+        )
+      } catch (error) {
+        if (error?.code !== '42P01' && error?.code !== '42703') throw error
+        console.warn('session_signals_write_skipped', error.code)
+      }
 
-      await updateProfileAfterSession(payload.id, {
-        message_count,
-        user_avg_message_length,
-        avg_reply_gap_seconds,
-        mode_switches,
-        starting_mode,
-        final_mode,
-        repeat_sentiment_detected,
-      })
+      try {
+        await updateProfileAfterSession(payload.id, {
+          message_count,
+          user_avg_message_length,
+          avg_reply_gap_seconds,
+          mode_switches,
+          starting_mode,
+          final_mode,
+          repeat_sentiment_detected,
+        })
+      } catch (error) {
+        console.error('session_preference_update_error', error)
+      }
     } else {
       await db.query(
         `INSERT INTO session_signals (session_id, user_id, training_eligible)
@@ -108,22 +117,26 @@ export default async function handler(req, res) {
     }
 
     if (personalisationEnabled && (message_count || 0) > 0) {
-      const knobs = await getOrCreateProfile(payload.id)
-      const feedbackRows = await getRecentReplyFeedback({ userId: payload.id, limit: 6 }).catch(() => [])
-      await updateLivingProfileAfterSession(payload.id, {
-        signals: {
-          user_avg_message_length,
-          final_mode,
-          repeat_sentiment_detected,
-          preferred_response_length: knobs.preferred_response_length,
-          preferred_tone: knobs.preferred_tone,
-          responds_well_to_questions: knobs.responds_well_to_questions,
-          prefers_validation_over_advice: knobs.prefers_validation_over_advice,
-        },
-        transcript: sessionTranscript.slice(0, 4000),
-        hour: new Date().getHours(),
-        feedbackRows,
-      })
+      try {
+        const knobs = await getOrCreateProfile(payload.id)
+        const feedbackRows = await getRecentReplyFeedback({ userId: payload.id, limit: 6 }).catch(() => [])
+        await updateLivingProfileAfterSession(payload.id, {
+          signals: {
+            user_avg_message_length,
+            final_mode,
+            repeat_sentiment_detected,
+            preferred_response_length: knobs.preferred_response_length,
+            preferred_tone: knobs.preferred_tone,
+            responds_well_to_questions: knobs.responds_well_to_questions,
+            prefers_validation_over_advice: knobs.prefers_validation_over_advice,
+          },
+          transcript: sessionTranscript.slice(0, 4000),
+          hour: new Date().getHours(),
+          feedbackRows,
+        })
+      } catch (error) {
+        console.error('session_living_profile_error', error)
+      }
     }
 
     if (memoryEnabled && (message_count || 0) > 0 && sessionTranscript.trim()) {
@@ -143,9 +156,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true })
   } catch (error) {
-    if (error?.code === '42P01' || error?.code === '42703') {
-      return res.status(200).json({ ok: true, skipped: true })
-    }
     console.error('session_end_error', error)
     return res.status(500).json({ error: 'Unable to end session' })
   }

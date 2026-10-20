@@ -11,16 +11,12 @@ async function submitMessageFeedback({
   reason,
   modeId,
   isAuthed,
-  replyExcerpt,
-  userExcerpt,
 }) {
   const body = {
     message_id: messageId,
     rating,
     reason: reason || undefined,
     mode_id: modeId || undefined,
-    reply_excerpt: replyExcerpt || undefined,
-    user_excerpt: userExcerpt || undefined,
     is_guest: !isAuthed,
     session_id: !isAuthed ? getGuestSessionToken() : undefined,
   }
@@ -42,8 +38,6 @@ export default function MessageFeedbackActions({
   modeId,
   isAuthed,
   disabled,
-  replyExcerpt,
-  userExcerpt,
 }) {
   const [rating, setRating] = useState(null)
   const [showReasons, setShowReasons] = useState(false)
@@ -63,7 +57,7 @@ export default function MessageFeedbackActions({
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showReasons, submitted, messageId, modeId, isAuthed, replyExcerpt, userExcerpt])
+  }, [showReasons, submitted, messageId, modeId, isAuthed])
 
   function fadePillsAway() {
     setPillsFading(true)
@@ -87,8 +81,6 @@ export default function MessageFeedbackActions({
       reason,
       modeId,
       isAuthed,
-      replyExcerpt,
-      userExcerpt,
     })
   }
 
@@ -101,8 +93,6 @@ export default function MessageFeedbackActions({
       rating: 'up',
       modeId,
       isAuthed,
-      replyExcerpt,
-      userExcerpt,
     })
   }
 

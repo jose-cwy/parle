@@ -81,6 +81,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS training_consent BOOLEAN NOT NULL DEF
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences_reset_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_reason VARCHAR(32);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_answered BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS image_attach_consent_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS session_signals (
   session_id UUID PRIMARY KEY,
@@ -194,3 +195,17 @@ CREATE TABLE IF NOT EXISTS user_living_profile (
   payload TEXT NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS session_length_history (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_avg_message_length INTEGER NOT NULL DEFAULT 0,
+  starting_mode VARCHAR(64),
+  final_mode VARCHAR(64),
+  mode_switches INTEGER NOT NULL DEFAULT 0,
+  repeat_sentiment_detected BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_length_history_user
+  ON session_length_history(user_id, created_at DESC);
