@@ -5,7 +5,8 @@ import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../compon
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { fetchAuthUser } from '../lib/authSession'
 import { clearGuestChatState } from '../lib/parle/clearGuestChatState'
-import { postLoginPath } from '../lib/routes'
+import { safeNextPath } from '../lib/routes'
+import { hasPreferredName } from '../lib/user'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -21,7 +22,10 @@ export default function Login() {
       .then((user) => {
         if (!active) return
         if (user) {
-          router.replace(postLoginPath(user, router.query.next))
+          const destination = !hasPreferredName(user)
+            ? '/welcome'
+            : safeNextPath(router.query.next)
+          router.replace(destination)
           return
         }
         setChecking(false)
@@ -49,7 +53,12 @@ export default function Login() {
     if (res.ok) {
       clearGuestChatState()
       const authUser = await fetchAuthUser({ force: true })
-      router.replace(postLoginPath(authUser, router.query.next))
+      const destination = !hasPreferredName(authUser)
+        ? '/welcome'
+        : router.query.next
+          ? safeNextPath(router.query.next)
+          : '/dashboard'
+      router.replace(destination)
     } else {
       const payload = await res.json().catch(() => null)
       alert(payload?.error || 'Login failed')

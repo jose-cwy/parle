@@ -11,7 +11,6 @@ import {
   Settings,
   SquarePen,
   Trash2,
-  BarChart3,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import {
@@ -20,7 +19,6 @@ import {
   prefetchChatExitRoutes,
   rememberChatReturnFromReferrer,
 } from '../../lib/parle/chatNavigation'
-import { ADMIN_INSIGHTS_PATH, shouldShowInsightsNav } from '../../lib/routes'
 import ParleLogo from '../brand/ParleLogo'
 
 function userDisplayName(user) {
@@ -299,21 +297,6 @@ export default function ParleChatSidebar({
         </div>
 
         <div className="parle-chat-sidebar__footer">
-          {isAuthed && shouldShowInsightsNav(user) ? (
-            <div className="parle-chat-sidebar__nav-extra">
-              <button
-                type="button"
-                className="parle-chat-sidebar__nav-link"
-                onClick={() => navigateFromSidebar(ADMIN_INSIGHTS_PATH)}
-                onMouseEnter={() => prefetchSidebarDestination(ADMIN_INSIGHTS_PATH)}
-                onFocus={() => prefetchSidebarDestination(ADMIN_INSIGHTS_PATH)}
-              >
-                <BarChart3 size={15} strokeWidth={1.75} className="shrink-0 opacity-70" aria-hidden />
-                <span>Insights</span>
-              </button>
-            </div>
-          ) : null}
-
           <div className="parle-chat-sidebar__privacy-note">
             <Lock size={11} strokeWidth={2} aria-hidden />
             <span>No public feed</span>

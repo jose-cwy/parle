@@ -1,5 +1,4 @@
 import db from '../../../lib/db'
-import { withAdminFlag } from '../../../lib/parle/adminAuth'
 import { normalizePreferredName } from '../../../lib/user'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 
@@ -26,7 +25,7 @@ export default async function handler(req, res) {
 
     if (!result.rows.length) return res.status(404).json({ error: 'Account not found' })
 
-    return res.status(200).json({ user: withAdminFlag(result.rows[0]) })
+    return res.status(200).json({ user: result.rows[0] })
   } catch (error) {
     if (error?.code === '42703') {
       return res.status(500).json({
