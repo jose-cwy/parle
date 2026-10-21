@@ -13,10 +13,12 @@ import '../styles/parler-landing.css'
 import '../styles/dark-mode.css'
 import '../styles/responsive.css'
 import '../styles/mobile-app.css'
+import '../styles/admin.css'
 import { useEffect, useLayoutEffect } from 'react'
 import TopProgressProvider from '../components/TopProgressProvider'
 import { ThemeProvider } from '../components/ThemeProvider'
 import AppShell from '../components/AppShell'
+import AdminShell from '../components/admin/AdminShell'
 import RequireAuth from '../components/RequireAuth'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -32,6 +34,7 @@ import {
   isLandingThemeRoute,
   isMarketingCreamRoute,
   isParlerMarketingPage,
+  isAdminRoute,
   isProtectedAppRoute,
 } from '../lib/routes'
 import { Analytics } from '@vercel/analytics/next'
@@ -39,6 +42,7 @@ import { Analytics } from '@vercel/analytics/next'
 export default function App({ Component, pageProps }) {
   const router = useRouter()
   const fullBleed = isFullBleedRoute(router.pathname)
+  const adminLayout = isAdminRoute(router.pathname)
   const appLayout = isAppRoute(router.pathname)
   const landingTheme = isLandingThemeRoute(router.pathname)
   const marketingCream = isMarketingCreamRoute(router.pathname)
@@ -56,6 +60,7 @@ export default function App({ Component, pageProps }) {
     body.classList.toggle('body--home-hero', isParlerShell)
     body.classList.toggle('body--parler-landing', isParlerShell)
     body.classList.toggle('body--app', appLayout)
+    body.classList.toggle('body--admin', adminLayout)
     body.classList.toggle('body--auth', isAuthPage)
     if (!landingTheme) body.classList.remove('body--nav-open')
 
@@ -64,7 +69,7 @@ export default function App({ Component, pageProps }) {
       document.documentElement.scrollLeft = 0
       body.scrollLeft = 0
     }
-  }, [landingTheme, marketingCream, appLayout, isParlerShell, isAuthPage])
+  }, [landingTheme, marketingCream, appLayout, adminLayout, isParlerShell, isAuthPage])
 
   useEffect(() => {
     function onRouteChangeStart(url) {
@@ -123,7 +128,7 @@ export default function App({ Component, pageProps }) {
         <meta name="msapplication-TileColor" content="#231821" />
       </Head>
 
-      {!fullBleed && !appLayout && !isHome && !isAuthPage && !isParlerMarketing && (
+      {!fullBleed && !appLayout && !adminLayout && !isHome && !isAuthPage && !isParlerMarketing && (
         <>
           <div className="page-noise" />
           <div className="page-glow page-glow-one" />
@@ -132,12 +137,16 @@ export default function App({ Component, pageProps }) {
         </>
       )}
 
-      {!appLayout && !isHome && <Header />}
+      {!appLayout && !adminLayout && !isHome && <Header />}
 
       {fullBleed ? (
         <div className="flex-1">
           <Component {...pageProps} />
         </div>
+      ) : adminLayout ? (
+        <AdminShell>
+          <Component {...pageProps} key={router.asPath} />
+        </AdminShell>
       ) : appLayout ? (
         <AppShell hideRail={isChatRoute(router.pathname)}>
           <RequireAuth enabled={isProtectedAppRoute(router.pathname)}>
@@ -170,7 +179,7 @@ export default function App({ Component, pageProps }) {
         </main>
       )}
 
-      {!fullBleed && !appLayout && !isAuthPage && !isParlerMarketing && <Footer />}
+      {!fullBleed && !appLayout && !adminLayout && !isAuthPage && !isParlerMarketing && <Footer />}
       <Analytics />
     </div>
     </TopProgressProvider>

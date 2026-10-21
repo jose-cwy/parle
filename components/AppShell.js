@@ -10,9 +10,11 @@ import {
   LogOut,
   Bookmark,
   Settings,
+  Shield,
 } from 'lucide-react'
 import { clearAuthCache, fetchAuthUser, getCachedAuthUser, isAuthCacheReady, subscribeAuthUser } from '../lib/authSession'
 import { cn } from '../lib/cn'
+import { shouldShowInsightsNav } from '../lib/routes'
 import { setChatLocalUserId } from '../lib/parle/chatPreferences'
 import HavenMark from './haven/HavenMark'
 import ParleLogo from './brand/ParleLogo'
@@ -199,6 +201,29 @@ export default function AppShell({ children, hideRail = false }) {
 
         {authReady && user ? (
           <>
+            {shouldShowInsightsNav(user) ? (
+              <Link
+                href="/admin"
+                className={cn(
+                  'group relative flex items-center h-11 text-muted-foreground hover:text-foreground transition-colors',
+                  expanded ? 'rounded-2xl px-2.5 hover:bg-secondary/60' : 'justify-center w-full',
+                )}
+                title="Control Centre"
+              >
+                <span
+                  className={cn(
+                    'haven-nav-icon-well shrink-0 grid place-items-center transition-colors duration-200',
+                    expanded ? 'h-9 w-9' : 'h-10 w-10 rounded-full group-hover:bg-secondary/60',
+                  )}
+                >
+                  <Shield size={17} strokeWidth={1.6} />
+                </span>
+                {expanded && (
+                  <span className="ml-1 text-[13.5px] font-medium whitespace-nowrap">Control Centre</span>
+                )}
+              </Link>
+            ) : null}
+
             <div className="h-px bg-border/70 my-2" />
 
             <button
@@ -277,6 +302,16 @@ export default function AppShell({ children, hideRail = false }) {
               </button>
               {accountOpen ? (
                 <div className="haven-shell__mobile-account-menu" role="menu">
+                  {shouldShowInsightsNav(user) ? (
+                    <Link
+                      href="/admin"
+                      className="haven-shell__mobile-account-item"
+                      role="menuitem"
+                      onClick={closeAccount}
+                    >
+                      Control Centre
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     className="haven-shell__mobile-account-item"
