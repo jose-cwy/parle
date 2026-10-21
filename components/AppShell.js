@@ -10,10 +10,12 @@ import {
   LogOut,
   Bookmark,
   Settings,
+  BarChart3,
 } from 'lucide-react'
 import { clearAuthCache, fetchAuthUser, getCachedAuthUser, isAuthCacheReady, subscribeAuthUser } from '../lib/authSession'
 import { cn } from '../lib/cn'
 import { setChatLocalUserId } from '../lib/parle/chatPreferences'
+import { ADMIN_INSIGHTS_PATH, shouldShowInsightsNav } from '../lib/routes'
 import HavenMark from './haven/HavenMark'
 import ParleLogo from './brand/ParleLogo'
 import { ParleSettingsPopup } from './haven/ParleSettings'
@@ -24,6 +26,19 @@ const NAV = [
   { href: '/journal', label: 'Journal', mobileLabel: 'Journal', icon: BookHeart },
   { href: '/quotes', label: 'Quotes Book', mobileLabel: 'Quotes', icon: BookOpen, mobileIcon: Bookmark },
 ]
+
+const INSIGHTS_NAV = {
+  href: ADMIN_INSIGHTS_PATH,
+  label: 'Insights',
+  mobileLabel: 'Insights',
+  icon: BarChart3,
+}
+
+const ADMIN_NAV = [...NAV, INSIGHTS_NAV]
+
+function navItemsForUser(user) {
+  return shouldShowInsightsNav(user) ? ADMIN_NAV : NAV
+}
 
 function isActive(pathname, item) {
   if (item.exact) return pathname === item.href
@@ -54,11 +69,13 @@ export default function AppShell({ children, hideRail = false }) {
     setMounted(true)
   }, [])
 
+  const navItems = navItemsForUser(user)
+
   useEffect(() => {
-    NAV.forEach((item) => {
+    navItems.forEach((item) => {
       router.prefetch(item.href)
     })
-  }, [router])
+  }, [router, navItems])
 
   useEffect(() => {
     let active = true
@@ -139,7 +156,7 @@ export default function AppShell({ children, hideRail = false }) {
         <div className="h-px bg-border/70 my-2" />
 
         <nav className="flex-1 flex flex-col gap-1.5 items-stretch" aria-label="Main">
-          {NAV.map((item) => {
+          {navItems.map((item) => {
             const active = isActive(router.pathname, item)
             const Icon = item.icon
             return (
@@ -277,6 +294,16 @@ export default function AppShell({ children, hideRail = false }) {
               </button>
               {accountOpen ? (
                 <div className="haven-shell__mobile-account-menu" role="menu">
+                  {shouldShowInsightsNav(user) ? (
+                    <Link
+                      href={ADMIN_INSIGHTS_PATH}
+                      className="haven-shell__mobile-account-item"
+                      role="menuitem"
+                      onClick={closeAccount}
+                    >
+                      Insights
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     className="haven-shell__mobile-account-item"
@@ -302,7 +329,7 @@ export default function AppShell({ children, hideRail = false }) {
           </header>
 
           <nav className="haven-shell__mobile-bottom-nav" aria-label="Primary">
-            {NAV.map((item) => {
+            {navItems.map((item) => {
               const active = isActive(router.pathname, item)
               const Icon = item.mobileIcon || item.icon
               return (
