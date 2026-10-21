@@ -1,11 +1,21 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { sanitizeEvent } = require('../../lib/parle/productEvents')
+const { sanitizeEvent, shouldRecordGuestMessageSent } = require('../../lib/parle/productEvents')
 const { isExcludedMetricsEmail, isAdminEmail } = require('../../lib/parle/metricsExclude')
 const { sqlIsAdditive, isForbiddenPrimaryMigration } = require('../../scripts/migrate')
 const fs = require('fs')
 const path = require('path')
 const { summarizeOutcome, pct } = require('../../lib/parle/insights')
+
+test('guest message_sent is only for accepted normal turns', () => {
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'normal' }), true)
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'normal', locked: false }), true)
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'crisis' }), false)
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'guardrail' }), false)
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'normal', locked: true }), false)
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'normal', rejected: true }), false)
+  assert.equal(shouldRecordGuestMessageSent({ kind: 'rejected' }), false)
+})
 
 test('sanitizeEvent drops unknown names and guest session keys', () => {
   assert.equal(sanitizeEvent({ name: 'chat_send', userId: 'x' }), null)
@@ -14,9 +24,14 @@ test('sanitizeEvent drops unknown names and guest session keys', () => {
     isGuest: true,
     sessionKey: 'guest-token-should-drop',
     modeId: 'cross',
+    ip: '1.2.3.4',
+    text: 'secret chat',
   })
   assert.equal(guest.sessionKey, null)
   assert.equal(guest.isGuest, true)
+  assert.equal(guest.userId, null)
+  assert.equal(guest.text, undefined)
+  assert.equal(guest.ip, undefined)
   const authed = sanitizeEvent({
     name: 'message_sent',
     userId: '11111111-1111-4111-8111-111111111111',
