@@ -23,7 +23,7 @@ test.describe('First-message onboarding', () => {
     const input = composer(page)
     await expect(input).toBeVisible()
     await input.fill('hi, this is a synthetic check-in about waiting in the rain')
-    await page.getByRole('button', { name: /^send$/i }).click()
+    await page.getByRole('button', { name: 'Send', exact: true }).filter({ visible: true }).first().click()
 
     const assistant = page.locator('.parle-chat-msg--assistant:not(.parle-chat-msg--typing)').last()
     await expect(assistant).toBeVisible({ timeout: 45_000 })
@@ -41,7 +41,7 @@ test.describe('First-message onboarding', () => {
     const input = composer(page)
     await expect(input).toBeVisible()
     await input.fill("i don't want to be here anymore")
-    await page.getByRole('button', { name: /^send$/i }).click()
+    await page.getByRole('button', { name: 'Send', exact: true }).filter({ visible: true }).first().click()
     await expect(page.getByText(/1-767/)).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText(/6389 2222/)).toBeVisible()
     await expect(composer(page)).toBeEnabled()

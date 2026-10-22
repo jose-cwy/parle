@@ -55,22 +55,34 @@ function guestBody(text, extra = {}) {
 }
 
 test('guest chat 11th rapid message returns 429', { skip: !RUN_API }, async () => {
+  // guestChat is 10 / 60s per IP, checked before crisis/guardrail/model.
+  // "write me html for a button" is out of scope (200 + guardrail:true) but still
+  // consumes the burst. A slow sequential loop can exceed the 60s window and
+  // reset the in-memory bucket (that is why an earlier 11-step run returned 200).
   const ip = `rate-guest-${Date.now()}`
-  let lastStatus = 200
-  let lastBody = null
-
-  for (let i = 0; i < 11; i += 1) {
-    const res = await request('/api/chat/guest-send', {
-      method: 'POST',
-      headers: { 'x-forwarded-for': ip },
-      body: guestBody('write me html for a button'),
-    })
-    lastStatus = res.status
-    lastBody = res.json()
-  }
-
-  assert.equal(lastStatus, 429)
-  assert.equal(lastBody?.error, 'rate_limited')
+  const started = Date.now()
+  const results = await Promise.all(
+    Array.from({ length: 11 }, (_, i) =>
+      request('/api/chat/guest-send', {
+        method: 'POST',
+        headers: { 'x-forwarded-for': ip },
+        body: guestBody(`write me html for a button ${i}`),
+      }),
+    ),
+  )
+  const elapsedMs = Date.now() - started
+  const summary = results.map((res) => ({
+    status: res.status,
+    error: res.json()?.error || null,
+    guardrail: Boolean(res.json()?.guardrail),
+  }))
+  const rateLimited = results.filter(
+    (res) => res.status === 429 && res.json()?.error === 'rate_limited',
+  )
+  assert.ok(
+    rateLimited.length >= 1,
+    `expected at least one rate_limited 429 within ${elapsedMs}ms, got ${JSON.stringify(summary)}`,
+  )
 })
 
 test('empty guest message returns 400', { skip: !RUN_API }, async () => {

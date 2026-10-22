@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Check, ChevronLeft, ChevronRight, Clock, CloudRain, Copy, Heart, Lock, MessageCircle, Pencil, RotateCcw, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Clock, CloudRain, Copy, Heart, Lock, MessageCircle, MoreHorizontal, Pencil, RotateCcw, X } from 'lucide-react'
 import { fetchAuthUser } from '../../lib/authSession'
 import { cn } from '../../lib/cn'
 import { pulseWarmth } from '../../lib/warmthPulse'
 import { useTopProgress } from '../../lib/hooks/useTopProgress'
 import { track } from '../../lib/events'
-import ChatInputBar from './ChatInputBar'
+import ChatInputBar, { ChatComposerProvider } from './ChatInputBar'
 import GuestConsentBanner from './GuestConsentBanner'
 import MessageFeedbackActions from './MessageFeedbackActions'
 import ProductPulseCard, {
@@ -66,6 +66,12 @@ import {
   guestDraftHasUserMessages,
 } from '../../lib/parle/guestChatDraft'
 import { parseBoldSegments } from '../../lib/parle/renderBoldText'
+import {
+  createAnimationFrameBatcher,
+  createThrottledRunner,
+  isNearBottom,
+  patchStreamingAssistantMessage,
+} from '../../lib/parle/chatUiPerf'
 
 const CURRENT_SESSION_ID = 'current-live'
 const SIDEBAR_COLLAPSED_KEY = 'parle-chat-sidebar-collapsed'
@@ -437,6 +443,7 @@ function UserMessageBubble({
   msg,
   messageIndex,
   disabled,
+  compactActions = false,
   onEdit,
   onResend,
   onBranchChange,
@@ -444,6 +451,7 @@ function UserMessageBubble({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(msg.text)
   const [copied, setCopied] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
   const textareaRef = useRef(null)
   const copiedTimerRef = useRef(null)
   const branchCount = msg.branches?.length ?? 0
@@ -565,6 +573,18 @@ function UserMessageBubble({
     <article className="parle-chat-msg parle-chat-msg--user">
       <div className="parle-chat-msg__bubble parle-chat-msg__bubble--user">{msg.text}</div>
       <div className="parle-chat-msg__user-actions">
+        {compactActions && !showBranchNav ? (
+          <button
+            type="button"
+            className="parle-chat-msg__action-btn"
+            onClick={() => setActionsOpen((open) => !open)}
+            aria-expanded={actionsOpen}
+            aria-label={actionsOpen ? 'Hide message actions' : 'Message actions'}
+            title="Message actions"
+          >
+            <MoreHorizontal size={15} strokeWidth={1.75} />
+          </button>
+        ) : null}
         {showBranchNav && (
           <div className="parle-chat-msg__branch-nav" aria-label="Message versions">
             <button
@@ -590,6 +610,8 @@ function UserMessageBubble({
             </button>
           </div>
         )}
+        {(compactActions ? actionsOpen : true) && (
+          <>
         <button
           type="button"
           className={cn(
@@ -631,16 +653,19 @@ function UserMessageBubble({
             </button>
           </>
         )}
+          </>
+        )}
       </div>
     </article>
   )
 }
 
-function Bubble({
+const Bubble = memo(function Bubble({
   msg,
   messageIndex,
   thinking,
   isAuthed,
+  compactActions = false,
   onEditUserMessage,
   onResendUserMessage,
   onBranchChange,
@@ -651,6 +676,7 @@ function Bubble({
         msg={msg}
         messageIndex={messageIndex}
         disabled={thinking}
+        compactActions={compactActions}
         onEdit={onEditUserMessage}
         onResend={onResendUserMessage}
         onBranchChange={onBranchChange}
@@ -666,12 +692,21 @@ function Bubble({
       <article className="parle-chat-msg parle-chat-msg--assistant">
         <AssistantBody text={msg.text} />
         {showFeedback ? (
-          <MessageFeedbackActions
-            messageId={msg.id}
-            modeId={msg.modeId}
-            isAuthed={isAuthed}
-            disabled={thinking}
-          />
+          compactActions ? (
+            <OlderAssistantActions
+              messageId={msg.id}
+              modeId={msg.modeId}
+              isAuthed={isAuthed}
+              disabled={thinking}
+            />
+          ) : (
+            <MessageFeedbackActions
+              messageId={msg.id}
+              modeId={msg.modeId}
+              isAuthed={isAuthed}
+              disabled={thinking}
+            />
+          )
         ) : null}
       </article>
     )
@@ -686,6 +721,40 @@ function Bubble({
   }
 
   return null
+}, function bubblePropsEqual(prev, next) {
+  return (
+    prev.msg === next.msg &&
+    prev.thinking === next.thinking &&
+    prev.messageIndex === next.messageIndex &&
+    prev.compactActions === next.compactActions &&
+    prev.isAuthed === next.isAuthed
+  )
+})
+
+function OlderAssistantActions({ messageId, modeId, isAuthed, disabled }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="parle-msg-feedback">
+      <button
+        type="button"
+        className="parle-chat-msg__action-btn"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-label={open ? 'Hide reply feedback' : 'Reply feedback'}
+        title="Reply feedback"
+      >
+        <MoreHorizontal size={15} strokeWidth={1.75} />
+      </button>
+      {open ? (
+        <MessageFeedbackActions
+          messageId={messageId}
+          modeId={modeId}
+          isAuthed={isAuthed}
+          disabled={disabled}
+        />
+      ) : null}
+    </div>
+  )
 }
 
 function TypingIndicator() {
@@ -755,9 +824,13 @@ export default function HavenChat() {
   const router = useRouter()
   const [messages, setMessages] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
-  const [text, setText] = useState('')
+  const [composerRestore, setComposerRestore] = useState(null)
+  const composerDraftRef = useRef('')
   const [loadingRevision, setLoadingRevision] = useState(0)
   const scrollRef = useRef(null)
+  const followScrollRef = useRef(true)
+  const persistRunnerRef = useRef(null)
+  const streamBatcherRef = useRef(null)
   const [chatMode, setChatMode] = useState(null)
   const [isAuthed, setIsAuthed] = useState(false)
   const [memoryEnabled, setMemoryEnabled] = useState(false)
@@ -789,6 +862,9 @@ export default function HavenChat() {
   const messagesRef = useRef(messages)
   const liveSessionTitleRef = useRef(LIVE_SESSION_TITLE)
   const activeSessionIdRef = useRef(activeSessionId)
+  const chatModeRef = useRef(chatMode)
+  const pendingModeIdRef = useRef(pendingModeId)
+  const isAuthedRef = useRef(isAuthed)
   const loadingSessionsRef = useRef(new Set())
   const replyAbortRef = useRef(null)
   const sessionOpGenRef = useRef(0)
@@ -797,6 +873,9 @@ export default function HavenChat() {
   messagesRef.current = messages
   liveSessionTitleRef.current = liveSessionTitle
   activeSessionIdRef.current = activeSessionId
+  chatModeRef.current = chatMode
+  pendingModeIdRef.current = pendingModeId
+  isAuthedRef.current = isAuthed
 
   function getActiveStorageKey() {
     return resolveSessionStorageKey(activeSessionIdRef.current, sessionRef.current.sessionId)
@@ -831,6 +910,8 @@ export default function HavenChat() {
   }
 
   function abortInFlightReply() {
+    streamBatcherRef.current?.flush()
+    persistRunnerRef.current?.flush()
     if (replyAbortRef.current) {
       replyAbortRef.current.abort()
       replyAbortRef.current = null
@@ -856,13 +937,44 @@ export default function HavenChat() {
     return archive?.messages || []
   }
 
-  function commitMessages(storageKey, updater, { chatModeId, bumpOrder = false, opGen } = {}) {
+  function persistTranscriptNow({ bumpOrder = false, chatModeId } = {}) {
+    const current = messagesRef.current || []
+    if (isAuthedRef.current) {
+      const storageKey = getActiveStorageKey()
+      const archive = getChatArchiveById(storageKey)
+      if (!archive || isArchiveDeleted(storageKey)) return
+      const persisted = current
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map(cloneMessage)
+      if (!persisted.length) return
+      saveChatArchive({
+        id: storageKey,
+        title: archive.title,
+        messages: persisted,
+        chatModeId: chatModeId || chatModeRef.current?.id || archive.chatModeId,
+        bumpOrder,
+      })
+      if (bumpOrder) setArchivesRevision((n) => n + 1)
+      return
+    }
+    saveGuestChatDraft({
+      messages: current,
+      chatModeId: chatModeRef.current?.id || null,
+      pendingModeId: pendingModeIdRef.current,
+    })
+  }
+
+  function scheduleTranscriptPersist() {
+    persistRunnerRef.current?.schedule()
+  }
+
+  function commitMessages(storageKey, updater, { chatModeId, bumpOrder = false, opGen, persist = true } = {}) {
     if (!canCommitMessages(storageKey, opGen)) return readMessagesForStorageKey(storageKey)
     const prev = readMessagesForStorageKey(storageKey)
     const next = typeof updater === 'function' ? updater(prev) : updater
     const archive = getChatArchiveById(storageKey)
 
-    if (archive && isAuthed && !isArchiveDeleted(storageKey)) {
+    if (persist && archive && isAuthedRef.current && !isArchiveDeleted(storageKey)) {
       saveChatArchive({
         id: storageKey,
         title: archive.title,
@@ -872,14 +984,27 @@ export default function HavenChat() {
         chatModeId: chatModeId || archive.chatModeId,
         bumpOrder,
       })
-      setArchivesRevision((n) => n + 1)
+      if (bumpOrder) setArchivesRevision((n) => n + 1)
     }
 
     if (isViewingStorageKey(storageKey)) {
       setMessages(next)
     }
 
+    if (persist && !isAuthedRef.current) {
+      saveGuestChatDraft({
+        messages: isViewingStorageKey(storageKey) ? next : currentGuestDraftMessages(storageKey, next),
+        chatModeId: chatModeId || chatModeRef.current?.id || null,
+        pendingModeId: pendingModeIdRef.current,
+      })
+    }
+
     return next
+  }
+
+  function currentGuestDraftMessages(storageKey, next) {
+    if (isViewingStorageKey(storageKey)) return next
+    return messagesRef.current || next
   }
 
   const thinking = isActiveSessionLoading()
@@ -1144,17 +1269,31 @@ export default function HavenChat() {
   }, [])
 
   useEffect(() => {
-    if (isAuthed || historyLoading) return undefined
-    const draft = {
-      messages,
-      chatModeId: chatMode?.id || null,
-      pendingModeId,
-    }
-    saveGuestChatDraft(draft)
+    const runner = createThrottledRunner(() => persistTranscriptNow())
+    persistRunnerRef.current = runner
     return () => {
-      saveGuestChatDraft(draft)
+      runner.flush()
+      persistRunnerRef.current = null
+      streamBatcherRef.current?.cancel()
+      streamBatcherRef.current = null
     }
-  }, [isAuthed, historyLoading, messages, chatMode, pendingModeId])
+  }, [])
+
+  useEffect(() => {
+    function persistOnLeave() {
+      persistRunnerRef.current?.flush()
+      persistTranscriptNow()
+    }
+    function onVisibility() {
+      if (document.visibilityState === 'hidden') persistOnLeave()
+    }
+    window.addEventListener('pagehide', persistOnLeave)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', persistOnLeave)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
 
   useEffect(() => {
     const onLeave = () => {
@@ -1166,11 +1305,9 @@ export default function HavenChat() {
     }
   }, [sendSessionEnd])
 
-  useEffect(() => {
-    if (productPulseVisible && String(text || '').trim()) {
-      setProductPulseVisible(false)
-    }
-  }, [text, productPulseVisible])
+  const dismissProductPulse = useCallback(() => {
+    setProductPulseVisible((visible) => (visible ? false : visible))
+  }, [])
 
   useEffect(() => {
     const msgs = messages || []
@@ -1186,9 +1323,24 @@ export default function HavenChat() {
   }, [messages, thinking])
 
 
+  const syncFollowFromScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    followScrollRef.current = isNearBottom(el)
+  }, [])
+
+  const scrollToBottomIfFollowing = useCallback((behavior = 'auto') => {
+    const el = scrollRef.current
+    if (!el || !followScrollRef.current) return
+    el.scrollTo({ top: el.scrollHeight, behavior })
+  }, [])
+
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, thinking])
+    const el = scrollRef.current
+    if (!el) return undefined
+    el.addEventListener('scroll', syncFollowFromScroll, { passive: true })
+    return () => el.removeEventListener('scroll', syncFollowFromScroll)
+  }, [syncFollowFromScroll, historyLoading])
 
   useEffect(() => {
     if (historyLoading) return
@@ -1501,7 +1653,7 @@ export default function HavenChat() {
           { chatModeId: mode.id, opGen },
         )
         if (isViewingStorageKey(storageKey) && userText) {
-          setText(userText)
+          setComposerRestore({ key: Date.now(), text: userText })
         }
         return
       }
@@ -1522,27 +1674,52 @@ export default function HavenChat() {
       commitMessages(storageKey, (prev) => [
         ...(prev || []),
         createAssistantMessage('', { at: assistantAt, modeId: mode.id }),
-      ], { chatModeId: mode.id, opGen })
+      ], { chatModeId: mode.id, opGen, persist: true })
 
       let finalReply = ''
       const streamMeta = {}
       const thinkMs = Number(res.headers.get('X-Parle-Think-Ms'))
+      const applyStreamText = (replyText) => {
+        commitMessages(
+          storageKey,
+          (prev) =>
+            patchStreamingAssistantMessage(prev, {
+              at: assistantAt,
+              text: replyText,
+              modeId: mode.id,
+              ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
+            }),
+          { chatModeId: mode.id, opGen, persist: false },
+        )
+        scrollToBottomIfFollowing('auto')
+        scheduleTranscriptPersist()
+      }
+      const batcher = createAnimationFrameBatcher(applyStreamText, {
+        raf: (cb) => window.requestAnimationFrame(cb),
+        caf: (id) => window.cancelAnimationFrame(id),
+      })
+      streamBatcherRef.current = batcher
       try {
         finalReply = await consumeChatStream(
           res,
           (replyText, payload) => {
             if (payload?.messageId != null) streamMeta.messageId = String(payload.messageId)
             if (payload?.ttfbMs != null) streamMeta.ttfbMs = payload.ttfbMs
-            commitMessages(storageKey, (prev) =>
-              (prev || []).map((m) =>
-                m.at === assistantAt ? { ...m, text: replyText, modeId: mode.id } : m,
-              ),
-            { chatModeId: mode.id, opGen })
+            if (payload?.done) {
+              batcher.flush()
+              applyStreamText(replyText)
+              return
+            }
+            batcher.schedule(replyText)
           },
           controller.signal,
         )
+        batcher.flush()
       } catch (error) {
+        batcher.flush()
         if (error?.name === 'AbortError') {
+          if (!canCommitMessages(storageKey, opGen)) return
+          persistTranscriptNow({ chatModeId: mode.id })
           commitMessages(
             storageKey,
             (prev) => {
@@ -1557,11 +1734,15 @@ export default function HavenChat() {
               }
               return list
             },
-            { chatModeId: mode.id, opGen },
+            { chatModeId: mode.id, opGen, persist: true },
           )
           return
         }
         throw error
+      } finally {
+        batcher.flush()
+        batcher.cancel()
+        if (streamBatcherRef.current === batcher) streamBatcherRef.current = null
       }
 
       const replyMessage = createAssistantMessage(finalReply || '', {
@@ -1570,28 +1751,29 @@ export default function HavenChat() {
         ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
       })
       const withReply = [...nextMessages, replyMessage]
+      persistRunnerRef.current?.flush()
       if (finalReply) {
         commitMessages(storageKey, (prev) => {
-          const mapped = (prev || []).map((m) =>
-            m.at === assistantAt
-              ? {
-                  ...m,
-                  text: finalReply,
-                  modeId: mode.id,
-                  ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
-                }
-              : m,
-          )
+          const mapped = patchStreamingAssistantMessage(prev, {
+            at: assistantAt,
+            text: finalReply,
+            modeId: mode.id,
+            ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
+          })
           return isEdit && typeof editMessageIndex === 'number'
             ? syncBranchTail(mapped, editMessageIndex)
             : mapped
-        }, { chatModeId: mode.id, opGen })
+        }, { chatModeId: mode.id, opGen, persist: true })
       } else if (isEdit && typeof editMessageIndex === 'number') {
         commitMessages(storageKey, (prev) => syncBranchTail(prev || [], editMessageIndex), {
           chatModeId: mode.id,
           opGen,
+          persist: true,
         })
+      } else {
+        persistTranscriptNow({ chatModeId: mode.id })
       }
+      scrollToBottomIfFollowing('auto')
 
       session.lastAssistantAt = Date.now()
       if (isViewingStorageKey(storageKey)) {
@@ -1825,14 +2007,17 @@ export default function HavenChat() {
     }
 
     liveClearedRef.current = false
-    setText('')
     if (productPulseVisible) setProductPulseVisible(false)
     const displayText = v || (imagePayload.length ? '[Image attached]' : '')
     const nextMessages = [...(messages || []), createUserMessage(displayText, now)]
+    followScrollRef.current = true
     setMessages(nextMessages)
+    messagesRef.current = nextMessages
     const storageKey = getActiveStorageKey()
+    persistTranscriptNow({ bumpOrder: true, chatModeId: mode.id })
+    requestAnimationFrame(() => scrollToBottomIfFollowing('auto'))
 
-    await checkRepeatSentiment(nextMessages)
+    void checkRepeatSentiment(nextMessages)
 
     let dontTextStep = null
     if (mode.id === 'stop_contact') {
@@ -1911,6 +2096,7 @@ export default function HavenChat() {
   }
 
   function resetToPreChatSync() {
+    clearGuestChatDraft()
     setMessages([])
     setChatMode(null)
     setPendingModeId(getPreferredModeId(DEFAULT_MODE.id))
@@ -1930,7 +2116,7 @@ export default function HavenChat() {
 
   async function maybeOfferOutcomeSurvey(nextMessages, modeId, isEdit) {
     if (isEdit || productPulseVisible || thinking) return
-    if (String(text || '').trim()) return
+    if (String(composerDraftRef.current || '').trim()) return
     const userMessages = (nextMessages || []).filter((m) => m.role === 'user')
     if (userMessages.length < 2) return
     const lastUser = [...userMessages].reverse()[0]
@@ -1965,8 +2151,8 @@ export default function HavenChat() {
   }
 
   function discardLiveAndArchives(snapshot) {
-    abortInFlightReply()
     bumpSessionOpGen()
+    abortInFlightReply()
     liveClearedRef.current = true
     if (snapshot?.sessionId) {
       removeChatArchive(snapshot.sessionId)
@@ -2048,8 +2234,8 @@ export default function HavenChat() {
   }
 
   async function clearChat() {
-    abortInFlightReply()
     bumpSessionOpGen()
+    abortInFlightReply()
 
     const currentMessages = messages || []
     const shouldArchive = shouldArchiveLiveChat(activeSessionId, currentMessages)
@@ -2108,8 +2294,8 @@ export default function HavenChat() {
       return
     }
 
-    abortInFlightReply()
     bumpSessionOpGen()
+    abortInFlightReply()
     removeChatArchive(session.id)
     setArchivesRevision((n) => n + 1)
 
@@ -2193,8 +2379,8 @@ export default function HavenChat() {
     if (!session?.loadable) return
     if (session.id === activeSessionIdRef.current) return
 
-    abortInFlightReply()
     bumpSessionOpGen()
+    abortInFlightReply()
     const mySelect = (selectGenRef.current += 1)
 
     const parked = persistSessionBeforeSwitch(session.id)
@@ -2288,7 +2474,28 @@ export default function HavenChat() {
     activeSessionId ??
     (hasLiveUserMessages && isLiveSession ? CURRENT_SESSION_ID : null)
 
+  const sendRef = useRef(send)
+  sendRef.current = send
+  const onSendStable = useCallback((payload) => sendRef.current(payload), [])
+  const modeChangeRef = useRef(handleModeChange)
+  modeChangeRef.current = handleModeChange
+  const onModeChangeStable = useCallback((mode) => modeChangeRef.current(mode), [])
+
+  let lastUserIndex = -1
+  let lastAssistantIndex = -1
+  for (let i = 0; i < (messages || []).length; i += 1) {
+    if (messages[i]?.role === 'user') lastUserIndex = i
+    if (messages[i]?.role === 'assistant' && String(messages[i].text || '').trim()) {
+      lastAssistantIndex = i
+    }
+  }
+
   return (
+    <ChatComposerProvider
+      restore={composerRestore}
+      onOccupied={dismissProductPulse}
+      draftRef={composerDraftRef}
+    >
     <div
       className={cn(
         'parle-chat-layout',
@@ -2352,11 +2559,12 @@ export default function HavenChat() {
                 }
                 return (
                   <Bubble
-                    key={m.id || `${m.role}-${i}-${m.text.slice(0, 8)}`}
+                    key={m.id || `${m.role}-${i}`}
                     msg={m}
                     messageIndex={i}
                     thinking={thinking}
                     isAuthed={isAuthed}
+                    compactActions={i !== lastUserIndex && i !== lastAssistantIndex}
                     onEditUserMessage={editUserMessage}
                     onResendUserMessage={resendUserMessage}
                     onBranchChange={switchMessageBranch}
@@ -2386,13 +2594,11 @@ export default function HavenChat() {
                 <GuestLimitBlock />
               ) : (
                 <ChatInputBar
-                  text={text}
-                  onTextChange={setText}
-                  onSend={send}
+                  onSend={onSendStable}
                   disabled={inputDisabled}
                   loading={thinking}
                   activeModeId={chatMode?.id || pendingModeId}
-                  onModeChange={handleModeChange}
+                  onModeChange={onModeChangeStable}
                   isAuthed={isAuthed}
                   imageConsentFromServer={imageAttachConsent}
                 />
@@ -2469,13 +2675,11 @@ export default function HavenChat() {
                 <GuestLimitBlock />
               ) : (
                 <ChatInputBar
-                  text={text}
-                  onTextChange={setText}
-                  onSend={send}
+                  onSend={onSendStable}
                   disabled={inputDisabled}
                   loading={thinking}
                   activeModeId={chatMode?.id || pendingModeId}
-                  onModeChange={handleModeChange}
+                  onModeChange={onModeChangeStable}
                   isAuthed={isAuthed}
                   imageConsentFromServer={imageAttachConsent}
                 />
@@ -2490,5 +2694,6 @@ export default function HavenChat() {
         </div>
       </div>
     </div>
+    </ChatComposerProvider>
   )
 }

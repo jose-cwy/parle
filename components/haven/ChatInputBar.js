@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { ArrowUp, ChevronDown, Loader2, Mic, Plus, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import HavenModal from './HavenModal'
@@ -29,6 +39,57 @@ function resizeTextarea(el) {
 function getSpeechRecognition() {
   if (typeof window === 'undefined') return null
   return window.SpeechRecognition || window.webkitSpeechRecognition || null
+}
+
+const ComposerContext = createContext(null)
+
+export function ChatComposerProvider({ children, restore, onOccupied, draftRef }) {
+  const [draft, setDraftState] = useState('')
+  const restoreKeyRef = useRef(null)
+
+  useEffect(() => {
+    if (!restore || restore.key == null) return
+    if (restoreKeyRef.current === restore.key) return
+    restoreKeyRef.current = restore.key
+    const next = String(restore.text || '')
+    setDraftState(next)
+    if (draftRef) draftRef.current = next
+  }, [restore, draftRef])
+
+  const setDraft = useCallback(
+    (value) => {
+      setDraftState((prev) => {
+        const next = typeof value === 'function' ? value(prev) : value
+        if (draftRef) draftRef.current = String(next || '')
+        return next
+      })
+      onOccupied?.()
+    },
+    [onOccupied, draftRef],
+  )
+
+  const clearDraft = useCallback(() => {
+    setDraftState('')
+    if (draftRef) draftRef.current = ''
+  }, [draftRef])
+
+  const value = useMemo(
+    () => ({ draft, setDraft, clearDraft }),
+    [draft, setDraft, clearDraft],
+  )
+
+  return <ComposerContext.Provider value={value}>{children}</ComposerContext.Provider>
+}
+
+function useComposerDraft() {
+  const shared = useContext(ComposerContext)
+  const [localDraft, setLocalDraft] = useState('')
+  if (shared) return shared
+  return {
+    draft: localDraft,
+    setDraft: setLocalDraft,
+    clearDraft: () => setLocalDraft(''),
+  }
 }
 
 function useIsMobileSheet() {
@@ -103,9 +164,7 @@ function ModePillSelector({ activeModeId, onSelect, onClose, anchorRef, sheet = 
   )
 }
 
-export default function ChatInputBar({
-  text,
-  onTextChange,
+function ChatInputBar({
   onSend,
   disabled,
   loading = false,
@@ -115,6 +174,7 @@ export default function ChatInputBar({
   imageConsentFromServer,
   showDisclaimer = false,
 }) {
+  const { draft, setDraft, clearDraft } = useComposerDraft()
   const [modeOpen, setModeOpen] = useState(false)
   const [recording, setRecording] = useState(false)
   const [micDenied, setMicDenied] = useState(false)
@@ -196,7 +256,7 @@ export default function ChatInputBar({
 
   useLayoutEffect(() => {
     resizeTextareaRef()
-  }, [text, resizeTextareaRef])
+  }, [draft, resizeTextareaRef])
 
   useEffect(() => {
     resizeTextareaRef()
@@ -296,7 +356,7 @@ export default function ChatInputBar({
     recognition.interimResults = true
     recognition.continuous = true
 
-    preRecordingTextRef.current = text
+    preRecordingTextRef.current = draft
 
     recognition.onresult = (event) => {
       let interim = ''
@@ -308,7 +368,7 @@ export default function ChatInputBar({
       }
       const base = preRecordingTextRef.current
       const combined = `${base}${base && (finalText || interim) ? ' ' : ''}${finalText}${interim}`.trim()
-      onTextChange(combined)
+      setDraft(combined)
       if (finalText) {
         preRecordingTextRef.current = `${base}${base ? ' ' : ''}${finalText}`.trim()
       }
@@ -340,7 +400,7 @@ export default function ChatInputBar({
       stopRecording()
       setMicDenied(true)
     }
-  }, [text, onTextChange, stopRecording])
+  }, [draft, setDraft, stopRecording])
 
   const toggleMic = useCallback(() => {
     if (recording) stopRecording()
@@ -350,17 +410,18 @@ export default function ChatInputBar({
   const handleSubmit = (e) => {
     e.preventDefault()
     if (disabled) return
-    const trimmed = String(text || '').trim()
+    const trimmed = String(draft || '').trim()
     if (!trimmed && !attachments.length) return
     onSend({
       text: trimmed,
       images: attachments.map((a) => a.dataUrl),
     })
+    clearDraft()
     setAttachments([])
     if (recording) stopRecording()
   }
 
-  const canSend = (String(text || '').trim().length > 0 || attachments.length > 0) && !disabled
+  const canSend = (String(draft || '').trim().length > 0 || attachments.length > 0) && !disabled
   const modeId = activeModeId || 'cross'
 
   return (
@@ -432,9 +493,9 @@ export default function ChatInputBar({
 
           <textarea
             ref={textareaRef}
-            value={text}
+            value={draft}
             onChange={(e) => {
-              onTextChange(e.target.value)
+              setDraft(e.target.value)
               resizeTextarea(e.target)
             }}
             onKeyDown={(e) => {
@@ -566,3 +627,5 @@ export default function ChatInputBar({
     </div>
   )
 }
+
+export default memo(ChatInputBar)

@@ -52,10 +52,10 @@ test.describe('Guest chat crisis detection', () => {
     if (await gotIt.isVisible().catch(() => false)) {
       await gotIt.click()
     }
-    const input = page.getByPlaceholder(/say what's on your mind/i).last()
+    const input = page.getByPlaceholder(/say what's on your mind/i).filter({ visible: true }).first()
     await expect(input).toBeVisible()
     await input.fill("i don't want to be here anymore")
-    await page.getByRole('button', { name: /^send$/i }).click()
+    await page.getByRole('button', { name: 'Send', exact: true }).filter({ visible: true }).first().click()
     await expect(page.getByText(/1-767/)).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText(/6389 2222/)).toBeVisible()
     await expect(page.getByText(/chat\.mentalhealth\.sg/)).toBeVisible()
