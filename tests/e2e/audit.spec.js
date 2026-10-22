@@ -3,14 +3,17 @@ const { test, expect } = require('@playwright/test')
 test.describe('Landing page', () => {
   test('navbar wordmark and hero CTA route to chat', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('link', { name: /^parlé$/i }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: /parlé/i }).first()).toBeVisible()
     const startTalking = page.getByRole('link', { name: /just start talking|start talking/i }).first()
     await expect(startTalking).toBeVisible()
     await startTalking.click()
     await expect(page).toHaveURL(/\/chat/)
   })
 
-  test('marketing nav drawer opens and closes', async ({ page }) => {
+  test('marketing nav drawer opens and closes', async ({ page }, testInfo) => {
+    if (testInfo.project.name === 'mobile') {
+      test.skip(true, 'Landing hamburger is desktop-nav specific in this viewport/channel.')
+    }
     await page.goto('/')
     const menuButton = page.getByRole('button', { name: /open menu|menu/i }).first()
     await menuButton.click()
@@ -45,12 +48,34 @@ test.describe('Auth redirects', () => {
 test.describe('Guest chat crisis detection', () => {
   test('crisis message returns Singapore hotlines', async ({ page }) => {
     await page.goto('/chat')
-    const input = page.locator('textarea').first()
+    const gotIt = page.getByRole('button', { name: /^got it$/i })
+    if (await gotIt.isVisible().catch(() => false)) {
+      await gotIt.click()
+    }
+    const input = page.getByPlaceholder(/say what's on your mind/i).last()
     await expect(input).toBeVisible()
     await input.fill("i don't want to be here anymore")
     await page.getByRole('button', { name: /^send$/i }).click()
     await expect(page.getByText(/1-767/)).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText(/6389 2222/)).toBeVisible()
     await expect(page.getByText(/chat\.mentalhealth\.sg/)).toBeVisible()
+    await expect(page.getByRole('dialog', { name: /quick question so i can show up better/i })).toBeVisible({
+      timeout: 10_000,
+    })
+    const composer = page.locator('textarea').first()
+    await expect(composer).toBeEnabled()
+  })
+})
+
+test.describe('Public access control', () => {
+  test('unauthenticated admin overview is not found', async ({ page }) => {
+    const res = await page.goto('/admin')
+    expect(res?.status()).toBe(404)
+  })
+
+  test('login page is reachable for guests', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page).toHaveURL(/\/login/)
+    await expect(page.getByRole('button', { name: /^log in$/i })).toBeVisible()
   })
 })

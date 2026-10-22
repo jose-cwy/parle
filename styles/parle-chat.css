@@ -1753,11 +1753,12 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   right: 0;
   bottom: 0;
   left: var(--parle-sidebar-width);
-  z-index: 55;
+  z-index: 45;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   padding: 24px;
+  padding-bottom: calc(var(--parle-mobile-nav-inset, 0px) + 6.5rem);
   pointer-events: none;
   visibility: hidden;
   transition: left 0.22s ease;
@@ -1774,7 +1775,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   border: 0;
   padding: 0;
   margin: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.08) 55%, transparent 100%);
   opacity: 0;
   transition: opacity 250ms ease-out;
   cursor: default;

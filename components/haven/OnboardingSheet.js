@@ -5,6 +5,7 @@ export default function OnboardingSheet({ open, onSelect, onSkip }) {
     <div
       className={`parle-onboarding${open ? ' parle-onboarding--open' : ''}`}
       aria-hidden={!open}
+      aria-modal={open ? 'false' : undefined}
     >
       <button
         type="button"
@@ -16,7 +17,7 @@ export default function OnboardingSheet({ open, onSelect, onSkip }) {
       <div
         className="parle-onboarding__sheet"
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-labelledby="parle-onboarding-title"
       >
         <p id="parle-onboarding-title" className="parle-onboarding__eyebrow">

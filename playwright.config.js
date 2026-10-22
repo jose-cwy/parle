@@ -13,11 +13,11 @@ module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], channel: 'msedge' },
     },
     {
       name: 'mobile',
-      use: { ...devices['iPhone SE'] },
+      use: { ...devices['Pixel 5'], channel: 'msedge' },
     },
   ],
 })

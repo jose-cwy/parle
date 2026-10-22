@@ -9,7 +9,7 @@ import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { runHiddenThink } from '../../../lib/parle/hiddenThink'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
 import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
-import { getModeLabel } from '../../../lib/parle/modes'
+import { buildTrustedHiddenInjections, trustedOnboardingReason } from '../../../lib/parle/trustedPrompt'
 import {
   recordGuestChatActivity,
   shouldRecordGuestMessageSent,
@@ -54,8 +54,7 @@ export default async function handler(req, res) {
       dontTextStep,
       dontTextMessageCount,
       messages,
-      contextRecap,
-      hiddenInjections,
+      onboardingReason,
       images,
       sessionToken,
     } = req.body || {}
@@ -152,10 +151,13 @@ export default async function handler(req, res) {
         quality,
       })
       const thinkMs = thinkBlock ? Date.now() - thinkStarted : 0
-      const injections = [...(hiddenInjections || [])]
       const qualityBlock = buildReplyQualityBlock(quality)
-      if (qualityBlock) injections.push(qualityBlock)
-      if (thinkBlock) injections.push(thinkBlock)
+      const injections = buildTrustedHiddenInjections({
+        onboardingReason: trustedOnboardingReason(onboardingReason),
+        qualityBlock,
+        thinkBlock,
+        clientHiddenInjections: req.body?.hiddenInjections,
+      })
 
       const completionMessages = buildChatCompletionMessages({
         modeId: safeModeId,
@@ -164,9 +166,7 @@ export default async function handler(req, res) {
         preferenceProfile: null,
         livingProfileBlock: '',
         replyFeedback,
-        contextRecap: contextRecap
-          ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
-          : null,
+        contextRecap: null,
         crossSessionSummary: null,
         memoryEnabled: false,
         hiddenInjections: injections,

@@ -24,8 +24,8 @@ import {
 } from '../../../lib/parle/crossSessionMemory'
 import { recordAuthedChatActivity } from '../../../lib/parle/productEvents'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
-import { getModeLabel } from '../../../lib/parle/modes'
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
+import { buildTrustedHiddenInjections } from '../../../lib/parle/trustedPrompt'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { checkRateLimit, sendRateLimitResponse } from '../../../lib/rateLimiter'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
@@ -60,15 +60,11 @@ export default async function handler(req, res) {
       modeId,
       dontTextStep,
       dontTextMessageCount,
-      contextRecap,
-      crossSessionSummary,
-      hiddenInjections,
       isNewSession,
       sessionId,
       images,
       isEdit,
       dbKeepCount,
-      messages: clientMessages,
     } = req.body || {}
 
     const imageCheck = validateImageDataUrls(images)
@@ -128,26 +124,15 @@ export default async function handler(req, res) {
       const crossSummary = resolveCrossSessionSummary({
         memoryEnabled: settings.memory_enabled,
         lastSessionSummary: settings.last_session_summary,
-        clientSummary: crossSessionSummary,
       })
 
-      let recent
-      if (isEdit && Array.isArray(clientMessages)) {
-        recent = trimConversationHistory(
-          clientMessages.map((m) => ({
-            role: m.role,
-            text: m.text,
-          })),
-        ).slice(0, -1)
-      } else {
-        const history = await getRecentChatMessages(payload.id, 20)
-        recent = trimConversationHistory(
-          history.slice(0, -1).map((m) => ({
-            role: m.role === 'user' ? 'user' : 'assistant',
-            text: m.text,
-          })),
-        )
-      }
+      const history = await getRecentChatMessages(payload.id, 20)
+      const recent = trimConversationHistory(
+        history.slice(0, -1).map((m) => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          text: m.text,
+        })),
+      )
 
       const talkMode = (modeId || 'cross') === 'talk'
       const conversationRecall = Boolean(settings.memory_enabled)
@@ -194,10 +179,13 @@ export default async function handler(req, res) {
         quality,
       })
       const thinkMs = thinkBlock ? Date.now() - thinkStarted : 0
-      const injections = [...(hiddenInjections || [])]
       const qualityBlock = buildReplyQualityBlock(quality)
-      if (qualityBlock) injections.push(qualityBlock)
-      if (thinkBlock) injections.push(thinkBlock)
+      const injections = buildTrustedHiddenInjections({
+        onboardingReason: settings.onboarding_reason,
+        qualityBlock,
+        thinkBlock,
+        clientHiddenInjections: req.body?.hiddenInjections,
+      })
 
       const completionMessages = buildChatCompletionMessages({
         modeId: modeId || 'cross',
@@ -206,9 +194,7 @@ export default async function handler(req, res) {
         preferenceProfile: settings.personalisation_enabled ? settings.profile : null,
         livingProfileBlock,
         replyFeedback,
-        contextRecap: contextRecap
-          ? { ...contextRecap, currentMode: contextRecap.currentMode || getModeLabel(modeId) }
-          : null,
+        contextRecap: null,
         crossSessionSummary: crossSummary,
         memoryEnabled: settings.memory_enabled,
         hiddenInjections: injections,

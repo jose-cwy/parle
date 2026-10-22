@@ -52,10 +52,9 @@ import {
   setChatLocalUserId,
   setPreferredModeId,
 } from '../../lib/parle/chatPreferences'
-import { buildContextRecapBlock } from '../../lib/parle/prompts'
 import OnboardingSheet from './OnboardingSheet'
 import {
-  getOnboardingContextInjection,
+  getGuestOnboardingReason,
   isGuestOnboardingAnswered,
   saveGuestOnboarding,
 } from '../../lib/parle/onboarding'
@@ -767,7 +766,6 @@ export default function HavenChat() {
   const [guestUsageRemaining, setGuestUsageRemaining] = useState(null)
   const [imageAttachConsent, setImageAttachConsent] = useState(false)
   const [stopContactPhase, setStopContactPhase] = useState(null)
-  const [hiddenInjections, setHiddenInjections] = useState([])
   const [isNewSession, setIsNewSession] = useState(true)
   const [user, setUser] = useState(null)
   const [sidebarSessions, setSidebarSessions] = useState([])
@@ -778,6 +776,7 @@ export default function HavenChat() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [onboardingAnswered, setOnboardingAnswered] = useState(true)
+  const [onboardingReason, setOnboardingReason] = useState(null)
   const [onboardingSheetOpen, setOnboardingSheetOpen] = useState(false)
   const [productPulseVisible, setProductPulseVisible] = useState(false)
   const lastAssistantDoneAtRef = useRef(0)
@@ -785,7 +784,6 @@ export default function HavenChat() {
   const [pendingModeId, setPendingModeId] = useState(DEFAULT_MODE.id)
   const [entryExiting, setEntryExiting] = useState(false)
   const sessionRef = useRef(createSessionState())
-  const lastRecapAt = useRef(0)
   const greetingPickRef = useRef(false)
   const [emptyGreeting, setEmptyGreeting] = useState('')
   const messagesRef = useRef(messages)
@@ -1027,6 +1025,7 @@ export default function HavenChat() {
           setMemoryEnabled(Boolean(context?.memory_enabled))
           setImageAttachConsent(Boolean(context?.image_attach_consent))
           setOnboardingAnswered(Boolean(context?.onboarding_answered))
+          setOnboardingReason(context?.onboarding_reason || null)
 
           const history = mapServerHistory(rows)
 
@@ -1102,6 +1101,7 @@ export default function HavenChat() {
         track('chat_loaded', { authed: false })
         setUser(null)
         setOnboardingAnswered(isGuestOnboardingAnswered())
+        setOnboardingReason(getGuestOnboardingReason())
         const guestDraft = loadGuestChatDraft()
         if (guestDraftHasUserMessages(guestDraft) && !pendingReplyRef.current) {
           setMessages(guestDraft.messages)
@@ -1229,31 +1229,6 @@ export default function HavenChat() {
     liveSessionTitle,
     isAuthed,
   ])
-
-  async function maybeGenerateRecap(currentMessages, modeId) {
-    const count = currentMessages.filter((m) => m.role === 'user' || m.role === 'assistant').length
-    if (count < 8 || count % 8 !== 0 || count === lastRecapAt.current) return null
-
-    lastRecapAt.current = count
-    const transcript = currentMessages
-      .slice(-16)
-      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
-      .join('\n')
-
-    const res = await fetch('/api/chat/recap', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript, modeId }),
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    if (data?.recap) {
-      const block = buildContextRecapBlock(data.recap)
-      setHiddenInjections((prev) => [...prev, block])
-      return block
-    }
-    return null
-  }
 
   async function checkRepeatSentiment(currentMessages) {
     const res = await fetch('/api/chat/repeat-sentiment', {
@@ -1414,6 +1389,7 @@ export default function HavenChat() {
 
     setOnboardingSheetOpen(false)
     setOnboardingAnswered(true)
+    setOnboardingReason(reason || 'skipped')
 
     if (isAuthed) {
       void fetch('/api/user/onboarding', {
@@ -1427,21 +1403,14 @@ export default function HavenChat() {
 
     if (!pending) return
 
-    // Restore the user's first message if init or another async path cleared state.
     messagesRef.current = pending.nextMessages
     setMessages(pending.nextMessages)
-
-    const contextInjection = getOnboardingContextInjection(reason)
-    const injections = contextInjection
-      ? [...(pending.injections || []), contextInjection]
-      : pending.injections || []
 
     startSessionLoading(pending.storageKey)
     try {
       track('chat_send', { authed: isAuthed, mode: pending.mode.id })
       await requestAssistantReply({
         ...pending,
-        injections,
       })
     } catch {
       commitMessages(pending.storageKey, (prev) => [
@@ -1460,7 +1429,6 @@ export default function HavenChat() {
     nextMessages,
     mode,
     dontTextStep,
-    injections = hiddenInjections,
     images = [],
     isEdit = false,
     dbKeepCount,
@@ -1474,13 +1442,13 @@ export default function HavenChat() {
       modeId: mode.id,
       dontTextStep,
       dontTextMessageCount: session.stopContactMessageCount,
-      hiddenInjections: injections,
       isNewSession: isAuthed && isNewSession && !isEdit,
       sessionId: session.sessionId,
       messages: toApiHistory(nextMessages.slice(0, -1)),
       images,
       ...(isEdit && isAuthed ? { isEdit: true, dbKeepCount } : {}),
       ...(!isAuthed ? { sessionToken: getGuestSessionToken() } : {}),
+      ...(!isAuthed && onboardingReason ? { onboardingReason } : {}),
     }
 
     const opGen = sessionOpGenRef.current
@@ -1755,8 +1723,6 @@ export default function HavenChat() {
     const dbKeepCount = countPersistedBefore(prior, messageIndex)
 
     await checkRepeatSentiment(truncated)
-    const newRecap = await maybeGenerateRecap(truncated, mode.id)
-    const injections = newRecap ? [...hiddenInjections, newRecap] : hiddenInjections
 
     let dontTextStep = null
     if (mode.id === 'stop_contact') {
@@ -1770,7 +1736,6 @@ export default function HavenChat() {
         nextMessages: truncated,
         mode,
         dontTextStep,
-        injections,
         isEdit: true,
         dbKeepCount,
         editMessageIndex: messageIndex,
@@ -1868,8 +1833,6 @@ export default function HavenChat() {
     const storageKey = getActiveStorageKey()
 
     await checkRepeatSentiment(nextMessages)
-    const newRecap = await maybeGenerateRecap(nextMessages, mode.id)
-    const injections = newRecap ? [...hiddenInjections, newRecap] : hiddenInjections
 
     let dontTextStep = null
     if (mode.id === 'stop_contact') {
@@ -1881,20 +1844,8 @@ export default function HavenChat() {
       }
     }
 
-    const shouldShowOnboarding = !onboardingAnswered && !hasUserMessages(messages || [])
-    if (shouldShowOnboarding) {
-      pendingReplyRef.current = {
-        userText: v,
-        nextMessages,
-        mode,
-        dontTextStep,
-        injections,
-        images: imagePayload,
-        storageKey,
-      }
-      setOnboardingSheetOpen(true)
-      return
-    }
+    const shouldShowOnboardingAfterReply =
+      !onboardingAnswered && !hasUserMessages(messages || [])
 
     startSessionLoading(storageKey)
 
@@ -1922,10 +1873,12 @@ export default function HavenChat() {
         nextMessages,
         mode,
         dontTextStep,
-        injections,
         images: imagePayload,
         storageKey,
       })
+      if (shouldShowOnboardingAfterReply) {
+        setOnboardingSheetOpen(true)
+      }
     } catch (error) {
       if (error?.name === 'AbortError') return
       commitMessages(storageKey, (prev) => [
@@ -1965,12 +1918,10 @@ export default function HavenChat() {
     setEntryExiting(false)
     setGuestBannerDismissed(false)
     setStopContactPhase(null)
-    setHiddenInjections([])
     setIsNewSession(true)
     setActiveSessionId(null)
     setLiveSessionTitle(LIVE_SESSION_TITLE)
     setReturningOpening(null)
-    lastRecapAt.current = 0
     greetingPickRef.current = false
     setEmptyGreeting('')
     setProductPulseVisible(false)
@@ -2301,7 +2252,6 @@ export default function HavenChat() {
     setActiveSessionId(session.id)
     setGuestBannerDismissed(false)
     setStopContactPhase(null)
-    setHiddenInjections([])
     setIsNewSession(false)
     sessionRef.current = createSessionState()
   }
@@ -2309,7 +2259,7 @@ export default function HavenChat() {
   const hasLiveUserMessages = hasUserMessages(visibleMessages)
   const chatActive = hasLiveUserMessages || thinking
   const guestDailyCapReached = !isAuthed && guestUsageRemaining === 0
-  const inputDisabled = thinking || onboardingSheetOpen || historyLoading || guestDailyCapReached
+  const inputDisabled = thinking || historyLoading || guestDailyCapReached
   const showEmptyUI = entryExiting || (!hasLiveUserMessages && !thinking)
   const userMessageCount = visibleMessages.filter((m) => m.role === 'user').length
   const showUsageHint =
@@ -2451,7 +2401,7 @@ export default function HavenChat() {
 
             <EmptyStateQuickPrompts
               onSelect={(prompt) => send({ text: prompt })}
-              disabled={thinking || onboardingSheetOpen || historyLoading || guestDailyCapReached}
+              disabled={thinking || historyLoading || guestDailyCapReached}
               exiting={entryExiting}
             />
           </div>

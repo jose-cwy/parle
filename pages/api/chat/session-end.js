@@ -1,11 +1,17 @@
 import db from '../../../lib/db'
 import { runApiPipeline } from '../../../lib/security/pipeline'
-import { encrypt, decrypt } from '../../../lib/security/encryption'
+import { encrypt } from '../../../lib/security/encryption'
 import { openaiChatComplete } from '../../../lib/openai'
 import { SESSION_SUMMARY_PROMPT } from '../../../lib/parle/prompts'
 import { getOrCreateProfile, updateProfileAfterSession } from '../../../lib/parle/preferences'
 import { updateLivingProfileAfterSession } from '../../../lib/parle/livingProfile'
 import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
+import { getRecentChatMessages } from '../../../lib/chatMemoryDb'
+import {
+  formatSessionTranscript,
+  selectSessionEndRows,
+  SESSION_END_MESSAGE_LIMIT,
+} from '../../../lib/parle/sessionTranscript'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -25,7 +31,6 @@ export default async function handler(req, res) {
     silence_after_response_count,
     repeat_sentiment_detected,
     session_length_minutes,
-    transcript,
   } = req.body || {}
 
   if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' })
@@ -102,21 +107,14 @@ export default async function handler(req, res) {
 
     const memoryEnabled = Boolean(userSettings.memory_enabled)
 
-    let sessionTranscript = String(transcript || '').trim()
-    if (!sessionTranscript && (personalisationEnabled || memoryEnabled) && (message_count || 0) > 0) {
-      const history = await db.query(
-        'SELECT role, text FROM chat_memory WHERE user_id = $1 ORDER BY created_at ASC',
-        [payload.id],
-      )
-      sessionTranscript = (history.rows || [])
-        .map((m) => {
-          const text = decrypt(m.text || '').slice(0, 800)
-          return `${m.role === 'user' ? 'User' : 'Assistant'}: ${text}`
-        })
-        .join('\n')
+    let sessionTranscript = ''
+    if ((personalisationEnabled || memoryEnabled) && Number(message_count) > 0) {
+      const history = await getRecentChatMessages(payload.id, SESSION_END_MESSAGE_LIMIT)
+      const scoped = selectSessionEndRows(history, { messageCount: message_count })
+      sessionTranscript = formatSessionTranscript(scoped)
     }
 
-    if (personalisationEnabled && (message_count || 0) > 0) {
+    if (personalisationEnabled && sessionTranscript) {
       try {
         const knobs = await getOrCreateProfile(payload.id)
         const feedbackRows = await getRecentReplyFeedback({ userId: payload.id, limit: 6 }).catch(() => [])
@@ -139,7 +137,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (memoryEnabled && (message_count || 0) > 0 && sessionTranscript.trim()) {
+    if (memoryEnabled && sessionTranscript.trim()) {
       const summary = await openaiChatComplete({
         messages: [
           { role: 'system', content: SESSION_SUMMARY_PROMPT },
