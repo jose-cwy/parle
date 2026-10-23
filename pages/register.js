@@ -7,7 +7,7 @@ import ContinueWithGoogle from '../components/auth/ContinueWithGoogle'
 import TermsAgreementModal from '../components/TermsAgreementModal'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { TERMS_VERSION } from '../lib/termsVersion'
-import { fetchAuthUser } from '../lib/authSession'
+import { clearAuthCache, fetchAuthUser } from '../lib/authSession'
 import { authQueryMessage } from '../lib/parle/authUiCopy'
 import { hasPreferredName } from '../lib/user'
 
@@ -37,12 +37,12 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [acceptingTerms, setAcceptingTerms] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const [redirecting, setRedirecting] = useState(false)
+  const [existingUser, setExistingUser] = useState(null)
   const [error, setError] = useState('')
   const router = useRouter()
   const queryError = authQueryMessage(router.query.auth)
 
-  useTopProgress(loading || acceptingTerms || redirecting)
+  useTopProgress(loading || acceptingTerms)
 
   useEffect(() => {
     let active = true
@@ -52,8 +52,7 @@ export default function Register() {
         const user = await fetchAuthUser({ force: true })
         if (!active) return
         if (user) {
-          setRedirecting(true)
-          router.replace(hasPreferredName(user) ? '/dashboard' : '/welcome')
+          setExistingUser(user)
           return
         }
 
@@ -78,21 +77,43 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!acceptedTerms) return
+    if (!acceptedTerms || loading) return
 
     setLoading(true)
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const payload = await res.json().catch(() => null)
-    if (res.ok) {
-      router.replace('/verify-email/pending')
-      return
+    setError('')
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), 20000)
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      })
+      const payload = await res.json().catch(() => null)
+      if (res.ok) {
+        clearAuthCache()
+        const params = new URLSearchParams()
+        if (email) params.set('email', email)
+        if (payload?.delivered === false) params.set('mail', 'failed')
+        const query = params.toString()
+        router.replace(query ? `/verify-email/pending?${query}` : '/verify-email/pending')
+        return
+      }
+      setError(payload?.error || 'Registration failed')
+      setLoading(false)
+    } catch {
+      setError('Signup took too long. If you just created a space, open Check your email and resend the link.')
+      setLoading(false)
+    } finally {
+      window.clearTimeout(timer)
     }
-    setError(payload?.error || 'Registration failed')
-    setLoading(false)
+  }
+
+  async function handleSignOutExisting() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    clearAuthCache()
+    setExistingUser(null)
   }
 
   async function handleAcceptTerms() {
@@ -120,7 +141,26 @@ export default function Register() {
     alert('Unable to record your acceptance right now. Please try again.')
   }
 
-  if (redirecting) return null
+  if (existingUser) {
+    return (
+      <AuthPageShell>
+        <AuthCard
+          eyebrow="Already here"
+          title="You already have a space"
+          description="Sign out first if you meant to create a new parlé account."
+          footer={(
+            <>
+              Want to enter it instead? <AuthSwitchLink href={hasPreferredName(existingUser) ? '/dashboard' : '/welcome'}>Continue</AuthSwitchLink>
+            </>
+          )}
+        >
+          <AuthSubmitButton type="button" loading={false} onClick={handleSignOutExisting}>
+            Sign out and create another
+          </AuthSubmitButton>
+        </AuthCard>
+      </AuthPageShell>
+    )
+  }
 
   const showTermsModal = !acceptedTerms
 

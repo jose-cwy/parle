@@ -21,29 +21,39 @@ export default function VerifyEmailPage() {
     if (!token || loading) return
     setLoading(true)
     setError('')
-    const res = await fetch('/api/auth/verify-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    })
-    const payload = await res.json().catch(() => null)
-    if (!res.ok) {
-      const reason = payload?.reason || 'invalid'
-      setStatus(reason)
-      setError(
-        reason === 'expired'
-          ? 'This link has expired. Request a new one.'
-          : reason === 'used'
-            ? 'This link was already used.'
-            : 'This confirmation link is not valid.',
-      )
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      const payload = await res.json().catch(() => null)
+      if (!res.ok) {
+        const reason = payload?.reason || 'invalid'
+        setStatus(reason)
+        setError(
+          reason === 'expired'
+            ? 'This link has expired. Request a new one.'
+            : reason === 'used'
+              ? 'This link was already used.'
+              : 'This confirmation link is not valid.',
+        )
+        return
+      }
+      if (payload?.user) setCachedAuthUser(payload.user)
+      else await fetchAuthUser({ force: true })
+      const user = payload?.user || (await fetchAuthUser({ force: true }))
+      if (!user) {
+        router.replace('/verify-email/pending')
+        return
+      }
+      router.replace(postLoginPath(user))
+    } catch {
+      setStatus('invalid')
+      setError('This confirmation link is not valid.')
+    } finally {
       setLoading(false)
-      return
     }
-    if (payload?.user) setCachedAuthUser(payload.user)
-    else await fetchAuthUser({ force: true })
-    const user = payload?.user || (await fetchAuthUser({ force: true }))
-    router.replace(postLoginPath(user))
   }
 
   return (

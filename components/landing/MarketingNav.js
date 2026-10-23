@@ -53,6 +53,7 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
   const close = useCallback(() => setOpen(false), [])
   const isRegister = router.pathname === '/register'
   const isLogin = router.pathname === '/login'
+  const isVerifyFlow = router.pathname === '/verify-email' || router.pathname === '/verify-email/pending'
   const homeHref = user ? '/dashboard' : '/'
 
   useEffect(() => {
@@ -140,7 +141,7 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
                 </div>
               ) : (
                 <div className="pss-nav-drawer__auth-inline">
-                  {!isLogin ? (
+                  {!isLogin && !isVerifyFlow ? (
                     <Link
                       href="/login"
                       className="pss-nav-drawer__link pss-nav-drawer__link--secondary"
@@ -149,12 +150,12 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
                       Log in
                     </Link>
                   ) : null}
-                  {!isLogin && !isRegister ? (
+                  {!isLogin && !isRegister && !isVerifyFlow ? (
                     <span className="pss-nav-drawer__auth-sep" aria-hidden="true">
                       ·
                     </span>
                   ) : null}
-                  {!isRegister ? (
+                  {!isRegister && !isVerifyFlow ? (
                     <Link
                       href="/register"
                       className="pss-nav-drawer__link pss-nav-drawer__link--secondary"
@@ -185,7 +186,7 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
         </Link>
 
         <div className="pss-nav__actions">
-          {ready && !user && !isRegister && (
+          {ready && !user && !isRegister && !isVerifyFlow && (
             <div className="pss-nav__auth-ctas">
               <Link href="/register" className="pss-nav-cta">
                 Start free

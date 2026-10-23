@@ -89,7 +89,7 @@ export function AuthField({ label, children }) {
   )
 }
 
-export function AuthSubmitButton({ children, loading, disabled, type = 'submit' }) {
+export function AuthSubmitButton({ children, loading, disabled, type = 'submit', onClick }) {
   const reduceMotion = useReducedMotion()
   return (
     <motion.div variants={reduceMotion ? undefined : item}>
@@ -97,6 +97,7 @@ export function AuthSubmitButton({ children, loading, disabled, type = 'submit' 
         type={type}
         className="auth-page__submit"
         disabled={disabled || loading}
+        onClick={onClick}
         whileHover={reduceMotion || disabled || loading ? undefined : { scale: 1.02, y: -1 }}
         whileTap={reduceMotion || disabled || loading ? undefined : { scale: 0.98 }}
         transition={{ duration: 0.2 }}

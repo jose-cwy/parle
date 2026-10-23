@@ -8,7 +8,6 @@ export default async function handler(req, res) {
     console.error('register_bootstrap_error', error)
     return res.status(500).json({
       error: 'Register route failed to start.',
-      hint: error?.message || 'Unknown startup error',
     })
   }
 }

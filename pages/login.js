@@ -67,7 +67,17 @@ export default function Login() {
     setLoading(false)
   }
 
-  if (checking) return null
+  if (checking) {
+    return (
+      <AuthPageShell>
+        <AuthCard
+          eyebrow="Welcome back"
+          title="Log in"
+          description="Opening your space…"
+        />
+      </AuthPageShell>
+    )
+  }
 
   return (
     <AuthPageShell>
