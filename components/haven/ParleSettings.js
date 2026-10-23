@@ -605,6 +605,20 @@ export function ParleSettingsPanel({
               disabled={togglesDisabled}
               onToggle={togglePersonalisation}
             />
+            {process.env.NEXT_PUBLIC_PARLE_GOOGLE_SIGNIN !== 'false' ? (
+            <div className="mt-4">
+              <p className="text-[12px] font-medium text-foreground">Google sign-in</p>
+              <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                Confirm your email first, then connect Google to the same space. We never merge accounts just because the emails match.
+              </p>
+              <a
+                href="/api/auth/google/start"
+                className="inline-block mt-3 h-9 px-4 rounded-xl border border-border text-[11px] leading-9 hover:bg-secondary/60 transition"
+              >
+                Continue with Google
+              </a>
+            </div>
+            ) : null}
           </>
         )}
       </div>

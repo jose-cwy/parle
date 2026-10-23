@@ -37,6 +37,10 @@ export default function RequireAuth({ children, enabled = true }) {
         router.replace(`/login?next=${encodeURIComponent(router.asPath)}`)
         return
       }
+      if (user.mustVerify) {
+        router.replace('/verify-email/pending')
+        return
+      }
       if (!hasPreferredName(user)) {
         router.replace('/welcome')
         return

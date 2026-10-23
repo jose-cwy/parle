@@ -3,13 +3,16 @@ import { AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
 import AuthPageShell from '../components/auth/AuthPageShell'
 import AuthCard, { AuthField, AuthSubmitButton, AuthSwitchLink } from '../components/auth/AuthCard'
+import ContinueWithGoogle from '../components/auth/ContinueWithGoogle'
 import TermsAgreementModal from '../components/TermsAgreementModal'
 import { useTopProgress } from '../lib/hooks/useTopProgress'
 import { TERMS_VERSION } from '../lib/termsVersion'
-import { fetchAuthUser, setCachedAuthUser } from '../lib/authSession'
+import { fetchAuthUser } from '../lib/authSession'
+import { authQueryMessage } from '../lib/parle/authUiCopy'
 import { hasPreferredName } from '../lib/user'
 
 const REGISTER_TERMS_SESSION_KEY = 'parle_register_terms_ok'
+const googleSignInPublic = process.env.NEXT_PUBLIC_PARLE_GOOGLE_SIGNIN !== 'false'
 
 function hasAcceptedTermsThisSession() {
   if (typeof window === 'undefined') return false
@@ -35,7 +38,9 @@ export default function Register() {
   const [acceptingTerms, setAcceptingTerms] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [redirecting, setRedirecting] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
+  const queryError = authQueryMessage(router.query.auth)
 
   useTopProgress(loading || acceptingTerms || redirecting)
 
@@ -81,14 +86,12 @@ export default function Register() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
+    const payload = await res.json().catch(() => null)
     if (res.ok) {
-      const payload = await res.json().catch(() => null)
-      if (payload?.user) setCachedAuthUser(payload.user)
-      router.replace('/welcome')
-    } else {
-      const payload = await res.json().catch(() => null)
-      alert(payload?.error || 'Registration failed')
+      router.replace('/verify-email/pending')
+      return
     }
+    setError(payload?.error || 'Registration failed')
     setLoading(false)
   }
 
@@ -138,6 +141,15 @@ export default function Register() {
           </>
         }
       >
+        {(error || queryError) ? (
+          <p className="auth-page__terms-hint" role="alert">{error || queryError}</p>
+        ) : null}
+        {googleSignInPublic ? (
+          <>
+            <ContinueWithGoogle disabled={!acceptedTerms || loading || acceptingTerms} />
+            <p className="auth-page__divider" role="separator">or</p>
+          </>
+        ) : null}
         <form
           onSubmit={handleSubmit}
           className={`auth-page__form${acceptedTerms ? '' : ' auth-page__form--locked'}`}

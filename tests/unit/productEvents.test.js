@@ -49,6 +49,11 @@ test('test accounts are excluded from official metrics', () => {
   assert.equal(isAdminEmail('a@x.com', { ADMIN_EMAILS: 'b@x.com' }), false)
 })
 
+test('0004 sql is additive', () => {
+  const sql = fs.readFileSync(path.join(__dirname, '../../database/migrations/0004_auth_identities.sql'), 'utf8')
+  assert.equal(sqlIsAdditive(sql), true)
+})
+
 test('0003 sql is additive and 0001/0002 cannot be authorized', () => {
   const sql = fs.readFileSync(path.join(__dirname, '../../database/migrations/0003_phase3_analytics.sql'), 'utf8')
   assert.equal(sqlIsAdditive(sql), true)

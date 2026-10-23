@@ -47,7 +47,12 @@ export default function App({ Component, pageProps }) {
   const landingTheme = isLandingThemeRoute(router.pathname)
   const marketingCream = isMarketingCreamRoute(router.pathname)
   const isHome = router.pathname === '/'
-  const isAuthPage = router.pathname === '/login' || router.pathname === '/register' || router.pathname === '/welcome'
+  const isAuthPage =
+    router.pathname === '/login'
+    || router.pathname === '/register'
+    || router.pathname === '/welcome'
+    || router.pathname === '/verify-email'
+    || router.pathname === '/verify-email/pending'
   const isParlerMarketing = isParlerMarketingPage(router.pathname)
   const isParlerShell = isHome || isAuthPage || isParlerMarketing
 

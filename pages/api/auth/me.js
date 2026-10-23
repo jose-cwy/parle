@@ -10,12 +10,20 @@ export default async function handler(req,res){
 
   try{
     const user = await db.query(
-      'SELECT id,email,preferred_name,accepted_terms_at,accepted_terms_version,created_at FROM users WHERE id=$1',
+      'SELECT id,email,preferred_name,accepted_terms_at,accepted_terms_version,created_at,email_verified_at FROM users WHERE id=$1',
       [payload.id]
     )
 
     if(!user.rows.length) return res.status(200).json({user:null})
-    return res.status(200).json({user: withAdminFlag(user.rows[0])})
+    const { mustVerifyToUseApp, isEmailVerified } = require('../../../lib/parle/authAccess')
+    const row = user.rows[0]
+    return res.status(200).json({
+      user: withAdminFlag({
+        ...row,
+        emailVerified: isEmailVerified(row),
+        mustVerify: mustVerifyToUseApp(row),
+      }),
+    })
   }catch(error){
     if(error?.code === '42703'){
       // Backward-compatible fallback while the database is still on the pre-terms schema.

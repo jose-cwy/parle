@@ -20,7 +20,8 @@ async function upsertUser(email, password) {
         memory_enabled = COALESCE(memory_enabled, FALSE),
         personalisation_enabled = COALESCE(personalisation_enabled, FALSE),
         training_consent = COALESCE(training_consent, FALSE),
-        preferred_name = COALESCE(preferred_name, $2)
+        preferred_name = COALESCE(preferred_name, $2),
+        email_verified_at = COALESCE(email_verified_at, now())
        WHERE email = $3`,
       [hash, email.split('@')[0], email],
     )
@@ -28,8 +29,8 @@ async function upsertUser(email, password) {
   }
 
   const inserted = await db.query(
-    `INSERT INTO users (email, password, preferred_name, memory_enabled, personalisation_enabled, training_consent)
-     VALUES ($1, $2, $3, FALSE, FALSE, FALSE)
+    `INSERT INTO users (email, password, preferred_name, memory_enabled, personalisation_enabled, training_consent, email_verified_at)
+     VALUES ($1, $2, $3, FALSE, FALSE, FALSE, now())
      RETURNING id`,
     [email, hash, email.split('@')[0]],
   )

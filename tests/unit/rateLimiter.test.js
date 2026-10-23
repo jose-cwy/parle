@@ -20,6 +20,8 @@ function mockReq(path, ip = '127.0.0.1') {
 test('resolveTier maps routes to expected tiers', () => {
   assert.equal(resolveTier('/api/auth/login'), 'authStrict')
   assert.equal(resolveTier('/api/auth/register'), 'authStrict')
+  assert.equal(resolveTier('/api/auth/verify-email'), 'authStrict')
+  assert.equal(resolveTier('/api/auth/google/start'), 'authStrict')
   assert.equal(resolveTier('/api/auth/me'), 'authRead')
   assert.equal(resolveTier('/api/chat/guest-send'), 'guestChat')
   assert.equal(resolveTier('/api/chat/send'), 'userChat')

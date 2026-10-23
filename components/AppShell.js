@@ -373,6 +373,12 @@ export default function AppShell({ children, hideRail = false }) {
       ) : null}
 
       <main className="haven-shell__main">
+        {user && !user.emailVerified && !user.mustVerify ? (
+          <p className="auth-page__grace-banner" role="status">
+            Confirm this email is yours so this space stays protected.{' '}
+            <a href="/verify-email/pending">Send confirmation</a>
+          </p>
+        ) : null}
         <div className="haven-shell__content">{children}</div>
       </main>
     </div>

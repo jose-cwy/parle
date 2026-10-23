@@ -22,6 +22,8 @@ const {
 const ADVISORY_LOCK_KEY = 872451901
 const PRIMARY_ADDITIVE_MIGRATION = '0003_phase3_analytics.sql'
 const EXPECTED_0003_CHECKSUM = '611daa96f31d10b73f5f86ea7aaaa39441ae1cd7234461e77da416180decf51a'
+const PRIMARY_AUTH_MIGRATION = '0004_auth_identities.sql'
+const EXPECTED_0004_CHECKSUM = '7bc29ddfe5d9f39129b8445218335fb3e5abd5c923f2822f01a4bedefa1494f0'
 
 function parseArgs(argv, env = process.env) {
   return parseRehearsalFlags(argv, env)
@@ -120,6 +122,51 @@ function assertAuthorizedPrimary0003(args, migrations = []) {
   }
 }
 
+function assertAuthorizedPrimary0004(args, migrations = []) {
+  if (!args.authorizePrimaryAdditive) {
+    throw new Error('Refusing: --authorize-primary-additive is required for the 0004 primary path')
+  }
+  if (args.allowDestructive) {
+    throw new Error('Refusing: --allow-destructive is not permitted on the 0004 primary path')
+  }
+  if (args.migration !== PRIMARY_AUTH_MIGRATION) {
+    throw new Error(`Refusing: only ${PRIMARY_AUTH_MIGRATION} may be authorized for primary auth`)
+  }
+  if (isForbiddenPrimaryMigration(args.migration)) {
+    throw new Error(`Refusing to select ${args.migration} as an authorized additive migration`)
+  }
+  if (!args.expectedChecksum) {
+    throw new Error('Refusing: --expected-checksum is required for the 0004 primary path')
+  }
+  if (args.expectedChecksum !== EXPECTED_0004_CHECKSUM) {
+    throw new Error('Refusing: --expected-checksum does not match the approved 0004 hash')
+  }
+  const migration = migrations.find((row) => row.version === PRIMARY_AUTH_MIGRATION)
+  if (!migration) {
+    throw new Error('Refusing: 0004_auth_identities.sql is missing')
+  }
+  if (migration.checksum !== EXPECTED_0004_CHECKSUM) {
+    throw new Error('Refusing: on-disk 0004 checksum does not match the approved hash')
+  }
+  if (migration.checksum !== args.expectedChecksum) {
+    throw new Error(`Checksum mismatch for ${migration.version}`)
+  }
+  if (migration.destructive || !sqlIsAdditive(migration.sql)) {
+    throw new Error('Refusing non-additive 0004')
+  }
+  if (args.rehearsePrimaryAuthorization) {
+    if (args.intendedPrimaryBranch !== PRIMARY_BRANCH_ID) {
+      throw new Error(`Rehearsal must name intended primary ${PRIMARY_BRANCH_ID}`)
+    }
+  } else if (args.requireBranch !== PRIMARY_BRANCH_ID) {
+    throw new Error(`Refusing: --require-branch must be ${PRIMARY_BRANCH_ID} for primary 0004`)
+  }
+}
+
+function isPrimaryAuthRehearsal(args) {
+  return Boolean(args.rehearsePrimaryAuthorization && args.migration === PRIMARY_AUTH_MIGRATION)
+}
+
 function assertSafeIdentity(identity, args) {
   if (!identity.branch_id || !identity.project_id) {
     throw new Error('Could not confirm Neon branch identity (empty project_id or branch_id)')
@@ -127,11 +174,20 @@ function assertSafeIdentity(identity, args) {
   if (identity.project_id !== EXPECTED_PROJECT_ID) {
     throw new Error(`Refusing to migrate unexpected project_id ${identity.project_id}`)
   }
+  if (args.executePrimary0003 && args.executePrimary0004) {
+    throw new Error('Refusing both --execute-primary-0003 and --execute-primary-0004')
+  }
   if (args.executePrimary0003 && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
     throw new Error('Refusing --execute-primary-0003 with rehearsal flags')
   }
+  if (args.executePrimary0004 && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
+    throw new Error('Refusing --execute-primary-0004 with rehearsal flags')
+  }
   if (args.executePrimary0003 && args.databaseUrlFlag) {
     throw new Error('Refusing --execute-primary-0003 with --database-url= (use DATABASE_URL only)')
+  }
+  if (args.executePrimary0004 && args.databaseUrlFlag) {
+    throw new Error('Refusing --execute-primary-0004 with --database-url= (use DATABASE_URL only)')
   }
   if (args.rehearsal && identity.branch_id === PRIMARY_BRANCH_ID) {
     throw new Error('Refusing --rehearsal against the audited primary branch')
@@ -146,13 +202,16 @@ function assertSafeIdentity(identity, args) {
     if (args.executePrimary0003) {
       throw new Error('Refusing to mix --execute-primary-0003 with rehearsal')
     }
+    if (args.executePrimary0004) {
+      throw new Error('Refusing to mix --execute-primary-0004 with rehearsal')
+    }
   }
 
   if (identity.branch_id === PRIMARY_BRANCH_ID) {
     if (args.identityOnly) return
-    if (!args.executePrimary0003) {
+    if (!args.executePrimary0003 && !args.executePrimary0004) {
       throw new Error(
-        'Primary execution is disabled until explicit --execute-primary-0003 approval' +
+        'Primary execution is disabled until explicit --execute-primary-0003 or --execute-primary-0004 approval' +
           (args.authorizePrimaryAdditive
             ? ' (--authorize-primary-additive is assembled but not executable)'
             : ''),
@@ -168,6 +227,9 @@ function assertSafeIdentity(identity, args) {
 
   if (args.executePrimary0003) {
     throw new Error('Refusing --execute-primary-0003 against a non-primary branch')
+  }
+  if (args.executePrimary0004) {
+    throw new Error('Refusing --execute-primary-0004 against a non-primary branch')
   }
   if (!args.identityOnly && identity.branch_id !== args.requireBranch) {
     throw new Error(
@@ -229,11 +291,13 @@ async function main() {
       return
     }
 
-    if (args.executePrimary0003 || args.rehearsePrimaryAuthorization) {
+    if (args.executePrimary0004 || isPrimaryAuthRehearsal(args)) {
+      assertAuthorizedPrimary0004(args, migrations)
+    } else if (args.executePrimary0003 || args.rehearsePrimaryAuthorization) {
       assertAuthorizedPrimary0003(args, migrations)
     }
-    if (args.executePrimary0003 && args.dryRun) {
-      throw new Error('Refusing --dry-run on the primary 0003 execute path')
+    if ((args.executePrimary0003 || args.executePrimary0004) && args.dryRun) {
+      throw new Error('Refusing --dry-run on the primary execute path')
     }
 
     const lock = await client.query('SELECT pg_try_advisory_lock($1) AS ok', [ADVISORY_LOCK_KEY])
@@ -334,12 +398,16 @@ module.exports = {
   sqlIsAdditive,
   isForbiddenPrimaryMigration,
   assertAuthorizedPrimary0003,
+  assertAuthorizedPrimary0004,
   assertSafeIdentity,
+  isPrimaryAuthRehearsal,
   ADVISORY_LOCK_KEY,
   PRIMARY_BRANCH_ID,
   EXPECTED_PROJECT_ID,
   PRIMARY_ADDITIVE_MIGRATION,
   EXPECTED_0003_CHECKSUM,
+  PRIMARY_AUTH_MIGRATION,
+  EXPECTED_0004_CHECKSUM,
 }
 
 if (require.main === module) {

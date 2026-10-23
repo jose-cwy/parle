@@ -7464,6 +7464,61 @@ body.body--landing.body--nav-open {
   background: rgba(253, 248, 246, 0.7);
 }
 
+.auth-page__google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 44px;
+  margin: 0.25rem 0 0;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(58, 47, 47, 0.16);
+  background: #fff;
+  color: #3a2f2f;
+  font-size: 0.98rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-page__google:hover {
+  background: #fbf7f4;
+}
+
+.auth-page__google--disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.auth-page__google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.auth-page__divider {
+  margin: 0.85rem 0 0.35rem;
+  text-align: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(58, 47, 47, 0.45);
+}
+
+.auth-page__grace-banner {
+  margin: 0 1rem 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(184, 135, 122, 0.12);
+  color: #3a2f2f;
+  font-size: 0.88rem;
+}
+
+.auth-page__grace-banner a {
+  color: inherit;
+  font-weight: 600;
+}
+
 .auth-page__submit {
   width: 100%;
   margin-top: 0.25rem;

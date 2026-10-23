@@ -27,6 +27,7 @@ import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/par
 import { truncateChatMemory } from '../../../lib/parle/chatMemory'
 import { buildTrustedHiddenInjections } from '../../../lib/parle/trustedPrompt'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { rejectUnverifiedAppSession } from '../../../lib/parle/authAccess'
 import { checkRateLimit, sendRateLimitResponse } from '../../../lib/rateLimiter'
 import { sanitizeChatMessage } from '../../../lib/security/sanitize'
 import { validateImageDataUrls } from '../../../lib/security/images'
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
   })
   if (guard.handled) return
   const payload = guard.payload
+  if (await rejectUnverifiedAppSession(res, payload)) return
 
   try {
     const {

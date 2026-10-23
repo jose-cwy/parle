@@ -745,7 +745,8 @@
     border-color: var(--ma-accent);
   }
 
-  body.body--auth .auth-page__submit {
+  body.body--auth .auth-page__submit,
+  body.body--auth .auth-page__google {
     margin-top: 0.15rem;
     min-height: 48px;
     height: 48px;
