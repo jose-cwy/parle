@@ -3,7 +3,7 @@ import { saveGuestEmailCapture } from '../../../lib/parle/guestEmailsDb'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { tier: 'guestEmail' })
+  const guard = await runApiPipeline(req, res, { tier: 'guestEmail' })
   if (guard.handled) return
 
   if (req.method !== 'POST') {

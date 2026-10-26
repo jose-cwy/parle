@@ -44,7 +44,7 @@ function setGuestUsageHeaders(res, usage) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { tier: 'guestChat', deferRateLimit: true })
+  const guard = await runApiPipeline(req, res, { tier: 'guestChat', deferRateLimit: true })
   if (guard.handled) return
 
   try {

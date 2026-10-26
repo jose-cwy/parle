@@ -14,6 +14,7 @@ This document is the configuration source of truth. Do not put client secrets, A
 | Email real users (verification or marketing) | **NO-GO** without named approval |
 | `PARLE_ADMIN_REQUIRE_VERIFIED_EMAIL` | **Keep off** until a founder account has `email_verified_at` |
 | `PARLE_AUTH_GRACE_UNTIL` | **Keep unset** (grace stays on; no existing-user lockout) |
+| `PARLE_AUTH_NEW_SIGNUP_FROM` | Default `2026-10-23` in code; do not move without named approval |
 | `PARLE_ANALYTICS_VERIFIED_FROM` | **Do not change** (keep `2026-10-20`) |
 | Automatic account cleanup / deletes | **Do not run** |
 | AI, chat, memory, privacy settings | **Do not change** beyond the verified-identity gate |

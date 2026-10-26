@@ -2,7 +2,7 @@ import db from '../../../lib/db'
 import { runApiPipeline } from '../../../lib/security/pipeline'
 
 export default async function handler(req,res){
-  const guard = runApiPipeline(req, res, { requireAuth: true, deprecated: '/api/gamification/progress' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, deprecated: '/api/gamification/progress' })
   if (guard.handled) return
   const payload = guard.payload
 

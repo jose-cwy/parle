@@ -3,7 +3,7 @@ import { runApiPipeline } from '../../lib/security/pipeline'
 const CLIENT_ALLOWED = new Set(['chat_loaded', 'entry_started', 'chat_title_auto', 'chat_deleted', 'chat_perf'])
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { tier: 'default' })
+  const guard = await runApiPipeline(req, res, { tier: 'default' })
   if (guard.handled) return
 
   if (req.method !== 'POST') {

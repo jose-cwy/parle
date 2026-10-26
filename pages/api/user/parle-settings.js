@@ -2,7 +2,7 @@ import { resetProfile } from '../../../lib/parle/preferences'
 import { runApiPipeline } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { requireAuth: true })
+  const guard = await runApiPipeline(req, res, { requireAuth: true })
   if (guard.handled) return
   const payload = guard.payload
 

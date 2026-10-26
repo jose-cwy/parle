@@ -20,6 +20,8 @@ Run against a rehearsal database or `AUTH_TEST_MAIL=1` / `AUTH_TEST_GOOGLE=1`. T
 | Guest chat still works | Existing guest API/e2e |
 | Mobile signup/login layout | Playwright `mobile` project |
 | Existing-user data preservation | Integrity fingerprints; no DELETE in auth migrations |
+| New signup vs legacy grace | Unit `authUpgrade` cutoff tests; new accounts cannot `sessionAllowsApp` while unverified |
+| Post-grace required + recovery UI | Playwright required/recovery screens; recovery copy forbids deletion |
 
 ## REAL PROVIDER (manual / controlled preview — not CI)
 
@@ -43,7 +45,8 @@ Repeat these with a founder-controlled mailbox and the authorized personal Gmail
 | Email signup | Real Resend delivery + pending screen stability verified |
 | `NEXT_PUBLIC_PARLE_GOOGLE_SIGNIN=true` | Real Google OAuth on preview **and** production redirect URIs, consent screen testers added, no silent merge |
 | `PARLE_ADMIN_REQUIRE_VERIFIED_EMAIL` | Founder account verified |
-| `PARLE_AUTH_GRACE_UNTIL` | Existing users warned; not part of this repair |
+| `PARLE_AUTH_GRACE_UNTIL` | Existing users warned; **keep unset** until the staged plan in `docs/auth-verification-rollout.md` |
+| `PARLE_AUTH_NEW_SIGNUP_FROM` | Default `2026-10-23`; new accounts must verify even while grace is on |
 
 ## Environments
 

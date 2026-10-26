@@ -7,7 +7,7 @@ import { sanitizeTranscript } from '../../../lib/security/sanitize'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
   if (guard.handled) return
 
   try {

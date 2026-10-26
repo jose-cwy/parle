@@ -38,7 +38,7 @@ export default function RequireAuth({ children, enabled = true }) {
         return
       }
       if (user.mustVerify) {
-        router.replace('/verify-email/pending')
+        router.replace(user.legacyUnverified ? '/verify-email/required' : '/verify-email/pending')
         return
       }
       if (!hasPreferredName(user)) {

@@ -866,6 +866,25 @@ body.body--parler-landing .pss-hero-btn-label--mobile {
   body.body--parler-landing .pss-hero-btn-label--mobile {
     display: inline;
   }
+
+  .parle-verify-notice {
+    flex-direction: column;
+    margin: 0.65rem 0.75rem 0;
+    padding: 0.9rem 0.95rem;
+  }
+
+  .parle-verify-notice__actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .parle-verify-notice__send,
+  .parle-verify-notice__recovery {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 @keyframes ma-bounce {

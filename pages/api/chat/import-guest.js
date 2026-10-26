@@ -7,7 +7,7 @@ const MAX_IMPORT_MESSAGES = 200
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
   if (guard.handled) return
 
   try {

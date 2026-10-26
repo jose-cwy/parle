@@ -8,13 +8,13 @@ import {
 } from '../../../lib/auth'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { normalizeEmail, findUserByEmail } from '../../../lib/parle/authChallenges'
-import { isEmailVerified, sessionAllowsApp } from '../../../lib/parle/authAccess'
+import { isEmailVerified, isLegacyUnverified, sessionAllowsApp } from '../../../lib/parle/authAccess'
 import { sendOrRefreshVerification } from '../../../lib/parle/sendVerifyMail'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res)
+  const guard = await runApiPipeline(req, res)
   if (guard.handled) return
 
   try {
@@ -43,6 +43,7 @@ export default async function handler(req, res) {
       return res.status(403).json({
         ok: false,
         pending: true,
+        lockout: isLegacyUnverified(user),
         error: 'check your email to finish signing in.',
       })
     }

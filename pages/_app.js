@@ -53,6 +53,8 @@ export default function App({ Component, pageProps }) {
     || router.pathname === '/welcome'
     || router.pathname === '/verify-email'
     || router.pathname === '/verify-email/pending'
+    || router.pathname === '/verify-email/required'
+    || router.pathname === '/verify-email/recovery'
   const isParlerMarketing = isParlerMarketingPage(router.pathname)
   const isParlerShell = isHome || isAuthPage || isParlerMarketing
 

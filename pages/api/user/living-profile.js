@@ -5,7 +5,7 @@ import {
 } from '../../../lib/parle/livingProfile'
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { requireAuth: true })
+  const guard = await runApiPipeline(req, res, { requireAuth: true })
   if (guard.handled) return
   const payload = guard.payload
 

@@ -53,7 +53,11 @@ export default function MarketingNav({ user = null, ready = true, onLogout }) {
   const close = useCallback(() => setOpen(false), [])
   const isRegister = router.pathname === '/register'
   const isLogin = router.pathname === '/login'
-  const isVerifyFlow = router.pathname === '/verify-email' || router.pathname === '/verify-email/pending'
+  const isVerifyFlow =
+    router.pathname === '/verify-email'
+    || router.pathname === '/verify-email/pending'
+    || router.pathname === '/verify-email/required'
+    || router.pathname === '/verify-email/recovery'
   const homeHref = user ? '/dashboard' : '/'
 
   useEffect(() => {

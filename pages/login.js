@@ -60,7 +60,7 @@ export default function Login() {
       return
     }
     if (res.status === 403 && payload?.pending) {
-      router.replace('/verify-email/pending')
+      router.replace(payload.lockout ? '/verify-email/required' : '/verify-email/pending')
       return
     }
     setError(payload?.error || 'Login failed')

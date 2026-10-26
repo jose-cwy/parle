@@ -19,6 +19,7 @@ import { setChatLocalUserId } from '../lib/parle/chatPreferences'
 import HavenMark from './haven/HavenMark'
 import ParleLogo from './brand/ParleLogo'
 import { ParleSettingsPopup } from './haven/ParleSettings'
+import VerifyNotice from './auth/VerifyNotice'
 
 const NAV = [
   { href: '/dashboard', label: 'Home', mobileLabel: 'Home', icon: Home, exact: true },
@@ -87,6 +88,11 @@ export default function AppShell({ children, hideRail = false }) {
       setAuthReady(true)
     })
   }, [])
+
+  useEffect(() => {
+    if (!user?.mustVerify) return
+    router.replace(user.legacyUnverified ? '/verify-email/required' : '/verify-email/pending')
+  }, [user, router])
 
   useEffect(() => {
     closeAccount()
@@ -374,10 +380,7 @@ export default function AppShell({ children, hideRail = false }) {
 
       <main className="haven-shell__main">
         {user && !user.emailVerified && !user.mustVerify ? (
-          <p className="auth-page__grace-banner" role="status">
-            Confirm this email is yours so this space stays protected.{' '}
-            <a href="/verify-email/pending">Send confirmation</a>
-          </p>
+          <VerifyNotice email={user.email || ''} />
         ) : null}
         <div className="haven-shell__content">{children}</div>
       </main>

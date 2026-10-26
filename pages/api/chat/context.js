@@ -17,7 +17,7 @@ async function ensureImageAttachConsentColumn() {
 }
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
   if (guard.handled) return
   const payload = guard.payload
 

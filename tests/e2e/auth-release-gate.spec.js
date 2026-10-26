@@ -25,4 +25,18 @@ test.describe('Auth release gate — MOCKED UI', () => {
     await expect(page.getByRole('heading', { name: /sign up/i })).toBeVisible()
     await expect(page).toHaveURL(/\/register/)
   })
+
+  test('post-grace verification-required screen keeps the account and offers recovery', async ({ page }) => {
+    await page.goto('/verify-email/required')
+    await expect(page.getByRole('heading', { name: /confirm your email to keep using this space/i })).toBeVisible()
+    await expect(page.getByText(/journal, chats, and memories are still here/i)).toBeVisible()
+    await expect(page.getByRole('link', { name: /use a different email/i })).toBeVisible()
+  })
+
+  test('email recovery never offers account deletion', async ({ page }) => {
+    await page.goto('/verify-email/recovery')
+    await expect(page.getByRole('heading', { name: /move this space to an email you can open/i })).toBeVisible()
+    await expect(page.getByText(/will not delete your space/i)).toBeVisible()
+    await expect(page.getByText(/delete/i)).toHaveCount(1)
+  })
 })

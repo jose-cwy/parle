@@ -5,7 +5,7 @@ import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { tier: 'chatRead' })
+  const guard = await runApiPipeline(req, res, { tier: 'chatRead' })
   if (guard.handled) return
 
   try {

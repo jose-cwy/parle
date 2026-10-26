@@ -7519,6 +7519,103 @@ body.body--landing.body--nav-open {
   font-weight: 600;
 }
 
+.parle-verify-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.75rem 1rem 0;
+  padding: 0.95rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid oklch(72% 0.08 70 / 0.45);
+  background: oklch(32% 0.035 55);
+  color: oklch(96% 0.02 85);
+}
+
+.parle-verify-notice__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: oklch(97% 0.025 85);
+}
+
+.parle-verify-notice__body,
+.parle-verify-notice__feedback {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: oklch(90% 0.03 80);
+}
+
+.parle-verify-notice__feedback {
+  font-weight: 600;
+}
+
+.parle-verify-notice__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 11.5rem;
+}
+
+.parle-verify-notice__send {
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+  color: oklch(22% 0.03 50);
+  background: oklch(84% 0.1 70);
+}
+
+.parle-verify-notice__send:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.parle-verify-notice__send:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.parle-verify-notice__send:focus-visible,
+.parle-verify-notice__recovery:focus-visible {
+  outline: 2px solid oklch(84% 0.1 70);
+  outline-offset: 3px;
+}
+
+.parle-verify-notice__recovery {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: oklch(90% 0.03 80);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+[data-theme="light"] .parle-verify-notice {
+  border-color: oklch(45% 0.06 50 / 0.28);
+  background: oklch(95% 0.025 75);
+  color: oklch(28% 0.04 45);
+}
+
+[data-theme="light"] .parle-verify-notice__title {
+  color: oklch(26% 0.045 45);
+}
+
+[data-theme="light"] .parle-verify-notice__body,
+[data-theme="light"] .parle-verify-notice__feedback,
+[data-theme="light"] .parle-verify-notice__recovery {
+  color: oklch(32% 0.04 45);
+}
+
+[data-theme="light"] .parle-verify-notice__send {
+  color: oklch(97% 0.02 85);
+  background: oklch(48% 0.13 45);
+}
+
 .auth-page__submit {
   width: 100%;
   margin-top: 0.25rem;

@@ -2,7 +2,7 @@ import { listChatMessages } from '../../../lib/chatMemoryDb'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
   if (guard.handled) return
 
   try {

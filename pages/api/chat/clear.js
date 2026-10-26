@@ -4,7 +4,7 @@ import { runApiPipeline } from '../../../lib/security/pipeline'
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, tier: 'chat' })
   if (guard.handled) return
   const payload = guard.payload
 

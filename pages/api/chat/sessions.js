@@ -4,7 +4,7 @@ import { runApiPipeline } from '../../../lib/security/pipeline'
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
 
-  const guard = runApiPipeline(req, res, {
+  const guard = await runApiPipeline(req, res, {
     requireAuth: true,
     tier: 'chat',
     deprecated: '/api/chat/sessions',

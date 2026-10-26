@@ -17,7 +17,7 @@ async function ensureOnboardingSchema() {
 }
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { requireAuth: true, tier: 'settings' })
+  const guard = await runApiPipeline(req, res, { requireAuth: true, tier: 'settings' })
   if (guard.handled) return
   const payload = guard.payload
 

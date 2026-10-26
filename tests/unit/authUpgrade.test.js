@@ -34,10 +34,71 @@ test('admin verified-email enforcement is off unless explicitly enabled', () => 
 })
 
 test('unverified users keep app access only while grace is active', () => {
-  const user = { email_verified_at: null }
+  const user = { email_verified_at: null, created_at: '2026-10-20T00:00:00.000Z' }
   assert.equal(sessionAllowsApp(user, {}), true)
   assert.equal(mustVerifyToUseApp(user, { PARLE_AUTH_GRACE_UNTIL: '2020-01-01' }), true)
   assert.equal(sessionAllowsApp({ email_verified_at: '2026-01-01' }, { PARLE_AUTH_GRACE_UNTIL: '2020-01-01' }), true)
+})
+
+test('new signups cannot use the app until verified even while grace is unset', () => {
+  const { isLegacyUnverified } = require('../../lib/parle/authAccess')
+  const newbie = {
+    email_verified_at: null,
+    email_verification_required: true,
+    created_at: '2026-10-24T12:00:00.000Z',
+  }
+  const legacy = {
+    email_verified_at: null,
+    email_verification_required: true,
+    created_at: '2026-10-20T02:00:00.000Z',
+  }
+  assert.equal(isLegacyUnverified(newbie, {}), false)
+  assert.equal(sessionAllowsApp(newbie, {}), false)
+  assert.equal(mustVerifyToUseApp(newbie, {}), true)
+  assert.equal(isLegacyUnverified(legacy, {}), true)
+  assert.equal(sessionAllowsApp(legacy, {}), true)
+  assert.equal(mustVerifyToUseApp(legacy, {}), false)
+})
+
+test('explicit email_verification_required false still grandfathered after cutoff', () => {
+  const { isLegacyUnverified } = require('../../lib/parle/authAccess')
+  const flagged = {
+    email_verified_at: null,
+    email_verification_required: false,
+    created_at: '2026-10-25T00:00:00.000Z',
+  }
+  assert.equal(isLegacyUnverified(flagged, {}), true)
+  assert.equal(sessionAllowsApp(flagged, {}), true)
+})
+
+test('missing created_at stays grandfathered so genuine accounts are not locked out', () => {
+  const { isLegacyUnverified } = require('../../lib/parle/authAccess')
+  const row = { email_verified_at: null, email_verification_required: true }
+  assert.equal(isLegacyUnverified(row, {}), true)
+  assert.equal(sessionAllowsApp(row, {}), true)
+})
+
+test('accounts created on the cutoff day are new signups, not grandfathered', () => {
+  const { isLegacyUnverified } = require('../../lib/parle/authAccess')
+  const onCutoff = {
+    email_verified_at: null,
+    email_verification_required: true,
+    created_at: '2026-10-23T00:00:00.000Z',
+  }
+  assert.equal(isLegacyUnverified(onCutoff, {}), false)
+  assert.equal(sessionAllowsApp(onCutoff, {}), false)
+})
+
+test('invalid PARLE_AUTH_NEW_SIGNUP_FROM falls back to the default cutoff', () => {
+  const { isLegacyUnverified, parseNewSignupFrom } = require('../../lib/parle/authAccess')
+  const env = { PARLE_AUTH_NEW_SIGNUP_FROM: 'not-a-date' }
+  assert.equal(parseNewSignupFrom(env), Date.parse('2026-10-23T00:00:00.000Z'))
+  const newbie = {
+    email_verified_at: null,
+    email_verification_required: true,
+    created_at: '2026-10-24T00:00:00.000Z',
+  }
+  assert.equal(isLegacyUnverified(newbie, env), false)
 })
 
 test('Google email is trusted only for verified Gmail or Workspace hd', () => {

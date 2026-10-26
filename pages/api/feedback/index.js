@@ -13,7 +13,7 @@ const ALLOWED_REASONS = new Set([
 ])
 
 export default async function handler(req, res) {
-  const guard = runApiPipeline(req, res, { tier: 'default' })
+  const guard = await runApiPipeline(req, res, { tier: 'default' })
   if (guard.handled) return
 
   if (req.method !== 'POST') {

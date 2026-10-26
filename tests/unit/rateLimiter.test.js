@@ -24,6 +24,7 @@ test('resolveTier maps routes to expected tiers', () => {
   assert.equal(resolveTier('/api/auth/google/start'), 'authStrict')
   assert.equal(resolveTier('/api/auth/me'), 'authRead')
   assert.equal(resolveTier('/api/auth/verify-email/status'), 'authRead')
+  assert.equal(resolveTier('/api/auth/verify-email/change'), 'authStrict')
   assert.equal(resolveTier('/api/chat/guest-send'), 'guestChat')
   assert.equal(resolveTier('/api/chat/send'), 'userChat')
   assert.equal(resolveTier('/api/user/settings'), 'settings')
