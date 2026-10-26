@@ -165,3 +165,135 @@ test('preflight script also requires --read-only', () => {
   assert.equal(preflightFlag(['--rehearsal'], '--read-only'), false)
   assert.equal(preflightFlag(['--read-only'], '--read-only'), true)
 })
+
+test('undefined-column errors never mint a login session', () => {
+  const {
+    isUndefinedColumnError,
+    isAuthSchemaError,
+    loginResponseForSchemaError,
+    apiRejectForSchemaError,
+    meResponseForSchemaError,
+    adminDenyForSchemaError,
+    unknownSchemaSessionFlags,
+  } = require('../../lib/parle/authSchemaFallback')
+  assert.equal(isUndefinedColumnError({ code: '42703' }), true)
+  assert.equal(isUndefinedColumnError({ code: '42P01' }), false)
+  assert.equal(isAuthSchemaError({ code: '42P01' }), true)
+  assert.equal(isUndefinedColumnError(null), false)
+  const login = loginResponseForSchemaError()
+  assert.equal(login.issueSession, false)
+  assert.equal(login.status, 503)
+  const api = apiRejectForSchemaError()
+  assert.equal(api.status, 503)
+  assert.equal(api.body.pending, true)
+  const me = meResponseForSchemaError()
+  assert.equal(me.status, 503)
+  assert.equal(adminDenyForSchemaError().ok, false)
+  assert.equal(adminDenyForSchemaError().status, 503)
+  const flags = unknownSchemaSessionFlags()
+  assert.equal(flags.emailVerified, false)
+  assert.equal(flags.mustVerify, true)
+  assert.equal(flags.legacyUnverified, false)
+})
+
+test('login handler fail-closes schema errors instead of issuing hs_session', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../../pages/api/auth/login.js'), 'utf8')
+  assert.match(src, /loginResponseForSchemaError/)
+  assert.doesNotMatch(src, /function handleLegacyLogin/)
+  assert.doesNotMatch(src, /emailVerified:\s*false,\s*legacy:\s*true/)
+})
+
+test('/me fail-closes schema errors instead of synthesizing a verified-enough user', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../../pages/api/auth/me.js'), 'utf8')
+  assert.match(src, /meResponseForSchemaError/)
+  assert.doesNotMatch(src, /unknownSchemaSessionFlags/)
+})
+
+test('schema errors during account-data counting do not look like an empty reclaimable account', async () => {
+  const { userOwnedDataCount, reclaimDecision } = require('../../lib/parle/authChallenges')
+  const db = require('../../lib/db')
+  const original = db.query
+  db.query = async () => {
+    const error = new Error('undefined table')
+    error.code = '42P01'
+    throw error
+  }
+  try {
+    const owned = await userOwnedDataCount('user-1')
+    assert.equal(owned, 1)
+    assert.equal(
+      reclaimDecision({ email_verified_at: null, created_at: '2026-01-01T00:00:00.000Z' }, owned, new Date('2026-10-24T00:00:00.000Z')).action,
+      'has_data',
+    )
+  } finally {
+    db.query = original
+  }
+})
+
+test('protected APIs fail-closed when verification columns are missing', async () => {
+  const { rejectUnverifiedAppSession } = require('../../lib/parle/authAccess')
+  const db = require('../../lib/db')
+  const original = db.query
+  db.query = async () => {
+    const error = new Error('column does not exist')
+    error.code = '42703'
+    throw error
+  }
+  const replies = []
+  const res = {
+    status(code) {
+      replies.push({ code })
+      return {
+        json(body) {
+          replies[replies.length - 1].body = body
+          return res
+        },
+      }
+    },
+  }
+  try {
+    const blocked = await rejectUnverifiedAppSession(res, { id: 'user-1' })
+    assert.equal(blocked, true)
+    assert.equal(replies[0].code, 503)
+    assert.equal(replies[0].body.pending, true)
+  } finally {
+    db.query = original
+  }
+})
+
+test('protected APIs fail-closed when a required relation is missing', async () => {
+  const { rejectUnverifiedAppSession } = require('../../lib/parle/authAccess')
+  const db = require('../../lib/db')
+  const original = db.query
+  db.query = async () => {
+    const error = new Error('undefined table')
+    error.code = '42P01'
+    throw error
+  }
+  const replies = []
+  const res = {
+    status(code) {
+      replies.push({ code })
+      return {
+        json(body) {
+          replies[replies.length - 1].body = body
+          return res
+        },
+      }
+    },
+  }
+  try {
+    const blocked = await rejectUnverifiedAppSession(res, { id: 'user-2' })
+    assert.equal(blocked, true)
+    assert.equal(replies[0].code, 503)
+  } finally {
+    db.query = original
+  }
+})
+
+test('login clears session cookies on schema errors and does not keep handleLegacyLogin', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../../pages/api/auth/login.js'), 'utf8')
+  assert.match(src, /clearSessionCookie\(res\)/)
+  assert.match(src, /isAuthSchemaError/)
+  assert.doesNotMatch(src, /handleLegacyLogin/)
+})

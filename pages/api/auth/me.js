@@ -26,23 +26,10 @@ export default async function handler(req,res){
       }),
     })
   }catch(error){
-    if(error?.code === '42703'){
-      // Backward-compatible fallback while the database is still on the pre-terms schema.
-      const legacyUser = await db.query(
-        'SELECT id,email,created_at FROM users WHERE id=$1',
-        [payload.id]
-      )
-
-      if(!legacyUser.rows.length) return res.status(200).json({user:null})
-
-      return res.status(200).json({
-        user: withAdminFlag({
-          ...legacyUser.rows[0],
-          preferred_name: null,
-          accepted_terms_at: null,
-          accepted_terms_version: null
-        })
-      })
+    const { isAuthSchemaError, meResponseForSchemaError } = require('../../../lib/parle/authSchemaFallback')
+    if(isAuthSchemaError(error)){
+      const decision = meResponseForSchemaError()
+      return res.status(decision.status).json(decision.body)
     }
 
     console.error('auth_me_error', error)

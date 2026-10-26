@@ -86,3 +86,30 @@ test('requireAdminUser ignores client flags and missing sessions', async () => {
   assert.equal(missing.ok, false)
   assert.equal(missing.status, 404)
 })
+
+test('requireAdminUser does not grant admin when verification columns are missing', async () => {
+  const db = require('../../lib/db')
+  const original = db.query
+  db.query = async () => {
+    const error = new Error('column does not exist')
+    error.code = '42703'
+    throw error
+  }
+  try {
+    const denied = await requireAdminUser(
+      { id: '11111111-1111-4111-8111-111111111111' },
+      { ADMIN_EMAILS: 'founder@parle.chat' },
+    )
+    assert.equal(denied.ok, false)
+    assert.equal(denied.status, 503)
+    assert.equal(denied.reason, 'schema')
+  } finally {
+    db.query = original
+  }
+})
+
+test('admin guard maps schema denials to 503 instead of 404', async () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../../lib/parle/adminGuard.js'), 'utf8')
+  assert.match(src, /admin\.status === 503/)
+  assert.match(src, /temporarily unavailable/)
+})

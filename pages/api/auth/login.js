@@ -9,6 +9,7 @@ import {
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { normalizeEmail, findUserByEmail } from '../../../lib/parle/authChallenges'
 import { isEmailVerified, isLegacyUnverified, sessionAllowsApp } from '../../../lib/parle/authAccess'
+import { isAuthSchemaError, loginResponseForSchemaError } from '../../../lib/parle/authSchemaFallback'
 import { sendOrRefreshVerification } from '../../../lib/parle/sendVerifyMail'
 
 export default async function handler(req, res) {
@@ -33,11 +34,20 @@ export default async function handler(req, res) {
     if (!ok) return res.status(401).json({ error: 'Invalid' })
 
     if (!isEmailVerified(user) && !sessionAllowsApp(user)) {
-      await sendOrRefreshVerification({
-        userId: user.id,
-        email: user.email,
-        purpose: 'existing_verify',
-      })
+      try {
+        await sendOrRefreshVerification({
+          userId: user.id,
+          email: user.email,
+          purpose: 'existing_verify',
+        })
+      } catch (error) {
+        if (isAuthSchemaError(error)) {
+          clearSessionCookie(res)
+          const decision = loginResponseForSchemaError()
+          return res.status(decision.status).json(decision.body)
+        }
+        throw error
+      }
       clearSessionCookie(res)
       setPendingVerifyCookie(res, { id: user.id, email: user.email })
       return res.status(403).json({
@@ -52,11 +62,15 @@ export default async function handler(req, res) {
     setSessionCookie(res, token)
 
     if (!isEmailVerified(user)) {
-      await sendOrRefreshVerification({
-        userId: user.id,
-        email: user.email,
-        purpose: 'existing_verify',
-      })
+      try {
+        await sendOrRefreshVerification({
+          userId: user.id,
+          email: user.email,
+          purpose: 'existing_verify',
+        })
+      } catch {
+        /* Authorized legacy login must not be revoked if mail/schema side-effects fail. */
+      }
     }
 
     let firstTime = false
@@ -77,21 +91,11 @@ export default async function handler(req, res) {
       mustVerify: false,
     })
   } catch (error) {
-    if (error?.code === '42703') {
-      return handleLegacyLogin(req, res)
+    if (isAuthSchemaError(error)) {
+      clearSessionCookie(res)
+      const decision = loginResponseForSchemaError()
+      return res.status(decision.status).json(decision.body)
     }
     return handleApiError(res, error, 'login')
   }
-}
-
-async function handleLegacyLogin(req, res) {
-  const { email, password } = req.body || {}
-  const user = await db.query('SELECT id,email,password FROM users WHERE email=$1', [email])
-  if (!user.rows.length) return res.status(401).json({ error: 'Invalid' })
-  const u = user.rows[0]
-  const ok = await bcrypt.compare(password, u.password)
-  if (!ok) return res.status(401).json({ error: 'Invalid' })
-  const token = signToken({ id: u.id, email: u.email })
-  setSessionCookie(res, token)
-  return res.status(200).json({ ok: true, emailVerified: false, legacy: true })
 }
