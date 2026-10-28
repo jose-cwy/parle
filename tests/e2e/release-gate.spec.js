@@ -22,6 +22,10 @@ async function acceptGuestTerms(page) {
 }
 
 async function openNewChat(page) {
+  const skipOnboarding = page.getByRole('button', { name: /skip onboarding/i })
+  if (await skipOnboarding.isVisible().catch(() => false)) {
+    await skipOnboarding.click()
+  }
   const openSidebar = page.getByRole('button', { name: /open sidebar/i })
   if (await openSidebar.isVisible().catch(() => false)) {
     await openSidebar.click()

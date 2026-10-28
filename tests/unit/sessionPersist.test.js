@@ -41,10 +41,6 @@ test('personalization schema, save, and reload with synthetic data', async (t) =
     return
   }
 
-  const beforeUsers = await db.query('SELECT count(*)::int AS n FROM users')
-  const beforeMemory = await db.query('SELECT count(*)::int AS n FROM chat_memory')
-  const beforeLiving = await db.query('SELECT count(*)::int AS n FROM user_living_profile')
-
   let userId = null
   try {
     const missingBefore = !(await tableExists('session_length_history'))
@@ -120,12 +116,16 @@ test('personalization schema, save, and reload with synthetic data', async (t) =
     if (userId) {
       await db.query('DELETE FROM users WHERE id = $1', [userId])
     }
-    const afterUsers = await db.query('SELECT count(*)::int AS n FROM users')
-    const afterMemory = await db.query('SELECT count(*)::int AS n FROM chat_memory')
-    const afterLiving = await db.query('SELECT count(*)::int AS n FROM user_living_profile')
-    assert.equal(afterUsers.rows[0].n, beforeUsers.rows[0].n)
-    assert.equal(afterMemory.rows[0].n, beforeMemory.rows[0].n)
-    assert.equal(afterLiving.rows[0].n, beforeLiving.rows[0].n)
+    const leftover = await db.query(
+      `SELECT
+         (SELECT count(*)::int FROM users WHERE email = $1) AS users,
+         (SELECT count(*)::int FROM chat_memory WHERE user_id = $2) AS memory,
+         (SELECT count(*)::int FROM user_living_profile WHERE user_id = $2) AS living`,
+      [SYNTH_EMAIL, userId || '00000000-0000-0000-0000-000000000000'],
+    )
+    assert.equal(leftover.rows[0].users, 0)
+    assert.equal(leftover.rows[0].memory, 0)
+    assert.equal(leftover.rows[0].living, 0)
     await db.pool.end().catch(() => {})
   }
 })

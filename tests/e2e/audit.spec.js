@@ -62,7 +62,7 @@ test.describe('Guest chat crisis detection', () => {
     await expect(page.getByRole('dialog', { name: /quick question so i can show up better/i })).toBeVisible({
       timeout: 10_000,
     })
-    const composer = page.locator('textarea').first()
+    const composer = page.getByPlaceholder(/say what's on your mind/i).filter({ visible: true }).first()
     await expect(composer).toBeEnabled()
   })
 })

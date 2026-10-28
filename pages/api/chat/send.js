@@ -2,7 +2,11 @@ import { containsCrisisLanguage, CRISIS_SAFETY_REPLY } from '../../../lib/chatSa
 import { isOutOfScope, getRedirectResponse } from '../../../lib/chatGuardrails'
 import { insertChatMessage, getRecentChatMessages } from '../../../lib/chatMemoryDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
-import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
+import {
+  attachClientAbort,
+  shouldPersistStreamedReply,
+  streamChatReply,
+} from '../../../lib/parle/chatStreamResponse'
 import { getUserChatSettings } from '../../../lib/parle/preferences'
 import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 import {
@@ -24,7 +28,7 @@ import {
 } from '../../../lib/parle/crossSessionMemory'
 import { recordAuthedChatActivity } from '../../../lib/parle/productEvents'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
-import { truncateChatMemory } from '../../../lib/parle/chatMemory'
+import { resolveImmediateConversationHistory } from '../../../lib/parle/immediateChatHistory'
 import { buildTrustedHiddenInjections } from '../../../lib/parle/trustedPrompt'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
 import { checkRateLimit, sendRateLimitResponse } from '../../../lib/rateLimiter'
@@ -33,7 +37,6 @@ import { validateImageDataUrls } from '../../../lib/security/images'
 import {
   getProcessingBlock,
   runChatAbuseChecks,
-  trimConversationHistory,
   withChatProcessing,
 } from '../../../lib/chatAbuse'
 
@@ -63,8 +66,7 @@ export default async function handler(req, res) {
       isNewSession,
       sessionId,
       images,
-      isEdit,
-      dbKeepCount,
+      messages: clientMessages,
     } = req.body || {}
 
     const imageCheck = validateImageDataUrls(images)
@@ -112,11 +114,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ reply: redirect, guardrail: true })
     }
 
+    const clientAbort = attachClientAbort(req, res)
     const lockResult = await withChatProcessing(abuse.lockKey, async () => {
-      if (isEdit && typeof dbKeepCount === 'number') {
-        await truncateChatMemory(payload.id, dbKeepCount)
-      }
-
       await insertChatMessage(payload.id, 'user', userText)
 
       const settings = await getUserChatSettings(payload.id)
@@ -126,13 +125,14 @@ export default async function handler(req, res) {
         lastSessionSummary: settings.last_session_summary,
       })
 
-      const history = await getRecentChatMessages(payload.id, 20)
-      const recent = trimConversationHistory(
-        history.slice(0, -1).map((m) => ({
-          role: m.role === 'user' ? 'user' : 'assistant',
-          text: m.text,
-        })),
-      )
+      const dbHistory = Array.isArray(clientMessages)
+        ? []
+        : await getRecentChatMessages(payload.id, 20)
+      const recent = resolveImmediateConversationHistory({
+        clientMessages,
+        isNewSession,
+        dbHistory: dbHistory.slice(0, -1),
+      })
 
       const talkMode = (modeId || 'cross') === 'talk'
       const conversationRecall = Boolean(settings.memory_enabled)
@@ -177,6 +177,7 @@ export default async function handler(req, res) {
         history: recent,
         modeId: modeId || 'cross',
         quality,
+        signal: clientAbort.signal,
       })
       const thinkMs = thinkBlock ? Date.now() - thinkStarted : 0
       const qualityBlock = buildReplyQualityBlock(quality)
@@ -216,14 +217,17 @@ export default async function handler(req, res) {
 
       const fallbackReply = `Yeah, that's a lot. ${String(userText).slice(0, 120)}. What's sitting heaviest right now?`
 
-      const reply = await streamChatReply(res, {
+      const streamedReply = await streamChatReply(res, {
         messages: completionMessages,
         temperature: 0.65,
         fallbackReply,
         extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
+        signal: clientAbort.signal,
       })
 
-      return { reply, thinkMs }
+      return { ...streamedReply, thinkMs }
+    }).finally(() => {
+      clientAbort.dispose()
     })
 
     if (lockResult.locked) {
@@ -231,7 +235,7 @@ export default async function handler(req, res) {
     }
 
     const streamed = lockResult.result || {}
-    if (streamed.reply) {
+    if (shouldPersistStreamedReply(streamed)) {
       await insertChatMessage(payload.id, 'assistant', streamed.reply)
     }
     await recordAuthedChatActivity({

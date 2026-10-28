@@ -52,6 +52,7 @@ test('GET /api/user/settings requires auth', async () => {
 test('POST /api/chat/guest-send crisis returns safety reply', async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': `203.0.113.${1 + (Date.now() % 200)}` },
     body: {
       text: 'i just want to disappear',
       modeId: 'cross',
@@ -69,6 +70,7 @@ test('POST /api/chat/guest-send crisis returns safety reply', async () => {
 test('POST /api/chat/guest-send does not expose API keys', async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': `203.0.113.${2 + (Date.now() % 200)}` },
     body: {
       text: 'hello there',
       modeId: 'cross',

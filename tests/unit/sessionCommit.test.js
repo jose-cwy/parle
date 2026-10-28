@@ -45,3 +45,27 @@ test('empty local chat can take server history', () => {
     true,
   )
 })
+
+test('longer local user chat is not replaced by a shorter server timeline', () => {
+  assert.equal(
+    shouldReplaceHistoryWithServer({
+      hasPendingReply: false,
+      localHasUserMessages: true,
+      localCount: 6,
+      serverCount: 2,
+    }),
+    false,
+  )
+})
+
+test('in-flight replies are not replaced by a server refresh', () => {
+  assert.equal(
+    shouldReplaceHistoryWithServer({
+      hasPendingReply: true,
+      localHasUserMessages: false,
+      localCount: 0,
+      serverCount: 8,
+    }),
+    false,
+  )
+})

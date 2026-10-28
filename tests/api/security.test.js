@@ -1,6 +1,11 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const http = require('http')
+const { randomInt } = require('crypto')
+
+function isolatedIp() {
+  return `198.51.100.${randomInt(1, 254)}-${randomInt(1e9)}`
+}
 
 const BASE = process.env.TEST_API_BASE || 'http://localhost:3000'
 const RUN_API = process.env.RUN_API_TESTS === '1'
@@ -56,7 +61,7 @@ test('GET /api/chat/history requires auth', { skip: !RUN_API }, async () => {
 test('guest chat does not expose API keys', { skip: !RUN_API }, async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': isolatedIp() },
     body: {
       text: 'hello',
       modeId: 'cross',
@@ -71,7 +76,7 @@ test('guest chat does not expose API keys', { skip: !RUN_API }, async () => {
 test('SQL injection in message handled safely', { skip: !RUN_API }, async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': isolatedIp() },
     body: {
       text: "'; DROP TABLE users; --",
       modeId: 'cross',
@@ -85,7 +90,7 @@ test('SQL injection in message handled safely', { skip: !RUN_API }, async () => 
 test('XSS in message not echoed as executable script', { skip: !RUN_API }, async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': isolatedIp() },
     body: {
       text: "<script>alert('xss')</script>",
       modeId: 'cross',
@@ -98,6 +103,7 @@ test('XSS in message not echoed as executable script', { skip: !RUN_API }, async
 test('missing Content-Type on JSON body rejected or handled', { skip: !RUN_API }, async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': isolatedIp() },
     body: JSON.stringify({ text: 'hi', modeId: 'cross', messages: [] }),
   })
   assert.ok([200, 400, 415, 429, 500].includes(res.status))

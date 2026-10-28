@@ -8,7 +8,11 @@ import { getRecentReplyFeedback } from '../../../lib/parle/feedbackDb'
 import { buildChatCompletionMessages } from '../../../lib/parle/chatComplete'
 import { runHiddenThink } from '../../../lib/parle/hiddenThink'
 import { buildReplyQualityBlock, getReplyQualitySignals } from '../../../lib/parle/replyQuality'
-import { streamChatReply } from '../../../lib/parle/chatStreamResponse'
+import {
+  attachClientAbort,
+  shouldPersistStreamedReply,
+  streamChatReply,
+} from '../../../lib/parle/chatStreamResponse'
 import { buildTrustedHiddenInjections, trustedOnboardingReason } from '../../../lib/parle/trustedPrompt'
 import {
   recordGuestChatActivity,
@@ -122,6 +126,7 @@ export default async function handler(req, res) {
       })
     }
 
+    const clientAbort = attachClientAbort(req, res)
     const lockResult = await withChatProcessing(abuse.lockKey, async () => {
       const recent = trimConversationHistory(
         Array.isArray(messages)
@@ -149,6 +154,7 @@ export default async function handler(req, res) {
         history: recent,
         modeId: safeModeId,
         quality,
+        signal: clientAbort.signal,
       })
       const thinkMs = thinkBlock ? Date.now() - thinkStarted : 0
       const qualityBlock = buildReplyQualityBlock(quality)
@@ -183,26 +189,29 @@ export default async function handler(req, res) {
         await recordGuestChatActivity({ modeId: safeModeId }).catch(() => null)
       }
 
-      const reply = await streamChatReply(res, {
+      const streamedReply = await streamChatReply(res, {
         messages: completionMessages,
         temperature: 0.65,
         fallbackReply,
         extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
+        signal: clientAbort.signal,
       })
 
-      return reply
+      return streamedReply
+    }).finally(() => {
+      clientAbort.dispose()
     })
 
     if (lockResult.locked) {
       return res.status(429).json({ error: 'processing' })
     }
 
-    if (lockResult.result) {
+    if (shouldPersistStreamedReply(lockResult.result)) {
       await logGuestTrainingExchange({
         sessionToken: trainingSessionToken,
         modeId: safeModeId,
         userText,
-        assistantText: lockResult.result,
+        assistantText: lockResult.result.reply,
         replyKind: 'normal',
       }).catch(() => false)
     }

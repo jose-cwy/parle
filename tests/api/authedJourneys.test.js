@@ -134,7 +134,10 @@ test('seed account login, privacy combos, journal CRUD, quotes, non-admin 404', 
 
   if (entryId) {
     const read = await request(`/api/journal/${entryId}`, { headers: { Cookie: cookie } })
-    assert.ok(read.status === 200 || read.status === 405)
+    assert.ok(
+      read.status === 200 || read.status === 405,
+      `journal GET /${entryId} returned ${read.status}: ${String(read.body).slice(0, 160)}`,
+    )
     const edited = await request(`/api/journal/${entryId}`, {
       method: 'PUT',
       headers: { Cookie: cookie },

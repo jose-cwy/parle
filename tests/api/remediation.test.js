@@ -1,6 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const http = require('http')
+const { randomInt } = require('crypto')
 
 const BASE = process.env.TEST_API_BASE || 'http://localhost:3000'
 
@@ -55,6 +56,7 @@ test('unauthenticated admin APIs stay closed', async () => {
 test('forged privileged fields do not bypass guest crisis handling', async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': `198.51.100.${randomInt(1, 254)}` },
     body: {
       text: 'i just want to disappear',
       modeId: 'cross',
@@ -97,6 +99,7 @@ function cookieHeader(cookies) {
 test('guest chat ignores forged summary fields on a normal turn', async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': `198.51.100.${randomInt(1, 254)}` },
     body: {
       text: 'hello, this is a synthetic check-in about a rainy bus ride',
       modeId: 'cross',

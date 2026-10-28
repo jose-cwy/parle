@@ -1,6 +1,11 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const http = require('http')
+const { randomInt } = require('crypto')
+
+function isolatedIp() {
+  return `198.51.100.${randomInt(1, 254)}-${process.pid}-${randomInt(1e9)}`
+}
 
 const BASE = process.env.TEST_API_BASE || 'http://localhost:3000'
 const RUN_API = process.env.RUN_API_TESTS === '1'
@@ -88,6 +93,7 @@ test('guest chat 11th rapid message returns 429', { skip: !RUN_API }, async () =
 test('empty guest message returns 400', { skip: !RUN_API }, async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': isolatedIp() },
     body: guestBody('   '),
   })
   assert.equal(res.status, 400)
@@ -97,6 +103,7 @@ test('empty guest message returns 400', { skip: !RUN_API }, async () => {
 test('oversized guest message returns 400', { skip: !RUN_API }, async () => {
   const res = await request('/api/chat/guest-send', {
     method: 'POST',
+    headers: { 'x-forwarded-for': isolatedIp() },
     body: guestBody('x'.repeat(2001)),
   })
   assert.equal(res.status, 400)
@@ -105,10 +112,19 @@ test('oversized guest message returns 400', { skip: !RUN_API }, async () => {
 
 test('concurrent processing returns 429 with processing error', { skip: !RUN_API }, async () => {
   const token = `proc-${Date.now()}`
+  const ip = isolatedIp()
   const body = guestBody('tell me something short', { sessionToken: token })
   const [first, second] = await Promise.all([
-    request('/api/chat/guest-send', { method: 'POST', body }),
-    request('/api/chat/guest-send', { method: 'POST', body: guestBody('second', { sessionToken: token }) }),
+    request('/api/chat/guest-send', {
+      method: 'POST',
+      headers: { 'x-forwarded-for': ip },
+      body,
+    }),
+    request('/api/chat/guest-send', {
+      method: 'POST',
+      headers: { 'x-forwarded-for': ip },
+      body: guestBody('second', { sessionToken: token }),
+    }),
   ])
   const statuses = [first.status, second.status]
   const hasProcessing = [first, second].some(

@@ -105,16 +105,6 @@ function isEphemeralAssistant(message) {
   return MODE_ACK_TEXTS.has(message.text)
 }
 
-function countPersistedBefore(messages, index) {
-  let count = 0
-  for (let i = 0; i < index; i += 1) {
-    const message = messages[i]
-    if (message.role === 'user') count += 1
-    else if (message.role === 'assistant' && !isEphemeralAssistant(message)) count += 1
-  }
-  return count
-}
-
 function mapServerHistory(rows) {
   return (rows || []).map((m) => ({
     id: m.id != null ? String(m.id) : createMessageId(),
@@ -1583,7 +1573,6 @@ export default function HavenChat() {
     dontTextStep,
     images = [],
     isEdit = false,
-    dbKeepCount,
     editMessageIndex,
     storageKey = getActiveStorageKey(),
   }) {
@@ -1598,7 +1587,7 @@ export default function HavenChat() {
       sessionId: session.sessionId,
       messages: toApiHistory(nextMessages.slice(0, -1)),
       images,
-      ...(isEdit && isAuthed ? { isEdit: true, dbKeepCount } : {}),
+      ...(isEdit && isAuthed ? { isEdit: true } : {}),
       ...(!isAuthed ? { sessionToken: getGuestSessionToken() } : {}),
       ...(!isAuthed && onboardingReason ? { onboardingReason } : {}),
     }
@@ -1902,8 +1891,6 @@ export default function HavenChat() {
     const storageKey = getActiveStorageKey()
     startSessionLoading(storageKey)
 
-    const dbKeepCount = countPersistedBefore(prior, messageIndex)
-
     await checkRepeatSentiment(truncated)
 
     let dontTextStep = null
@@ -1919,7 +1906,6 @@ export default function HavenChat() {
         mode,
         dontTextStep,
         isEdit: true,
-        dbKeepCount,
         editMessageIndex: messageIndex,
         storageKey,
       })
@@ -2228,9 +2214,8 @@ export default function HavenChat() {
       }).catch(() => null)
     }
 
-    if (isAuthed) {
-      await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
-    }
+    // Intentionally do not call /api/chat/clear. That endpoint deletes the
+    // whole account timeline. Session-end only writes a summary.
   }
 
   async function clearChat() {
@@ -2240,8 +2225,6 @@ export default function HavenChat() {
     const currentMessages = messages || []
     const shouldArchive = shouldArchiveLiveChat(activeSessionId, currentMessages)
     const snapshot = shouldArchive ? captureSessionSnapshot() : null
-    const shouldClearServer =
-      isAuthed && isActiveLiveSession(activeSessionId) && !isViewingArchive(activeSessionId)
 
     if (snapshot && isAuthed) {
       const archiveId = snapshot.sessionId
@@ -2263,8 +2246,6 @@ export default function HavenChat() {
 
     if (snapshot) {
       void finalizePreviousSession(snapshot)
-    } else if (shouldClearServer) {
-      void fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
     }
 
     track('chat_deleted', { authed: isAuthed })
@@ -2286,8 +2267,6 @@ export default function HavenChat() {
       void (async () => {
         if (snapshot) {
           await finalizePreviousSession(snapshot)
-        } else if (isAuthed) {
-          await fetch('/api/chat/clear', { method: 'POST' }).catch(() => null)
         }
         await refreshReturningOpening()
       })()
