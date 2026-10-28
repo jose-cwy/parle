@@ -221,13 +221,40 @@ test('request close after the body is read is not treated as cancel', () => {
   handle.dispose()
 })
 
-test('response close before end is treated as client disconnect', () => {
+test('consumed request stream and header flush close do not cancel the reply', async () => {
+  const req = fakeReq()
+  req.destroyed = true
+  req.complete = true
+  req.readableEnded = true
+  const res = fakeRes()
+  res.flushHeaders = function flushHeaders() {
+    this.emit('close')
+  }
+  const handle = attachClientAbort(req, res)
+  assert.equal(handle.signal.aborted, false)
+
+  async function* ok() {
+    yield 'hello'
+  }
+  const result = await streamChatReply(res, {
+    messages: [],
+    streamFn: ok,
+    signal: handle.signal,
+  })
+  assert.equal(handle.signal.aborted, false)
+  assert.equal(result.aborted, false)
+  assert.equal(result.reply, 'hello')
+  assert.equal(shouldPersistStreamedReply(result), true)
+  handle.dispose()
+})
+
+test('response close before end is not treated as cancel on serverless', () => {
   const req = fakeReq()
   const res = fakeRes()
   const handle = attachClientAbort(req, res)
   assert.equal(handle.signal.aborted, false)
   res.emit('close')
-  assert.equal(handle.signal.aborted, true)
+  assert.equal(handle.signal.aborted, false)
   handle.dispose()
 })
 
