@@ -76,6 +76,12 @@ test('loadMigrations finds numbered SQL files', () => {
   const auth = list.find((m) => m.version === '0004_auth_identities.sql')
   assert.ok(auth && !auth.destructive)
   assert.equal(auth.checksum, EXPECTED_0004_CHECKSUM)
+  const v2 = list.find((m) => m.version === '0005_conversations_v2.sql')
+  assert.ok(v2 && !v2.destructive)
+  const lease = list.find((m) => m.version === '0006_conversation_lease_token.sql')
+  assert.ok(lease && !lease.destructive)
+  const revision = list.find((m) => m.version === '0009_timeline_revision.sql')
+  assert.ok(revision && !revision.destructive)
 })
 
 test('primary-looking flags still parse without enabling primary writes', () => {

@@ -122,6 +122,150 @@ test('aborted stream does not persist fallback or partial reply', async () => {
   assert.equal(res.chunks.join('').includes('FALLBACK_SHOULD_NOT_SAVE'), false)
 })
 
+test('legacy empty provider error without fallback completes without error SSE', async () => {
+  const res = fakeRes()
+  async function* boom() {
+    throw new Error('ECONNRESET')
+  }
+  const result = await streamChatReply(res, {
+    messages: [],
+    streamFn: boom,
+  })
+  assert.equal(result.aborted, false)
+  assert.equal(result.providerError, false)
+  assert.equal(result.reply, '')
+  assert.equal(shouldPersistStreamedReply(result), false)
+  assert.equal(res.chunks.join('').includes('"error":"provider_error"'), false)
+  assert.equal((res.chunks.join('').match(/"done":true/g) || []).length, 1)
+})
+
+test('v2 deferComplete mid-stream provider throw does not persist partial as complete', async () => {
+  const res = fakeRes()
+  async function* boom() {
+    yield 'partial-token'
+    throw new Error('provider_down')
+  }
+  const result = await streamChatReply(res, {
+    messages: [],
+    streamFn: boom,
+    deferComplete: true,
+  })
+  assert.equal(result.aborted, false)
+  assert.equal(result.providerError, true)
+  assert.equal(shouldPersistStreamedReply(result), false)
+  assert.equal(res.chunks.join('').includes('"error":"provider_error"'), true)
+  assert.equal(res.chunks.join('').includes('"done":true'), true)
+})
+
+test('v2 deferComplete successful stream returns complete() and may persist', async () => {
+  const res = fakeRes()
+  async function* ok() {
+    yield 'v2 '
+    yield 'ok'
+  }
+  const result = await streamChatReply(res, {
+    messages: [],
+    streamFn: ok,
+    deferComplete: true,
+  })
+  assert.equal(result.aborted, false)
+  assert.equal(result.providerError, false)
+  assert.equal(result.reply, 'v2 ok')
+  assert.equal(shouldPersistStreamedReply(result), true)
+  assert.equal(typeof result.complete, 'function')
+  assert.equal(result.complete(), true)
+  assert.equal((res.chunks.join('').match(/"done":true/g) || []).length, 1)
+})
+
+test('v2 deferComplete empty provider output does not persist', async () => {
+  const res = fakeRes()
+  async function* empty() {}
+  const result = await streamChatReply(res, {
+    messages: [],
+    streamFn: empty,
+    deferComplete: true,
+  })
+  assert.equal(result.aborted, false)
+  assert.equal(result.providerError, false)
+  assert.equal(result.reply, '')
+  assert.equal(shouldPersistStreamedReply(result), false)
+})
+
+test('v2 deferComplete cancellation skips persist and releases the lock', async () => {
+  const key = `user:v2-abort-${Date.now()}`
+  const controller = new AbortController()
+  const res = fakeRes()
+  async function* hang({ signal }) {
+    yield 'partial'
+    await new Promise((_, reject) => {
+      const fail = () => reject(abortErr())
+      if (signal.aborted) return fail()
+      signal.addEventListener('abort', fail, { once: true })
+    })
+  }
+  const running = withProcessingLock(key, () =>
+    streamChatReply(res, {
+      messages: [],
+      streamFn: hang,
+      signal: controller.signal,
+      deferComplete: true,
+    }),
+  )
+  await new Promise((resolve) => setTimeout(resolve, 20))
+  controller.abort()
+  const lock = await running
+  assert.equal(lock.locked, false)
+  assert.equal(lock.result.aborted, true)
+  assert.equal(shouldPersistStreamedReply(lock.result), false)
+  assert.equal(isProcessing(key), false)
+})
+
+test('v2 deferComplete provider error releases the lock and skips persist', async () => {
+  const key = `user:v2-err-${Date.now()}`
+  const res = fakeRes()
+  async function* boom() {
+    yield 'partial'
+    throw new Error('ECONNRESET')
+  }
+  const lock = await withProcessingLock(key, () =>
+    streamChatReply(res, {
+      messages: [],
+      streamFn: boom,
+      deferComplete: true,
+    }),
+  )
+  assert.equal(lock.locked, false)
+  assert.equal(lock.result.providerError, true)
+  assert.equal(shouldPersistStreamedReply(lock.result), false)
+  assert.equal(isProcessing(key), false)
+})
+
+test('v2 deferComplete provider error emits recoverable error SSE and skips persist', async () => {
+  const res = fakeRes()
+  async function* boom() {
+    throw new Error('ECONNRESET')
+  }
+  const result = await streamChatReply(res, {
+    messages: [],
+    streamFn: boom,
+    deferComplete: true,
+  })
+  assert.equal(result.aborted, false)
+  assert.equal(result.providerError, true)
+  assert.equal(shouldPersistStreamedReply(result), false)
+  assert.equal(res.chunks.join('').includes('"error":"provider_error"'), true)
+})
+
+test('legacy empty successful stream still completes once and does not persist', async () => {
+  const res = fakeRes()
+  async function* empty() {}
+  const result = await streamChatReply(res, { messages: [], streamFn: empty })
+  assert.equal(result.aborted, false)
+  assert.equal(result.reply, '')
+  assert.equal(shouldPersistStreamedReply(result), false)
+  assert.equal((res.chunks.join('').match(/"done":true/g) || []).length, 1)
+})
+
 test('provider connection error releases the lock and may persist fallback', async () => {
   const key = `user:err-${Date.now()}`
   const res = fakeRes()

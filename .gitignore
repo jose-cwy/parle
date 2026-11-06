@@ -2,6 +2,8 @@ node_modules
 .next
 .cache
 node_modules/.cache
+test-results
+playwright-report
 
 # Secrets — never commit
 .env

@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Check, ChevronLeft, ChevronRight, Clock, CloudRain, Copy, Heart, Lock, MessageCircle, MoreHorizontal, Pencil, RotateCcw, X } from 'lucide-react'
@@ -43,7 +44,26 @@ import {
   pruneArchivesMatchingMessages,
   isArchiveDeleted,
 } from '../../lib/parle/chatArchives'
-import { shouldIgnoreCommit, shouldReplaceHistoryWithServer } from '../../lib/parle/sessionCommit'
+import { shouldIgnoreCommit } from '../../lib/parle/sessionCommit'
+import {
+  listConversations,
+  listLegacyHistory,
+  createConversation,
+  getConversation,
+  postConversationMessage,
+  archiveConversation as archiveConversationRequest,
+  restoreConversation as restoreConversationRequest,
+  mergeLegacyPages,
+  readConversationIdFromUrl,
+  loadStoredConversationId,
+  resolveConversationSelection,
+  shouldApplyBootstrappedConversation,
+  resolveActiveConversationRef,
+  saveSelectedConversationId,
+  loadConversationTitles,
+  saveConversationTitle,
+  mapConversationMessages,
+} from '../../lib/parle/conversationClient'
 import {
   clearLiveSessionMeta,
   getPreferredModeId,
@@ -289,8 +309,29 @@ function GuestLimitBlock() {
   )
 }
 
-function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSessionTitle, isAuthed }) {
-  const archives = isAuthed ? getChatArchives() : []
+function buildSidebarSessionList({
+  visibleMessages,
+  activeSessionId,
+  liveSessionTitle,
+  isAuthed,
+  serverConversations,
+  conversationTitles,
+}) {
+  if (isAuthed) {
+    return (serverConversations || []).map((row) => ({
+      id: row.id,
+      title:
+        conversationTitles?.[row.id]
+        || row.title
+        || liveSessionTitle
+        || LIVE_SESSION_TITLE,
+      loadable: true,
+      deletable: false,
+      archivable: true,
+      renamable: false,
+    }))
+  }
+  const archives = []
   const items = []
   const hasUserMessageInLiveSession = hasUserMessages(visibleMessages)
   const viewingArchive = isViewingArchive(activeSessionId)
@@ -326,11 +367,12 @@ function buildSidebarSessionList({ visibleMessages, activeSessionId, liveSession
       seen.add(id)
       return true
     })
-    .map(({ id, title, loadable, deletable, renamable }) => ({
+    .map(({ id, title, loadable, deletable, archivable, renamable }) => ({
       id,
       title,
       loadable,
       deletable: Boolean(deletable),
+      archivable: Boolean(archivable),
       renamable: Boolean(renamable),
     }))
 }
@@ -371,6 +413,12 @@ async function consumeChatStream(res, onUpdate, signal) {
           continue
         }
 
+        if (payload.error && !payload.delta && !payload.reply) {
+          const error = new Error(String(payload.error))
+          error.code = payload.error
+          error.recoverable = true
+          throw error
+        }
         if (payload.delta) {
           reply += payload.delta
           onUpdate(reply)
@@ -447,7 +495,7 @@ function UserMessageBubble({
   const branchCount = msg.branches?.length ?? 0
   const activeBranch = msg.activeBranch ?? Math.max(branchCount - 1, 0)
   const showBranchNav = branchCount > 1
-  const canEdit = msg.text !== '[Image attached]'
+  const canEdit = Boolean(onEdit) && Boolean(onResend) && msg.text !== '[Image attached]'
 
   useEffect(() => {
     setDraft(msg.text)
@@ -676,7 +724,9 @@ const Bubble = memo(function Bubble({
 
   if (msg.role === 'assistant') {
     const showFeedback =
-      !msg.ephemeral && String(msg.text || '').trim().length > 0
+      Boolean(onEditUserMessage) &&
+      !msg.ephemeral &&
+      String(msg.text || '').trim().length > 0
 
     return (
       <article className="parle-chat-msg parle-chat-msg--assistant">
@@ -833,6 +883,17 @@ export default function HavenChat() {
   const [user, setUser] = useState(null)
   const [sidebarSessions, setSidebarSessions] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
+  const [serverConversations, setServerConversations] = useState([])
+  const [archivedConversations, setArchivedConversations] = useState([])
+  const [legacyHistory, setLegacyHistory] = useState(null)
+  const [legacyCursor, setLegacyCursor] = useState(null)
+  const [legacyHasMore, setLegacyHasMore] = useState(false)
+  const [legacyVersion, setLegacyVersion] = useState(null)
+  const [legacyLoadingMore, setLegacyLoadingMore] = useState(false)
+  const [legacyStale, setLegacyStale] = useState(false)
+  const [generationRecovery, setGenerationRecovery] = useState(false)
+  const [incompleteStream, setIncompleteStream] = useState(null)
+  const [conversationTitles, setConversationTitles] = useState({})
   const [archivesRevision, setArchivesRevision] = useState(0)
   const [liveSessionTitle, setLiveSessionTitle] = useState(LIVE_SESSION_TITLE)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -859,16 +920,81 @@ export default function HavenChat() {
   const replyAbortRef = useRef(null)
   const sessionOpGenRef = useRef(0)
   const selectGenRef = useRef(0)
+  const creatingConversationRef = useRef(false)
+  const creatingPromiseRef = useRef(null)
   const liveClearedRef = useRef(false)
   messagesRef.current = messages
   liveSessionTitleRef.current = liveSessionTitle
-  activeSessionIdRef.current = activeSessionId
+  activeSessionIdRef.current = resolveActiveConversationRef({
+    creating: creatingConversationRef.current,
+    createPending: Boolean(creatingPromiseRef.current),
+    renderedId: activeSessionId,
+    rememberedId: activeSessionIdRef.current,
+  })
   chatModeRef.current = chatMode
   pendingModeIdRef.current = pendingModeId
   isAuthedRef.current = isAuthed
+  const legacyWrapId = legacyHistory?.conversation?.id || null
+
+  function isLegacyHistoryId(id) {
+    return Boolean(legacyWrapId && id && id === legacyWrapId)
+  }
+
+  function applyLegacyTranscript(payload, conversationId, userId, { bump = true } = {}) {
+    rememberSelectedConversation(conversationId, userId, { bump })
+    setMessages(mapConversationMessages(payload))
+    setLegacyCursor(payload?.nextCursor || null)
+    setLegacyHasMore(Boolean(payload?.hasMore))
+    setLegacyVersion(payload?.timelineVersion || payload?.conversation?.timelineVersion || null)
+    setLegacyStale(Boolean(payload?.stale))
+    setIncompleteStream(null)
+    applyGenerationState(payload)
+    setIsNewSession(false)
+    setChatMode(null)
+    setStopContactPhase(null)
+    setReturningOpening(null)
+  }
 
   function getActiveStorageKey() {
     return resolveSessionStorageKey(activeSessionIdRef.current, sessionRef.current.sessionId)
+  }
+
+  function applyGenerationState(payload) {
+    if (!payload || !payload.generation) return
+    setGenerationRecovery(payload.generation.available === false)
+  }
+
+  async function refreshServerConversations() {
+    const listed = await listConversations()
+    if (listed.unauthorized) return []
+    applyGenerationState(listed)
+    setServerConversations(listed.conversations)
+    return listed.conversations
+  }
+
+  async function refreshArchivedConversations() {
+    const listed = await listConversations({ status: 'archived' })
+    if (listed.unauthorized) return []
+    setArchivedConversations(listed.conversations)
+    return listed.conversations
+  }
+
+  function rememberSelectedConversation(conversationId, userId = user?.id, { bump = true } = {}) {
+    if (bump && conversationId !== activeSessionIdRef.current) {
+      selectGenRef.current += 1
+    }
+    if (userId) saveSelectedConversationId(userId, conversationId)
+    setActiveSessionId(conversationId)
+    activeSessionIdRef.current = conversationId
+  }
+
+  async function ensureActiveConversationId(modeId) {
+    const current = activeSessionIdRef.current
+    if (current && current !== CURRENT_SESSION_ID && !isLegacyHistoryId(current)) return current
+    const created = await createConversation(modeId || 'cross')
+    rememberSelectedConversation(created.id)
+    await refreshServerConversations().catch(() => {})
+    return created.id
   }
 
   function isViewingStorageKey(storageKey) {
@@ -1128,11 +1254,7 @@ export default function HavenChat() {
           setChatLocalUserId(authUser.id)
           clearGuestSessionToken()
           track('chat_loaded', { authed: true })
-          const [historyRes, contextRes] = await Promise.all([
-            fetch('/api/chat/history'),
-            fetch('/api/chat/context'),
-          ])
-          const rows = historyRes.ok ? await historyRes.json() : []
+          const contextRes = await fetch('/api/chat/context')
           const context = contextRes.ok ? await contextRes.json() : {}
 
           if (!active) return
@@ -1141,21 +1263,93 @@ export default function HavenChat() {
           setImageAttachConsent(Boolean(context?.image_attach_consent))
           setOnboardingAnswered(Boolean(context?.onboarding_answered))
           setOnboardingReason(context?.onboarding_reason || null)
+          setConversationTitles(loadConversationTitles(authUser.id))
 
-          const history = mapServerHistory(rows)
+          const [listed, archivedListed, legacyListed] = await Promise.all([
+            listConversations(),
+            listConversations({ status: 'archived' }),
+            listLegacyHistory().catch(() => ({
+              conversation: null,
+              migration: { state: 'absent' },
+            })),
+          ])
+          if (!active) return
+          const conversations = listed.unauthorized ? [] : listed.conversations
+          const archived = (archivedListed.unauthorized ? [] : archivedListed.conversations)
+            .filter((row) => row.origin !== 'legacy_timeline')
+          setServerConversations(conversations)
+          setArchivedConversations(archived)
+          setLegacyHistory(legacyListed.unauthorized ? { conversation: null, migration: { state: 'absent' } } : legacyListed)
+          applyGenerationState(listed.unauthorized ? null : listed)
+          if (!listed.generation) applyGenerationState(legacyListed)
 
-          if (history.length > 0) {
-            const applyServer = shouldReplaceHistoryWithServer({
-              hasPendingReply: Boolean(pendingReplyRef.current),
-              localHasUserMessages: hasUserMessages(messagesRef.current),
-              localCount: (messagesRef.current || []).length,
-              serverCount: history.length,
-            })
-            if (applyServer) {
+          const bootGen = (selectGenRef.current += 1)
+          const urlId = readConversationIdFromUrl()
+          const storedId = loadStoredConversationId(authUser.id)
+          const resolved = resolveConversationSelection({
+            urlId,
+            storedId,
+            conversations,
+            archivedConversations: archived,
+          })
+
+          if (resolved.fetchId) {
+            let payload = null
+            try {
+              payload = await getConversation(resolved.fetchId)
+            } catch {
+              payload = null
+            }
+            if (
+              !active ||
+              !shouldApplyBootstrappedConversation({
+                bootGen,
+                currentGen: selectGenRef.current,
+                fetchId: resolved.fetchId,
+                urlId: readConversationIdFromUrl(),
+                activeId: activeSessionIdRef.current,
+              })
+            ) {
+              if (active && !creatingConversationRef.current) setHistoryLoading(false)
+              return
+            }
+            if (!payload) {
+              if (!pendingReplyRef.current) setMessages([])
+              setIsNewSession(true)
+              setActiveSessionId(null)
+              activeSessionIdRef.current = null
+              clearGuestChatDraft()
+              setHistoryLoading(false)
+              return
+            }
+            const history = mapConversationMessages(payload)
+            const modeId = payload.conversation?.mode_id
+            if (
+              !shouldApplyBootstrappedConversation({
+                bootGen,
+                currentGen: selectGenRef.current,
+                fetchId: resolved.fetchId,
+                urlId: readConversationIdFromUrl(),
+                activeId: activeSessionIdRef.current,
+              })
+            ) {
+              if (!creatingConversationRef.current) setHistoryLoading(false)
+              return
+            }
+            if (payload.conversation?.origin === 'legacy_timeline') {
+              applyLegacyTranscript(payload, resolved.fetchId, authUser.id, { bump: false })
+              clearGuestChatDraft()
+              setHistoryLoading(false)
+              return
+            }
+            rememberSelectedConversation(resolved.fetchId, authUser.id, { bump: false })
+            if (!pendingReplyRef.current) {
               setMessages(history)
-              setIsNewSession(false)
-              setActiveSessionId(CURRENT_SESSION_ID)
-              restoreLiveSessionFromMeta(loadLiveSessionMeta(), { history })
+              setIsNewSession(history.length === 0)
+              if (modeId) {
+                const mode = getModeById(modeId)
+                setChatMode({ id: mode.id, style: mode.style, mood: mode.mood })
+              }
             }
             clearGuestChatDraft()
             setHistoryLoading(false)
@@ -1164,12 +1358,9 @@ export default function HavenChat() {
 
           const guestDraft = loadGuestChatDraft()
           if (guestDraftHasUserMessages(guestDraft) && !pendingReplyRef.current) {
-            await fetch('/api/chat/import-guest', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ messages: guestDraft.messages }),
-            }).catch(() => null)
-
+            const created = await createConversation(guestDraft.chatModeId || guestDraft.pendingModeId || 'cross')
+            rememberSelectedConversation(created.id, authUser.id)
+            await refreshServerConversations().catch(() => {})
             setMessages(guestDraft.messages)
             const modeId = guestDraft.chatModeId || guestDraft.pendingModeId
             if (modeId) {
@@ -1178,8 +1369,6 @@ export default function HavenChat() {
               setPendingModeId(mode.id)
             }
             setIsNewSession(false)
-            setActiveSessionId(CURRENT_SESSION_ID)
-            restoreLiveSessionFromMeta(loadLiveSessionMeta(), { history: guestDraft.messages })
             clearGuestChatDraft()
             setHistoryLoading(false)
             return
@@ -1333,8 +1522,6 @@ export default function HavenChat() {
   }, [syncFollowFromScroll, historyLoading])
 
   useEffect(() => {
-    if (historyLoading) return
-
     if (migrateLegacyArchiveTitles()) {
       setArchivesRevision((n) => n + 1)
     }
@@ -1345,9 +1532,22 @@ export default function HavenChat() {
         activeSessionId,
         liveSessionTitle,
         isAuthed,
+        serverConversations,
+        conversationTitles,
       }),
     )
-  }, [messages, chatMode, visibleMessages, isAuthed, activeSessionId, archivesRevision, liveSessionTitle])
+  }, [
+    messages,
+    chatMode,
+    visibleMessages,
+    isAuthed,
+    activeSessionId,
+    archivesRevision,
+    liveSessionTitle,
+    serverConversations,
+    conversationTitles,
+    historyLoading,
+  ])
 
   useEffect(() => {
     if (historyLoading) return
@@ -1460,7 +1660,7 @@ export default function HavenChat() {
   function startWithMode(mode, { isSwitch = false } = {}) {
     setChatMode({ id: mode.id, style: mode.style, mood: mode.mood })
     setIsNewSession(false)
-    setActiveSessionId(CURRENT_SESSION_ID)
+    if (!isAuthed) setActiveSessionId(CURRENT_SESSION_ID)
 
     if (!sessionRef.current.startingMode) {
       sessionRef.current.startingMode = mode.label
@@ -1566,6 +1766,207 @@ export default function HavenChat() {
     }
   }
 
+  async function requestV2AssistantReply({
+    userText,
+    nextMessages,
+    mode,
+    dontTextStep,
+    images = [],
+    isEdit = false,
+    editMessageIndex,
+    storageKey = getActiveStorageKey(),
+  }) {
+    const conversationId = await ensureActiveConversationId(mode.id)
+    const opGen = sessionOpGenRef.current
+    const controller = new AbortController()
+    replyAbortRef.current = controller
+    const idempotencyKey = createMessageId()
+    const session = sessionRef.current
+
+    let res
+    try {
+      res = await postConversationMessage(
+        conversationId,
+        {
+          text: userText,
+          modeId: mode.id,
+          dontTextStep,
+          dontTextMessageCount: session.stopContactMessageCount,
+          idempotencyKey,
+          messages: toApiHistory(nextMessages.slice(0, -1)),
+          images,
+        },
+        { signal: controller.signal },
+      )
+    } catch (error) {
+      if (error?.name === 'AbortError') return false
+      throw error
+    }
+
+    if (!canCommitMessages(conversationId, opGen) && !canCommitMessages(storageKey, opGen)) {
+      return false
+    }
+
+    const contentType = res.headers.get('content-type') || ''
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      const notice =
+        data?.message
+        || (res.status === 429
+          ? data?.error === 'processing'
+            ? 'Still finishing the last reply. Your message is saved.'
+            : 'slow down a little.'
+          : 'That reply did not come through. Your message is saved — try again.')
+      commitMessages(
+        conversationId,
+        (prev) => [...(prev || []), createSystemNotice(notice)],
+        { chatModeId: mode.id, opGen },
+      )
+      if (isViewingStorageKey(conversationId) && userText) {
+        setComposerRestore({ key: Date.now(), text: userText })
+      }
+      return false
+    }
+
+    if (contentType.includes('application/json')) {
+      const data = await res.json().catch(() => ({}))
+      const replyText = data.reply || ''
+      if (!replyText && data.replay) return true
+      const replyMessage = createAssistantMessage(replyText, { modeId: mode.id })
+      commitMessages(
+        conversationId,
+        (prev) => {
+          const merged = [...(prev || []), replyMessage]
+          return isEdit && typeof editMessageIndex === 'number'
+            ? syncBranchTail(merged, editMessageIndex)
+            : merged
+        },
+        { chatModeId: mode.id, opGen },
+      )
+      session.lastAssistantAt = Date.now()
+      if (isViewingStorageKey(conversationId)) {
+        setIsNewSession(false)
+        pulseWarmth(1, 1600)
+        maybeAutoTitleSession([...(nextMessages || []), replyMessage])
+        if (user?.id) saveConversationTitle(user.id, conversationId, liveSessionTitleRef.current)
+      }
+      return true
+    }
+
+    const assistantAt = Date.now()
+    commitMessages(conversationId, (prev) => [
+      ...(prev || []),
+      createAssistantMessage('', { at: assistantAt, modeId: mode.id }),
+    ], { chatModeId: mode.id, opGen, persist: true })
+
+    let finalReply = ''
+    const streamMeta = {}
+    const applyStreamText = (replyText) => {
+      commitMessages(
+        conversationId,
+        (prev) =>
+          patchStreamingAssistantMessage(prev, {
+            at: assistantAt,
+            text: replyText,
+            modeId: mode.id,
+            ...(streamMeta.messageId ? { id: streamMeta.messageId } : {}),
+          }),
+        { chatModeId: mode.id, opGen, persist: false },
+      )
+      scrollToBottomIfFollowing('auto')
+    }
+    const batcher = createAnimationFrameBatcher(applyStreamText, {
+      raf: (cb) => window.requestAnimationFrame(cb),
+      caf: (id) => window.cancelAnimationFrame(id),
+    })
+    streamBatcherRef.current = batcher
+    try {
+      finalReply = await consumeChatStream(
+        res,
+        (replyText, payload) => {
+          if (payload?.messageId != null) streamMeta.messageId = String(payload.messageId)
+          if (payload?.done) {
+            batcher.flush()
+            applyStreamText(replyText)
+            return
+          }
+          batcher.schedule(replyText)
+        },
+        controller.signal,
+      )
+      batcher.flush()
+    } catch (error) {
+      batcher.flush()
+      if (error?.name === 'AbortError') {
+        commitMessages(
+          conversationId,
+          (prev) => {
+            const list = [...(prev || [])]
+            const last = list[list.length - 1]
+            if (last?.role === 'assistant' && last.at === assistantAt && !String(last.text || '').trim()) {
+              list.pop()
+            }
+            return list
+          },
+          { chatModeId: mode.id, opGen, persist: true },
+        )
+        return false
+      }
+      commitMessages(
+        conversationId,
+        (prev) => {
+          const list = [...(prev || [])]
+          const last = list[list.length - 1]
+          if (last?.role === 'assistant' && last.at === assistantAt && !String(last.text || '').trim()) {
+            list.pop()
+          }
+          return [...list, createSystemNotice('That reply did not come through. Your message is saved — try again.')]
+        },
+        { chatModeId: mode.id, opGen, persist: true },
+      )
+      return false
+    } finally {
+      batcher.flush()
+      batcher.cancel()
+      if (streamBatcherRef.current === batcher) streamBatcherRef.current = null
+    }
+
+    if (!String(finalReply || '').trim()) {
+      commitMessages(
+        conversationId,
+        (prev) => {
+          const list = [...(prev || [])]
+          const last = list[list.length - 1]
+          if (last?.role === 'assistant' && last.at === assistantAt && !String(last.text || '').trim()) {
+            list.pop()
+          }
+          return [...list, createSystemNotice('That reply did not come through. Your message is saved — try again.')]
+        },
+        { chatModeId: mode.id, opGen, persist: true },
+      )
+      return false
+    }
+
+    commitMessages(
+      conversationId,
+      (prev) =>
+        patchStreamingAssistantMessage(prev, {
+          at: assistantAt,
+          text: finalReply,
+          modeId: mode.id,
+        }),
+      { chatModeId: mode.id, opGen, persist: true },
+    )
+    session.lastAssistantAt = Date.now()
+    if (isViewingStorageKey(conversationId)) {
+      setIsNewSession(false)
+      pulseWarmth(1, 1600)
+      maybeAutoTitleSession([...(nextMessages || []), createAssistantMessage(finalReply, { modeId: mode.id })])
+      if (user?.id) saveConversationTitle(user.id, conversationId, liveSessionTitleRef.current)
+    }
+    return true
+  }
+
   async function requestAssistantReply({
     userText,
     nextMessages,
@@ -1576,8 +1977,20 @@ export default function HavenChat() {
     editMessageIndex,
     storageKey = getActiveStorageKey(),
   }) {
+    if (isAuthed) {
+      return requestV2AssistantReply({
+        userText,
+        nextMessages,
+        mode,
+        dontTextStep,
+        images,
+        isEdit,
+        editMessageIndex,
+        storageKey,
+      })
+    }
     const session = sessionRef.current
-    const endpoint = isAuthed ? '/api/chat/send' : '/api/chat/guest-send'
+    const endpoint = '/api/chat/guest-send'
     const body = {
       text: userText,
       modeId: mode.id,
@@ -1942,9 +2355,25 @@ export default function HavenChat() {
   }
 
   async function send({ text: value, images = [] } = {}) {
+    if (generationRecovery) return
+    if (isLegacyHistoryId(activeSessionIdRef.current)) return
     const v = String(value || '').trim()
     const imagePayload = Array.isArray(images) ? images.filter(Boolean).slice(0, 2) : []
-    if ((!v && !imagePayload.length) || isActiveSessionLoading() || historyLoading) return
+    if (creatingPromiseRef.current) {
+      try {
+        await creatingPromiseRef.current
+      } catch {
+        /* New Chat create failed; send uses whatever session remains */
+      }
+    }
+    if (
+      (!v && !imagePayload.length) ||
+      isActiveSessionLoading() ||
+      historyLoading ||
+      creatingConversationRef.current
+    ) {
+      return
+    }
     if (!isAuthed && guestUsageRemaining === 0) return
 
     let mode = resolveMode()
@@ -1956,8 +2385,10 @@ export default function HavenChat() {
       if (isAuthed) {
         setPreferredModeId(mode.id)
       }
-      setActiveSessionId(CURRENT_SESSION_ID)
-      activeSessionIdRef.current = CURRENT_SESSION_ID
+      if (!isAuthed) {
+        setActiveSessionId(CURRENT_SESSION_ID)
+        activeSessionIdRef.current = CURRENT_SESSION_ID
+      }
       if (!sessionRef.current.startingMode) {
         sessionRef.current.startingMode = selectedMode.label
       }
@@ -1999,6 +2430,18 @@ export default function HavenChat() {
     followScrollRef.current = true
     setMessages(nextMessages)
     messagesRef.current = nextMessages
+    if (isAuthed) {
+      try {
+        await ensureActiveConversationId(mode.id)
+      } catch {
+        commitMessages(getActiveStorageKey(), (prev) => [
+          ...(prev || []),
+          createSystemNotice('Could not start that chat. Your message is still here — try again.'),
+        ])
+        setComposerRestore({ key: Date.now(), text: v })
+        return
+      }
+    }
     const storageKey = getActiveStorageKey()
     persistTranscriptNow({ bumpOrder: true, chatModeId: mode.id })
     requestAnimationFrame(() => scrollToBottomIfFollowing('auto'))
@@ -2037,9 +2480,10 @@ export default function HavenChat() {
     }
 
     const sendOpGen = sessionOpGenRef.current
+    pendingReplyRef.current = true
     try {
       track('chat_send', { authed: isAuthed, mode: mode.id })
-      await requestAssistantReply({
+      const sent = await requestAssistantReply({
         userText: v,
         nextMessages,
         mode,
@@ -2047,18 +2491,17 @@ export default function HavenChat() {
         images: imagePayload,
         storageKey,
       })
-      if (shouldShowOnboardingAfterReply) {
+      if (sent === true && shouldShowOnboardingAfterReply) {
         setOnboardingSheetOpen(true)
       }
     } catch (error) {
       if (error?.name === 'AbortError') return
       commitMessages(storageKey, (prev) => [
         ...(prev || []),
-        createAssistantMessage('Sorry, something went wrong. Please try again.', {
-          modeId: mode.id,
-        }),
+        createSystemNotice('That reply did not come through. Your message is saved — try again.'),
       ], { chatModeId: mode.id, opGen: sendOpGen })
     } finally {
+      pendingReplyRef.current = false
       stopSessionLoading(storageKey)
     }
   }
@@ -2081,7 +2524,7 @@ export default function HavenChat() {
     }
   }
 
-  function resetToPreChatSync() {
+  function resetToPreChatSync({ preserveActiveConversation = false } = {}) {
     clearGuestChatDraft()
     setMessages([])
     setChatMode(null)
@@ -2091,7 +2534,9 @@ export default function HavenChat() {
     setGuestBannerDismissed(false)
     setStopContactPhase(null)
     setIsNewSession(true)
-    setActiveSessionId(null)
+    if (!preserveActiveConversation) {
+      setActiveSessionId(null)
+    }
     setLiveSessionTitle(LIVE_SESSION_TITLE)
     setReturningOpening(null)
     greetingPickRef.current = false
@@ -2220,7 +2665,50 @@ export default function HavenChat() {
 
   async function clearChat() {
     bumpSessionOpGen()
+    const createGen = sessionOpGenRef.current
     abortInFlightReply()
+
+    if (isAuthed) {
+      const previous = creatingPromiseRef.current
+      creatingConversationRef.current = true
+      const pending = (async () => {
+        try {
+          if (previous) {
+            try {
+              await previous
+            } catch {
+              /* previous New Chat failed or was superseded */
+            }
+          }
+          if (createGen !== sessionOpGenRef.current) return
+          const created = await createConversation(pendingModeIdRef.current || chatMode?.id || 'cross')
+          if (createGen !== sessionOpGenRef.current) return
+          messagesRef.current = []
+          resetToPreChatSync({ preserveActiveConversation: true })
+          rememberSelectedConversation(created.id)
+          await refreshServerConversations().catch(() => {})
+        } catch {
+          if (createGen !== sessionOpGenRef.current) return
+          rememberSelectedConversation(null)
+          resetToPreChatSync()
+        } finally {
+          if (createGen === sessionOpGenRef.current) {
+            creatingConversationRef.current = false
+            setHistoryLoading(false)
+          }
+        }
+      })()
+      creatingPromiseRef.current = pending
+      try {
+        await pending
+      } finally {
+        if (creatingPromiseRef.current === pending) creatingPromiseRef.current = null
+        if (createGen === sessionOpGenRef.current) setHistoryLoading(false)
+      }
+      setArchivesRevision((n) => n + 1)
+      track('chat_deleted', { authed: true, source: 'new_chat' })
+      return
+    }
 
     const currentMessages = messages || []
     const shouldArchive = shouldArchiveLiveChat(activeSessionId, currentMessages)
@@ -2252,9 +2740,53 @@ export default function HavenChat() {
     await refreshReturningOpening()
   }
 
+  async function handleArchiveSession(session, e) {
+    e?.preventDefault?.()
+    e?.stopPropagation?.()
+    if (!isAuthed || !session?.archivable) return
+    bumpSessionOpGen()
+    abortInFlightReply()
+    const archived = await archiveConversationRequest(session.id)
+    if (!archived) return
+    const listed = await refreshServerConversations()
+    await refreshArchivedConversations().catch(() => {})
+    if (activeSessionIdRef.current === session.id) {
+      const next = listed.find((row) => row.id !== session.id) || listed[0]
+      if (next) {
+        rememberSelectedConversation(next.id)
+        const payload = await getConversation(next.id)
+        if (payload) {
+          setMessages(mapConversationMessages(payload))
+          setIsNewSession(!(payload.messages || []).length)
+        }
+      } else {
+        rememberSelectedConversation(null)
+        resetToPreChatSync()
+      }
+    }
+  }
+
+  async function handleRestoreSession(session, e) {
+    e?.preventDefault?.()
+    e?.stopPropagation?.()
+    if (!isAuthed || !session?.id) return
+    const restored = await restoreConversationRequest(session.id)
+    if (!restored) return
+    await refreshServerConversations()
+    await refreshArchivedConversations().catch(() => {})
+    rememberSelectedConversation(restored.id)
+    const payload = await getConversation(restored.id)
+    if (payload) {
+      setMessages(mapConversationMessages(payload))
+      setIsNewSession(!(payload.messages || []).length)
+    }
+    setMobileSidebarOpen(false)
+  }
+
   function handleDeleteSession(session, e) {
     e?.preventDefault?.()
     e?.stopPropagation?.()
+    if (isAuthed || session?.archiveUnavailable) return
     if (!session?.deletable) return
 
     if (session.id === CURRENT_SESSION_ID) {
@@ -2354,6 +2886,43 @@ export default function HavenChat() {
     return null
   }
 
+  async function handleSelectLegacyHistory() {
+    const wrap = legacyHistory?.conversation
+    if (!wrap?.id) return
+    bumpSessionOpGen()
+    abortInFlightReply()
+    const mySelect = (selectGenRef.current += 1)
+    const payload = await getConversation(wrap.id)
+    if (mySelect !== selectGenRef.current) return
+    if (!payload) return
+    applyLegacyTranscript(payload, wrap.id, user?.id)
+    sessionRef.current = createSessionState()
+  }
+
+  async function loadMoreLegacyHistory() {
+    const wrap = legacyHistory?.conversation
+    if (!wrap?.id || !legacyHasMore || legacyLoadingMore) return
+    setLegacyLoadingMore(true)
+    try {
+      const payload = await getConversation(wrap.id, {
+        cursor: legacyCursor,
+        version: legacyVersion,
+      })
+      if (!payload) return
+      if (payload.stale) {
+        applyLegacyTranscript(payload, wrap.id, user?.id, { bump: false })
+        return
+      }
+      setMessages((prev) => mergeLegacyPages(prev, mapConversationMessages(payload)))
+      setLegacyCursor(payload.nextCursor || null)
+      setLegacyHasMore(Boolean(payload.hasMore))
+      setLegacyVersion(payload.timelineVersion || legacyVersion)
+      setLegacyStale(false)
+    } finally {
+      setLegacyLoadingMore(false)
+    }
+  }
+
   async function handleSelectSession(session) {
     if (!session?.loadable) return
     if (session.id === activeSessionIdRef.current) return
@@ -2361,6 +2930,32 @@ export default function HavenChat() {
     bumpSessionOpGen()
     abortInFlightReply()
     const mySelect = (selectGenRef.current += 1)
+
+    if (isAuthed) {
+      const payload = await getConversation(session.id)
+      if (mySelect !== selectGenRef.current) return
+      if (!payload) return
+      if (payload.conversation?.origin === 'legacy_timeline') {
+        applyLegacyTranscript(payload, session.id, user?.id)
+        sessionRef.current = createSessionState()
+        return
+      }
+      rememberSelectedConversation(session.id)
+      setMessages(mapConversationMessages(payload))
+      setIncompleteStream(payload.incompleteStream || null)
+      applyGenerationState(payload)
+      setIsNewSession(!(payload.messages || []).length)
+      setChatMode(
+        payload.conversation?.mode_id
+          ? { id: payload.conversation.mode_id, ...getModeById(payload.conversation.mode_id) }
+          : chatMode,
+      )
+      setStopContactPhase(null)
+      setLegacyHasMore(false)
+      setLegacyCursor(null)
+      sessionRef.current = createSessionState()
+      return
+    }
 
     const parked = persistSessionBeforeSwitch(session.id)
     if (parked) {
@@ -2422,10 +3017,15 @@ export default function HavenChat() {
   }
 
   const hasLiveUserMessages = hasUserMessages(visibleMessages)
-  const chatActive = hasLiveUserMessages || thinking
+  const isLiveSession = isActiveLiveSession(activeSessionId) && !isViewingArchive(activeSessionId)
+  const resolvedActiveSessionId =
+    activeSessionId ??
+    (hasLiveUserMessages && isLiveSession ? CURRENT_SESSION_ID : null)
+  const viewingLegacy = isLegacyHistoryId(activeSessionId)
+  const chatActive = hasLiveUserMessages || thinking || viewingLegacy || generationRecovery
   const guestDailyCapReached = !isAuthed && guestUsageRemaining === 0
-  const inputDisabled = thinking || historyLoading || guestDailyCapReached
-  const showEmptyUI = entryExiting || (!hasLiveUserMessages && !thinking)
+  const inputDisabled = thinking || historyLoading || guestDailyCapReached || viewingLegacy || generationRecovery
+  const showEmptyUI = !viewingLegacy && !generationRecovery && (entryExiting || (!hasLiveUserMessages && !thinking))
   const userMessageCount = visibleMessages.filter((m) => m.role === 'user').length
   const showUsageHint =
     !isAuthed &&
@@ -2446,12 +3046,6 @@ export default function HavenChat() {
     (!lastVisibleMessage ||
       lastVisibleMessage.role === 'user' ||
       (lastVisibleMessage.role === 'assistant' && !String(lastVisibleMessage.text || '').trim()))
-
-  const isLiveSession = isActiveLiveSession(activeSessionId) && !isViewingArchive(activeSessionId)
-
-  const resolvedActiveSessionId =
-    activeSessionId ??
-    (hasLiveUserMessages && isLiveSession ? CURRENT_SESSION_ID : null)
 
   const sendRef = useRef(send)
   sendRef.current = send
@@ -2493,6 +3087,14 @@ export default function HavenChat() {
         onNewChat={clearChat}
         onSelectSession={handleSelectSession}
         onDeleteSession={handleDeleteSession}
+        onArchiveSession={handleArchiveSession}
+        onRestoreSession={handleRestoreSession}
+        archivedSessions={(archivedConversations || []).map((row) => ({
+          id: row.id,
+          title: conversationTitles?.[row.id] || row.title || LIVE_SESSION_TITLE,
+        }))}
+        legacyHistory={legacyHistory}
+        onSelectLegacyHistory={handleSelectLegacyHistory}
         onRenameSession={handleRenameSession}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -2525,6 +3127,63 @@ export default function HavenChat() {
             </div>
           ) : chatActive ? (
             <div className="parle-chat__messages">
+              {generationRecovery && !viewingLegacy ? (
+                <motion.div
+                  className="parle-chat-history-banner"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                >
+                  <p className="parle-chat-history-banner__label">Read-only for now</p>
+                  <p className="parle-chat-history-banner__text">
+                    Replies are temporarily unavailable. Your earlier conversations and saved chats are still here.
+                  </p>
+                  {incompleteStream ? (
+                    <p className="parle-chat-history-banner__text" style={{ marginTop: '0.4rem' }}>
+                      The last reply did not finish. Existing messages were kept.
+                      {incompleteStream.retryable ? ' You can retry when replies return.' : ' Retry is unavailable until replies return.'}
+                    </p>
+                  ) : null}
+                </motion.div>
+              ) : null}
+              {viewingLegacy ? (
+                <motion.div
+                  className="parle-chat-history-banner"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                >
+                  <p className="parle-chat-history-banner__label">Read-only history</p>
+                  <p className="parle-chat-history-banner__text">
+                    {legacyHistory?.migration?.incomplete
+                      ? 'This is your previous account history. It is still being saved, so some older messages may be missing. New chats stay separate.'
+                      : legacyHistory?.migration?.pendingQuiesce
+                        ? 'This is your previous account history, kept in the order it was saved. Additional older messages may still arrive. New chats stay separate.'
+                        : 'This is your previous account history, kept in the order it was saved. It is not one original chat. New chats stay separate.'}
+                  </p>
+                  {legacyStale ? (
+                    <p className="parle-chat-history-banner__text" style={{ marginTop: '0.4rem' }}>
+                      Saved history was updated. The list was refreshed from the start.
+                    </p>
+                  ) : null}
+                  <div className="parle-chat-history-banner__actions">
+                    <button
+                      type="button"
+                      className="parle-chat-history-banner__btn parle-chat-history-banner__btn--primary"
+                      onClick={() => clearChat()}
+                    >
+                      New Chat
+                    </button>
+                  </div>
+                </motion.div>
+              ) : null}
+              {viewingLegacy && !(messages || []).length ? (
+                <p className="parle-chat-history-empty">
+                  {legacyHistory?.migration?.incomplete
+                    ? 'No saved history is available yet.'
+                    : 'No saved history messages were found for this account.'}
+                </p>
+              ) : null}
               {(messages || []).map((m, i) => {
                 if (m.role !== 'user' && m.role !== 'assistant' && m.role !== 'system') {
                   return null
@@ -2544,13 +3203,32 @@ export default function HavenChat() {
                     thinking={thinking}
                     isAuthed={isAuthed}
                     compactActions={i !== lastUserIndex && i !== lastAssistantIndex}
-                    onEditUserMessage={editUserMessage}
-                    onResendUserMessage={resendUserMessage}
-                    onBranchChange={switchMessageBranch}
+                    onEditUserMessage={viewingLegacy || generationRecovery ? undefined : editUserMessage}
+                    onResendUserMessage={viewingLegacy || generationRecovery ? undefined : resendUserMessage}
+                    onBranchChange={viewingLegacy || generationRecovery ? undefined : switchMessageBranch}
                   />
                 )
               })}
               {showTypingIndicator && <TypingIndicator />}
+              {viewingLegacy && legacyHasMore ? (
+                <div className="parle-chat-history-banner__actions" style={{ justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    className="parle-chat-history-banner__btn"
+                    onClick={loadMoreLegacyHistory}
+                    disabled={legacyLoadingMore}
+                  >
+                    {legacyLoadingMore ? 'Loading…' : 'Load more history'}
+                  </button>
+                </div>
+              ) : null}
+              {viewingLegacy && !legacyHasMore && (messages || []).length > 0 ? (
+                <p className="parle-chat-history-empty">
+                  {legacyHistory?.migration?.incomplete || legacyHistory?.migration?.pendingQuiesce
+                    ? 'End of currently saved history. Migration is not fully settled yet.'
+                    : 'End of saved history.'}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
@@ -2602,7 +3280,7 @@ export default function HavenChat() {
           {!isAuthed && <GuestConsentBanner visible />}
           <div className="parle-chat-main__bottom-inner">
             <ProductPulseCard
-              visible={productPulseVisible && !showEmptyUI}
+              visible={productPulseVisible && !showEmptyUI && !viewingLegacy}
               sessionId={
                 isAuthed
                   ? sessionRef.current.sessionId
@@ -2650,7 +3328,7 @@ export default function HavenChat() {
                 showEmptyUI && 'parle-chat-main__bottom-input--empty-mobile',
               )}
             >
-              {guestDailyCapReached ? (
+              {viewingLegacy || generationRecovery ? null : guestDailyCapReached ? (
                 <GuestLimitBlock />
               ) : (
                 <ChatInputBar

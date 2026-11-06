@@ -257,3 +257,120 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
   status TEXT NOT NULL CHECK (status IN ('applied', 'failed')),
   error TEXT
 );
+
+-- V2-B.1 conversation tables (additive). Applied via 0005 on rehearsal only.
+CREATE TABLE IF NOT EXISTS conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active', 'archived', 'deleted')),
+  title_enc TEXT,
+  mode_id TEXT,
+  origin TEXT NOT NULL DEFAULT 'live'
+    CHECK (origin IN ('live', 'legacy_timeline', 'guest_import', 'archive_import')),
+  legacy_import_key TEXT,
+  last_message_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  timeline_revision BIGINT NOT NULL DEFAULT 0,
+  UNIQUE (id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS conversation_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL,
+  user_id UUID NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+  seq BIGINT NOT NULL,
+  text_enc TEXT NOT NULL,
+  training_content_enc TEXT,
+  revision_of UUID REFERENCES conversation_messages(id),
+  client_message_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (conversation_id, seq),
+  FOREIGN KEY (conversation_id, user_id)
+    REFERENCES conversations (id, user_id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS conversation_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  conversation_id UUID NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'accepted'
+    CHECK (status IN ('accepted', 'streaming', 'completed', 'cancelled', 'failed')),
+  lease_owner TEXT,
+  lease_token UUID,
+  lease_expires_at TIMESTAMPTZ,
+  user_message_id UUID REFERENCES conversation_messages(id),
+  assistant_message_id UUID REFERENCES conversation_messages(id),
+  error_code TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, conversation_id, idempotency_key),
+  FOREIGN KEY (conversation_id, user_id)
+    REFERENCES conversations (id, user_id)
+    ON DELETE CASCADE
+);
+
+-- V2-D.1 wrap-copy tracking (additive). Applied via 0007 on rehearsal only.
+CREATE TABLE IF NOT EXISTS user_chat_migration (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  state TEXT NOT NULL DEFAULT 'legacy_only'
+    CHECK (state IN (
+      'legacy_only',
+      'migrating',
+      'interrupted',
+      'pending_quiesce',
+      'migrated'
+    )),
+  wrap_conversation_id UUID,
+  snapshot_xmin TEXT,
+  snapshot_at TIMESTAMPTZ,
+  last_batch_at TIMESTAMPTZ,
+  mapped_count INTEGER NOT NULL DEFAULT 0,
+  started_at TIMESTAMPTZ,
+  finished_at TIMESTAMPTZ,
+  error TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  FOREIGN KEY (wrap_conversation_id, user_id)
+    REFERENCES conversations (id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS conversation_legacy_map (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  chat_memory_id INTEGER NOT NULL,
+  conversation_id UUID NOT NULL,
+  conversation_message_id UUID NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, chat_memory_id),
+  UNIQUE (conversation_message_id),
+  FOREIGN KEY (chat_memory_id, user_id)
+    REFERENCES chat_memory (id, user_id),
+  FOREIGN KEY (conversation_id, user_id)
+    REFERENCES conversations (id, user_id),
+  FOREIGN KEY (conversation_message_id, conversation_id, user_id)
+    REFERENCES conversation_messages (id, conversation_id, user_id)
+);
+
+-- V2-F ops generation control (additive). Applied via 0010 on rehearsal only.
+CREATE TABLE IF NOT EXISTS parle_ops_controls (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL CHECK (value IN ('live', 'read_only')),
+  revision BIGINT NOT NULL DEFAULT 0,
+  updated_by UUID NOT NULL REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reason TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS parle_ops_control_audit (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  key TEXT NOT NULL,
+  old_value TEXT,
+  new_value TEXT NOT NULL CHECK (new_value IN ('live', 'read_only')),
+  revision BIGINT NOT NULL,
+  actor_id UUID NOT NULL REFERENCES users(id),
+  reason TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

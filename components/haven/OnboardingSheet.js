@@ -35,7 +35,12 @@ export default function OnboardingSheet({ open, onSelect, onSkip }) {
             </button>
           ))}
         </div>
-        <button type="button" className="parle-onboarding__skip" onClick={onSkip}>
+        <button
+          type="button"
+          className="parle-onboarding__skip"
+          aria-label="Skip onboarding"
+          onClick={onSkip}
+        >
           skip
         </button>
       </div>

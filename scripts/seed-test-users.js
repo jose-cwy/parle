@@ -9,6 +9,7 @@ const db = require('../lib/db')
 const TEST_USERS = [
   { email: 'testuser_a@parle.test', password: 'TestPassword123!' },
   { email: 'testuser_b@parle.test', password: 'TestPassword123!' },
+  { email: 'testuser_persist@parle.test', password: 'TestPassword123!' },
 ]
 
 async function upsertUser(email, password) {
