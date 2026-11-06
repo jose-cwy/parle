@@ -485,4 +485,6 @@ test('authed send inserts the user row before streaming and skips assistant pers
   const persistIdx = send.indexOf('if (shouldPersistStreamedReply')
   assert.ok(userIdx > 0 && streamIdx > userIdx)
   assert.ok(persistIdx > streamIdx)
+  assert.match(send, /deferComplete:\s*true/)
+  assert.ok(send.indexOf("persist: 'user_only'") > persistIdx)
 })

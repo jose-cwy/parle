@@ -39,6 +39,7 @@ import {
   runChatAbuseChecks,
   withChatProcessing,
 } from '../../../lib/chatAbuse'
+import { assertLegacyWritesAdmitted } from '../../../lib/parle/legacyWriteBarrier'
 
 export const config = {
   api: {
@@ -94,6 +95,8 @@ export default async function handler(req, res) {
     }
 
     const userText = abuse.userText || sanitizeChatMessage(text) || '(See attached image)'
+
+    await assertLegacyWritesAdmitted()
 
     if (containsCrisisLanguage(userText)) {
       await insertChatMessage(payload.id, 'user', userText)
@@ -223,6 +226,7 @@ export default async function handler(req, res) {
         fallbackReply,
         extraHeaders: { 'X-Parle-Think-Ms': String(thinkMs) },
         signal: clientAbort.signal,
+        deferComplete: true,
       })
 
       return { ...streamedReply, thinkMs }
@@ -236,7 +240,24 @@ export default async function handler(req, res) {
 
     const streamed = lockResult.result || {}
     if (shouldPersistStreamedReply(streamed)) {
-      await insertChatMessage(payload.id, 'assistant', streamed.reply)
+      try {
+        await insertChatMessage(payload.id, 'assistant', streamed.reply)
+      } catch (error) {
+        if (error?.statusCode === 503 && typeof streamed.complete === 'function') {
+          streamed.complete({
+            error: 'history_save_in_progress',
+            persist: 'user_only',
+            message:
+              'Chat is briefly unavailable while we save your history. Your last message is already saved. Do not send it again.',
+          })
+          return
+        }
+        if (error?.statusCode === 503 && res.headersSent) return
+        throw error
+      }
+    }
+    if (typeof streamed.complete === 'function') {
+      streamed.complete()
     }
     await recordAuthedChatActivity({
       userId: payload.id,
@@ -245,6 +266,9 @@ export default async function handler(req, res) {
       isNewSession: Boolean(isNewSession),
     }).catch(() => null)
   } catch (error) {
+    if (error?.statusCode) {
+      return res.status(error.statusCode).json(error.body || { error: 'Error' })
+    }
     return handleApiError(res, error, 'chat_send')
   }
 }

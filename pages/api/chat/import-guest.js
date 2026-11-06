@@ -1,6 +1,7 @@
 import { insertChatMessage, listChatMessages } from '../../../lib/chatMemoryDb'
 import { planGuestImport } from '../../../lib/parle/guestImport'
 import { runApiPipeline, handleApiError } from '../../../lib/security/pipeline'
+import { assertLegacyWritesAdmitted } from '../../../lib/parle/legacyWriteBarrier'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -9,6 +10,7 @@ export default async function handler(req, res) {
   if (guard.handled) return
 
   try {
+    await assertLegacyWritesAdmitted()
     const existing = await listChatMessages(guard.payload.id, { limit: 1, order: 'ASC' })
     const plan = planGuestImport(existing.length, req.body?.messages)
     if (plan.skip) {
@@ -23,6 +25,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, imported })
   } catch (error) {
+    if (error?.statusCode) {
+      return res.status(error.statusCode).json(error.body || { error: 'Error' })
+    }
     return handleApiError(res, error, 'chat_import_guest')
   }
 }

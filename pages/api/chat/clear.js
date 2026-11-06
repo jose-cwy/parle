@@ -1,5 +1,6 @@
 import db from '../../../lib/db'
 import { runApiPipeline } from '../../../lib/security/pipeline'
+import { withLegacyMutation } from '../../../lib/parle/legacyWriteBarrier'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).end()
@@ -9,9 +10,14 @@ export default async function handler(req, res) {
   const payload = guard.payload
 
   try {
-    await db.query('DELETE FROM chat_memory WHERE user_id=$1', [payload.id])
+    await withLegacyMutation((client) =>
+      client.query('DELETE FROM chat_memory WHERE user_id=$1', [payload.id]),
+    )
     return res.status(200).json({ ok: true })
   } catch (error) {
+    if (error?.statusCode) {
+      return res.status(error.statusCode).json(error.body || { error: 'Error' })
+    }
     if (error?.code === '42P01') {
       return res.status(200).json({ ok: true, skipped: true })
     }

@@ -374,3 +374,12 @@ CREATE TABLE IF NOT EXISTS parle_ops_control_audit (
   reason TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Stage 4 rehearsal write barrier (additive). Applied via 0011 on rehearsal only.
+CREATE TABLE IF NOT EXISTS parle_legacy_write_barrier (
+  key TEXT PRIMARY KEY,
+  frozen BOOLEAN NOT NULL DEFAULT FALSE,
+  epoch BIGINT NOT NULL DEFAULT 0 CHECK (epoch >= 0),
+  reason TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

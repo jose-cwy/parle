@@ -533,6 +533,14 @@ async function main() {
         console.log('SKIP_DESTRUCTIVE', migration.version)
         continue
       }
+      if (
+        identity.branch_id === PRIMARY_BRANCH_ID &&
+        (String(migration.version).startsWith('0011_') ||
+          String(migration.version).startsWith('0012_'))
+      ) {
+        console.log('SKIP_PRIMARY', migration.version)
+        continue
+      }
 
       const existing = byVersion.get(migration.version)
       if (existing?.status === 'applied') {

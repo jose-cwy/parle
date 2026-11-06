@@ -90,6 +90,8 @@ test('V2-D.4 recovery reads, isolation, wrap idempotency, and revision stale', a
   }
 
   const prevRecovery = process.env.PARLE_V2_RECOVERY
+  const prevNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'test'
   process.env.PARLE_V2_RECOVERY = '1'
 
   const owner = await createSynthUser('migrated')
@@ -241,5 +243,7 @@ test('V2-D.4 recovery reads, isolation, wrap idempotency, and revision stale', a
   } finally {
     if (prevRecovery == null) delete process.env.PARLE_V2_RECOVERY
     else process.env.PARLE_V2_RECOVERY = prevRecovery
+    if (prevNodeEnv == null) delete process.env.NODE_ENV
+    else process.env.NODE_ENV = prevNodeEnv
   }
 })

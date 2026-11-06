@@ -815,6 +815,7 @@ export default function HavenChat() {
   const [messages, setMessages] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
   const [composerRestore, setComposerRestore] = useState(null)
+  const [historySaveFrozen, setHistorySaveFrozen] = useState(false)
   const composerDraftRef = useRef('')
   const [loadingRevision, setLoadingRevision] = useState(0)
   const scrollRef = useRef(null)
@@ -1128,9 +1129,10 @@ export default function HavenChat() {
           setChatLocalUserId(authUser.id)
           clearGuestSessionToken()
           track('chat_loaded', { authed: true })
-          const [historyRes, contextRes] = await Promise.all([
+          const [historyRes, contextRes, writeRes] = await Promise.all([
             fetch('/api/chat/history'),
             fetch('/api/chat/context'),
+            fetch('/api/chat/write-status'),
           ])
           const rows = historyRes.ok ? await historyRes.json() : []
           const context = contextRes.ok ? await contextRes.json() : {}
@@ -1141,6 +1143,11 @@ export default function HavenChat() {
           setImageAttachConsent(Boolean(context?.image_attach_consent))
           setOnboardingAnswered(Boolean(context?.onboarding_answered))
           setOnboardingReason(context?.onboarding_reason || null)
+
+          if (writeRes.ok) {
+            const writeStatus = await writeRes.json().catch(() => ({}))
+            setHistorySaveFrozen(writeStatus?.writable === false)
+          }
 
           const history = mapServerHistory(rows)
 
@@ -1624,6 +1631,24 @@ export default function HavenChat() {
         const remaining = parseGuestUsageRemaining(res, data)
         if (remaining != null) setGuestUsageRemaining(remaining)
       }
+      if (res.status === 503 && data?.error === 'history_save_in_progress') {
+        setHistorySaveFrozen(true)
+        commitMessages(
+          storageKey,
+          (prev) => {
+            const list = [...(prev || [])]
+            if (list.length && list[list.length - 1]?.role === 'user') {
+              list.pop()
+            }
+            return list
+          },
+          { chatModeId: mode.id, opGen },
+        )
+        if (isViewingStorageKey(storageKey) && userText) {
+          setComposerRestore({ key: Date.now(), text: userText })
+        }
+        return
+      }
       if (res.status === 429 || res.status === 400) {
         const isProcessingLock = data?.error === 'processing'
         commitMessages(
@@ -1694,6 +1719,8 @@ export default function HavenChat() {
           (replyText, payload) => {
             if (payload?.messageId != null) streamMeta.messageId = String(payload.messageId)
             if (payload?.ttfbMs != null) streamMeta.ttfbMs = payload.ttfbMs
+            if (payload?.persist != null) streamMeta.persist = payload.persist
+            if (payload?.error != null) streamMeta.error = payload.error
             if (payload?.done) {
               batcher.flush()
               applyStreamText(replyText)
@@ -1732,6 +1759,31 @@ export default function HavenChat() {
         batcher.flush()
         batcher.cancel()
         if (streamBatcherRef.current === batcher) streamBatcherRef.current = null
+      }
+
+      if (
+        isAuthed &&
+        (streamMeta.persist === 'user_only' || streamMeta.error === 'history_save_in_progress')
+      ) {
+        setHistorySaveFrozen(true)
+        commitMessages(
+          storageKey,
+          (prev) => {
+            const list = [...(prev || [])]
+            const last = list[list.length - 1]
+            if (last?.role === 'assistant' && last.at === assistantAt) {
+              list.pop()
+            }
+            return [
+              ...list,
+              createSystemNotice(
+                'Your last message is saved. Chat is briefly unavailable — do not send it again.',
+              ),
+            ]
+          },
+          { chatModeId: mode.id, opGen, persist: true },
+        )
+        return
       }
 
       const replyMessage = createAssistantMessage(finalReply || '', {
@@ -1946,6 +1998,7 @@ export default function HavenChat() {
     const imagePayload = Array.isArray(images) ? images.filter(Boolean).slice(0, 2) : []
     if ((!v && !imagePayload.length) || isActiveSessionLoading() || historyLoading) return
     if (!isAuthed && guestUsageRemaining === 0) return
+    if (isAuthed && historySaveFrozen) return
 
     let mode = resolveMode()
     let activeStopContactPhase = stopContactPhase
@@ -2424,7 +2477,7 @@ export default function HavenChat() {
   const hasLiveUserMessages = hasUserMessages(visibleMessages)
   const chatActive = hasLiveUserMessages || thinking
   const guestDailyCapReached = !isAuthed && guestUsageRemaining === 0
-  const inputDisabled = thinking || historyLoading || guestDailyCapReached
+  const inputDisabled = thinking || historyLoading || guestDailyCapReached || (isAuthed && historySaveFrozen)
   const showEmptyUI = entryExiting || (!hasLiveUserMessages && !thinking)
   const userMessageCount = visibleMessages.filter((m) => m.role === 'user').length
   const showUsageHint =
@@ -2586,7 +2639,7 @@ export default function HavenChat() {
 
             <EmptyStateQuickPrompts
               onSelect={(prompt) => send({ text: prompt })}
-              disabled={thinking || historyLoading || guestDailyCapReached}
+              disabled={thinking || historyLoading || guestDailyCapReached || (isAuthed && historySaveFrozen)}
               exiting={entryExiting}
             />
           </div>
@@ -2613,6 +2666,16 @@ export default function HavenChat() {
               isGuest={!isAuthed}
               onDismiss={() => setProductPulseVisible(false)}
             />
+            {isAuthed && historySaveFrozen ? (
+              <div className="parle-chat__composer-notice">
+                <div className="parle-chat__composer-notice-bar">
+                  <p className="parle-chat__composer-notice-text">
+                    Chat is briefly unavailable while we save your history. Your draft is still here.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {!showEmptyUI && showGuestBanner && (
               <div className="parle-chat__composer-notice">
                 <div className="parle-chat__composer-notice-bar">

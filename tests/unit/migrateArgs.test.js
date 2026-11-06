@@ -1,5 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
+const fs = require('fs')
 const path = require('path')
 const {
   parseArgs,
@@ -612,4 +613,29 @@ test('migration apply sets bounded lock_timeout and statement_timeout', async ()
     "SET LOCAL lock_timeout = '5s'",
     "SET LOCAL statement_timeout = '30s'",
   ])
+})
+
+test('0011 write barrier is rehearsal-only and additive', () => {
+  const migrations = loadMigrations(path.join(__dirname, '../../database/migrations'))
+  const file = migrations.find((row) => row.version === '0011_legacy_write_barrier.sql')
+  assert.ok(file)
+  assert.equal(file.destructive, false)
+  assert.equal(require('../../scripts/migrate').sqlIsAdditive(file.sql), true)
+  assert.equal(PRIMARY_FOLLOW_ON['0011_legacy_write_barrier.sql'], undefined)
+  assert.doesNotMatch(file.sql, /\b(UPDATE|DELETE)\s+.*\bchat_memory\b/i)
+})
+
+test('0012 chat_memory write guard is rehearsal-only, additive, and SHARE-compatible', () => {
+  const migrations = loadMigrations(path.join(__dirname, '../../database/migrations'))
+  const file = migrations.find((row) => row.version === '0012_chat_memory_write_guard.sql')
+  const migrateSrc = fs.readFileSync(path.join(__dirname, '../../scripts/migrate.js'), 'utf8')
+  assert.ok(file)
+  assert.equal(file.destructive, false)
+  assert.equal(require('../../scripts/migrate').sqlIsAdditive(file.sql), true)
+  assert.equal(PRIMARY_FOLLOW_ON['0012_chat_memory_write_guard.sql'], undefined)
+  assert.match(file.sql, /FOR SHARE/)
+  assert.match(file.sql, /BEFORE INSERT OR UPDATE OR DELETE ON chat_memory/)
+  assert.doesNotMatch(file.sql, /\bDELETE\s+FROM\b/i)
+  assert.doesNotMatch(file.sql, /\bUPDATE\s+chat_memory\b/i)
+  assert.match(migrateSrc, /startsWith\('0012_'\)/)
 })
