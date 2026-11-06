@@ -20,12 +20,41 @@ const {
 } = require('./rehearsalEnv')
 
 const ADVISORY_LOCK_KEY = 872451901
+const MIGRATION_LOCK_TIMEOUT = '5s'
+const MIGRATION_STATEMENT_TIMEOUT = '30s'
 const PRIMARY_ADDITIVE_MIGRATION = '0003_phase3_analytics.sql'
 const EXPECTED_0003_CHECKSUM = '611daa96f31d10b73f5f86ea7aaaa39441ae1cd7234461e77da416180decf51a'
 const PRIMARY_AUTH_MIGRATION = '0004_auth_identities.sql'
 const EXPECTED_0004_CHECKSUM = '7bc29ddfe5d9f39129b8445218335fb3e5abd5c923f2822f01a4bedefa1494f0'
 const PRIMARY_CONVERSATIONS_MIGRATION = '0005_conversations_v2.sql'
 const EXPECTED_0005_CHECKSUM = '23e703266d35d8945edd28adb9151e1d1959a544b5d306bf7210d69c601fe251'
+const PRIMARY_FOLLOW_ON = Object.freeze({
+  '0006_conversation_lease_token.sql': {
+    flag: 'executePrimary0006',
+    cli: '--execute-primary-0006',
+    checksum: '0b20eb485c0783aec17cae7414a1fc7c2330dba400560be7e824a31ceee4ba9e',
+  },
+  '0007_legacy_wrap_migration.sql': {
+    flag: 'executePrimary0007',
+    cli: '--execute-primary-0007',
+    checksum: 'd85a0f1c8386d54bcfb9924f2ccb86c10b3505ab16ed8c61c2538e2b6ff15148',
+  },
+  '0008_legacy_wrap_origin_triggers.sql': {
+    flag: 'executePrimary0008',
+    cli: '--execute-primary-0008',
+    checksum: '18420f1a50fd8aa11f1b5b557d4641faf0ea73cb04e000f4fff3d30316652628',
+  },
+  '0009_timeline_revision.sql': {
+    flag: 'executePrimary0009',
+    cli: '--execute-primary-0009',
+    checksum: 'a4df15c0cd5a37eb951775bb931a57b93d737dcc07a3e30914a28e95fa404f37',
+  },
+  '0010_parle_ops_controls.sql': {
+    flag: 'executePrimary0010',
+    cli: '--execute-primary-0010',
+    checksum: '299cbe82d498fa00dad1cbf59371fdd2016ed6eee6324fa7c1bec430e392a886',
+  },
+})
 
 function parseArgs(argv, env = process.env) {
   return parseRehearsalFlags(argv, env)
@@ -33,6 +62,13 @@ function parseArgs(argv, env = process.env) {
 
 function checksum(contents) {
   return crypto.createHash('sha256').update(contents).digest('hex')
+}
+
+function executableSql(sql) {
+  return String(sql || '')
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('--'))
+    .join('\n')
 }
 
 function sqlIsAdditive(sql) {
@@ -178,7 +214,113 @@ function primaryExecuteFlags(args) {
   if (args.executePrimary0003) flags.push('--execute-primary-0003')
   if (args.executePrimary0004) flags.push('--execute-primary-0004')
   if (args.executePrimary0005) flags.push('--execute-primary-0005')
+  for (const spec of Object.values(PRIMARY_FOLLOW_ON)) {
+    if (args[spec.flag]) flags.push(spec.cli)
+  }
   return flags
+}
+
+function followOnSpecFor(args) {
+  const byFile = args.migration ? PRIMARY_FOLLOW_ON[args.migration] : null
+  const byFlag = Object.entries(PRIMARY_FOLLOW_ON).find(([, spec]) => args[spec.flag])
+  if (byFlag && byFile && byFlag[0] !== args.migration) {
+    throw new Error(`Refusing: ${byFlag[1].cli} only authorizes ${byFlag[0]}`)
+  }
+  if (byFile) return { file: args.migration, ...byFile }
+  if (byFlag) return { file: byFlag[0], ...byFlag[1] }
+  return null
+}
+
+function isPrimaryFollowOnRehearsal(args) {
+  return Boolean(args.rehearsePrimaryAuthorization && args.migration && PRIMARY_FOLLOW_ON[args.migration])
+}
+
+function assertAuthorizedPrimaryFollowOn(args, migrations = []) {
+  const spec = followOnSpecFor(args)
+  if (!spec) {
+    throw new Error('Refusing: 0006–0010 primary path requires an exact follow-on migration filename')
+  }
+  if (!args.authorizePrimaryAdditive) {
+    throw new Error(`Refusing: --authorize-primary-additive is required for the ${spec.file} primary path`)
+  }
+  if (args.allowDestructive) {
+    throw new Error(`Refusing: --allow-destructive is not permitted on the ${spec.file} primary path`)
+  }
+  if (args.migration !== spec.file) {
+    throw new Error(`Refusing: only ${spec.file} may be authorized for ${spec.cli}`)
+  }
+  if (isForbiddenPrimaryMigration(args.migration)) {
+    throw new Error(`Refusing to select ${args.migration} as an authorized additive migration`)
+  }
+  if (!args.expectedChecksum) {
+    throw new Error(`Refusing: --expected-checksum is required for the ${spec.file} primary path`)
+  }
+  if (args.expectedChecksum !== spec.checksum) {
+    throw new Error(`Refusing: --expected-checksum does not match the approved ${spec.file} hash`)
+  }
+  const migration = migrations.find((row) => row.version === spec.file)
+  if (!migration) {
+    throw new Error(`Refusing: ${spec.file} is missing`)
+  }
+  if (migration.checksum !== spec.checksum) {
+    throw new Error(`Refusing: on-disk ${spec.file} checksum does not match the approved hash`)
+  }
+  if (migration.checksum !== args.expectedChecksum) {
+    throw new Error(`Checksum mismatch for ${migration.version}`)
+  }
+  if (migration.destructive || !sqlIsAdditive(migration.sql)) {
+    throw new Error(`Refusing non-additive ${spec.file}`)
+  }
+  const executable = executableSql(migration.sql)
+  if (
+    /\bDELETE\s+FROM\b/i.test(executable) ||
+    /\bTRUNCATE\b/i.test(executable) ||
+    /\bUPDATE\s+(?!OF\b|ON\b)/i.test(executable)
+  ) {
+    throw new Error(`Refusing ${spec.file}: must not rewrite existing rows`)
+  }
+  if (spec.file === '0006_conversation_lease_token.sql') {
+    if (!/ALTER TABLE conversation_requests/i.test(executable)) {
+      throw new Error('Refusing 0006: expected ALTER TABLE conversation_requests')
+    }
+    if (/\bchat_memory\b/i.test(executable)) {
+      throw new Error('Refusing 0006: must not touch chat_memory')
+    }
+  }
+  if (spec.file === '0007_legacy_wrap_migration.sql') {
+    if (!/CREATE UNIQUE INDEX IF NOT EXISTS idx_chat_memory_id_user/i.test(executable)) {
+      throw new Error('Refusing 0007: expected additive unique index on chat_memory (id, user_id)')
+    }
+    if (/\b(UPDATE|DELETE)\s+.*\bchat_memory\b/i.test(executable)) {
+      throw new Error('Refusing 0007: must not rewrite chat_memory rows')
+    }
+  }
+  if (spec.file === '0008_legacy_wrap_origin_triggers.sql' && /\bchat_memory\b/i.test(executable)) {
+    throw new Error('Refusing 0008: must not touch chat_memory')
+  }
+  if (spec.file === '0009_timeline_revision.sql') {
+    if (!/ALTER TABLE conversations/i.test(executable) || !/timeline_revision/i.test(executable)) {
+      throw new Error('Refusing 0009: expected timeline_revision on conversations')
+    }
+    if (/\bchat_memory\b/i.test(executable)) {
+      throw new Error('Refusing 0009: must not touch chat_memory')
+    }
+  }
+  if (spec.file === '0010_parle_ops_controls.sql') {
+    if (!/CREATE TABLE IF NOT EXISTS parle_ops_controls/i.test(executable)) {
+      throw new Error('Refusing 0010: expected parle_ops_controls')
+    }
+    if (/\bchat_memory\b/i.test(executable)) {
+      throw new Error('Refusing 0010: must not touch chat_memory')
+    }
+  }
+  if (args.rehearsePrimaryAuthorization) {
+    if (args.intendedPrimaryBranch !== PRIMARY_BRANCH_ID) {
+      throw new Error(`Rehearsal must name intended primary ${PRIMARY_BRANCH_ID}`)
+    }
+  } else if (args.requireBranch !== PRIMARY_BRANCH_ID) {
+    throw new Error(`Refusing: --require-branch must be ${PRIMARY_BRANCH_ID} for ${spec.file}`)
+  }
 }
 
 function assertAuthorizedPrimary0005(args, migrations = []) {
@@ -243,23 +385,12 @@ function assertSafeIdentity(identity, args) {
   if (executeFlags.length > 1) {
     throw new Error(`Refusing both ${executeFlags.join(' and ')}`)
   }
-  if (args.executePrimary0003 && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
-    throw new Error('Refusing --execute-primary-0003 with rehearsal flags')
+  const executeFlag = executeFlags[0]
+  if (executeFlag && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
+    throw new Error(`Refusing ${executeFlag} with rehearsal flags`)
   }
-  if (args.executePrimary0004 && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
-    throw new Error('Refusing --execute-primary-0004 with rehearsal flags')
-  }
-  if (args.executePrimary0005 && (args.rehearsal || args.rehearsePrimaryAuthorization)) {
-    throw new Error('Refusing --execute-primary-0005 with rehearsal flags')
-  }
-  if (args.executePrimary0003 && args.databaseUrlFlag) {
-    throw new Error('Refusing --execute-primary-0003 with --database-url= (use DATABASE_URL only)')
-  }
-  if (args.executePrimary0004 && args.databaseUrlFlag) {
-    throw new Error('Refusing --execute-primary-0004 with --database-url= (use DATABASE_URL only)')
-  }
-  if (args.executePrimary0005 && args.databaseUrlFlag) {
-    throw new Error('Refusing --execute-primary-0005 with --database-url= (use DATABASE_URL only)')
+  if (executeFlag && args.databaseUrlFlag) {
+    throw new Error(`Refusing ${executeFlag} with --database-url= (use DATABASE_URL only)`)
   }
   if (args.rehearsal && identity.branch_id === PRIMARY_BRANCH_ID) {
     throw new Error('Refusing --rehearsal against the audited primary branch')
@@ -271,22 +402,16 @@ function assertSafeIdentity(identity, args) {
     if (identity.branch_id === PRIMARY_BRANCH_ID) {
       throw new Error('Refusing primary-authorization rehearsal against the audited primary')
     }
-    if (args.executePrimary0003) {
-      throw new Error('Refusing to mix --execute-primary-0003 with rehearsal')
-    }
-    if (args.executePrimary0004) {
-      throw new Error('Refusing to mix --execute-primary-0004 with rehearsal')
-    }
-    if (args.executePrimary0005) {
-      throw new Error('Refusing to mix --execute-primary-0005 with rehearsal')
+    if (executeFlag) {
+      throw new Error(`Refusing to mix ${executeFlag} with rehearsal`)
     }
   }
 
   if (identity.branch_id === PRIMARY_BRANCH_ID) {
     if (args.identityOnly) return
-    if (!args.executePrimary0003 && !args.executePrimary0004 && !args.executePrimary0005) {
+    if (!executeFlag) {
       throw new Error(
-        'Primary execution is disabled until explicit --execute-primary-0003, --execute-primary-0004, or --execute-primary-0005 approval' +
+        'Primary execution is disabled until an explicit --execute-primary-0003 through --execute-primary-0010 approval' +
           (args.authorizePrimaryAdditive
             ? ' (--authorize-primary-additive is assembled but not executable)'
             : ''),
@@ -300,20 +425,19 @@ function assertSafeIdentity(identity, args) {
     return
   }
 
-  if (args.executePrimary0003) {
-    throw new Error('Refusing --execute-primary-0003 against a non-primary branch')
-  }
-  if (args.executePrimary0004) {
-    throw new Error('Refusing --execute-primary-0004 against a non-primary branch')
-  }
-  if (args.executePrimary0005) {
-    throw new Error('Refusing --execute-primary-0005 against a non-primary branch')
+  if (executeFlag) {
+    throw new Error(`Refusing ${executeFlag} against a non-primary branch`)
   }
   if (!args.identityOnly && identity.branch_id !== args.requireBranch) {
     throw new Error(
       `Branch mismatch: connected ${identity.branch_id || '(unknown)'} vs required ${args.requireBranch}`,
     )
   }
+}
+
+async function applyMigrationTimeouts(client) {
+  await client.query(`SET LOCAL lock_timeout = '${MIGRATION_LOCK_TIMEOUT}'`)
+  await client.query(`SET LOCAL statement_timeout = '${MIGRATION_STATEMENT_TIMEOUT}'`)
 }
 
 async function ensureLedger(client) {
@@ -373,10 +497,12 @@ async function main() {
       assertAuthorizedPrimary0004(args, migrations)
     } else if (args.executePrimary0005 || isPrimaryConversationsRehearsal(args)) {
       assertAuthorizedPrimary0005(args, migrations)
+    } else if (isPrimaryFollowOnRehearsal(args) || Object.values(PRIMARY_FOLLOW_ON).some((spec) => args[spec.flag])) {
+      assertAuthorizedPrimaryFollowOn(args, migrations)
     } else if (args.executePrimary0003 || args.rehearsePrimaryAuthorization) {
       assertAuthorizedPrimary0003(args, migrations)
     }
-    if ((args.executePrimary0003 || args.executePrimary0004 || args.executePrimary0005) && args.dryRun) {
+    if (primaryExecuteFlags(args).length && args.dryRun) {
       throw new Error('Refusing --dry-run on the primary execute path')
     }
 
@@ -429,6 +555,7 @@ async function main() {
 
       try {
         await client.query('BEGIN')
+        await applyMigrationTimeouts(client)
         await client.query(migration.sql)
         await client.query(
           `INSERT INTO schema_migrations (version, checksum, applied_at, status, error)
@@ -480,6 +607,7 @@ module.exports = {
   assertAuthorizedPrimary0003,
   assertAuthorizedPrimary0004,
   assertAuthorizedPrimary0005,
+  assertAuthorizedPrimaryFollowOn,
   assertSafeIdentity,
   isPrimaryAuthRehearsal,
   isPrimaryConversationsRehearsal,
@@ -493,6 +621,10 @@ module.exports = {
   EXPECTED_0004_CHECKSUM,
   PRIMARY_CONVERSATIONS_MIGRATION,
   EXPECTED_0005_CHECKSUM,
+  PRIMARY_FOLLOW_ON,
+  MIGRATION_LOCK_TIMEOUT,
+  MIGRATION_STATEMENT_TIMEOUT,
+  applyMigrationTimeouts,
 }
 
 if (require.main === module) {

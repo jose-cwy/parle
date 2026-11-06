@@ -16,7 +16,12 @@ const {
   assertAuthorizedPrimary0005,
   PRIMARY_CONVERSATIONS_MIGRATION,
   EXPECTED_0005_CHECKSUM,
+  PRIMARY_FOLLOW_ON,
+  assertAuthorizedPrimaryFollowOn,
   EXPECTED_PROJECT_ID,
+  MIGRATION_LOCK_TIMEOUT,
+  MIGRATION_STATEMENT_TIMEOUT,
+  applyMigrationTimeouts,
 } = require('../../scripts/migrate')
 
 test('parseArgs requires explicit flags', () => {
@@ -468,4 +473,143 @@ test('primary-authorization rehearsal for 0005 names the real primary and refuse
     ),
     /execute-primary-0005 with rehearsal/,
   )
+})
+
+test('authorized primary 0006–0010 bundles require matching file, checksum, and primary branch', () => {
+  const migrations = loadMigrations(path.join(__dirname, '../../database/migrations'))
+  for (const [file, spec] of Object.entries(PRIMARY_FOLLOW_ON)) {
+    const onDisk = migrations.find((row) => row.version === file)
+    assert.equal(onDisk.checksum, spec.checksum, file)
+    assert.equal(onDisk.destructive, false, file)
+    assert.equal(require('../../scripts/migrate').sqlIsAdditive(onDisk.sql), true, file)
+
+    const ok = parseArgs(
+      [
+        'node',
+        'migrate.js',
+        '--authorize-primary-additive',
+        `--migration=${file}`,
+        `--expected-checksum=${spec.checksum}`,
+        `--require-branch=${PRIMARY_BRANCH_ID}`,
+      ],
+      { DATABASE_URL: 'postgres://primary.example/neondb' },
+    )
+    assert.equal(ok[spec.flag], false)
+    assert.doesNotThrow(() => assertAuthorizedPrimaryFollowOn(ok, migrations))
+
+    assert.throws(
+      () => assertAuthorizedPrimaryFollowOn({ ...ok, authorizePrimaryAdditive: false }, migrations),
+      /authorize-primary-additive/,
+    )
+    assert.throws(
+      () => assertAuthorizedPrimaryFollowOn({ ...ok, expectedChecksum: 'abc' }, migrations),
+      /approved/,
+    )
+    assert.throws(
+      () => assertAuthorizedPrimaryFollowOn({ ...ok, allowDestructive: true }, migrations),
+      /allow-destructive/,
+    )
+    assert.throws(
+      () => assertAuthorizedPrimaryFollowOn({ ...ok, migration: '0002_archive_legacy.sql' }, migrations),
+      /follow-on migration filename|only /,
+    )
+  }
+
+  const lease = PRIMARY_FOLLOW_ON['0006_conversation_lease_token.sql']
+  const mixed = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--authorize-primary-additive',
+      '--execute-primary-0006',
+      '--migration=0007_legacy_wrap_migration.sql',
+      `--expected-checksum=${lease.checksum}`,
+      `--require-branch=${PRIMARY_BRANCH_ID}`,
+    ],
+    { DATABASE_URL: 'postgres://primary.example/neondb' },
+  )
+  assert.throws(() => assertAuthorizedPrimaryFollowOn(mixed, migrations), /only authorizes 0006/)
+})
+
+test('primary 0006 execution stays disabled without --execute-primary-0006', () => {
+  const identity = { project_id: EXPECTED_PROJECT_ID, branch_id: PRIMARY_BRANCH_ID }
+  const file = '0006_conversation_lease_token.sql'
+  const spec = PRIMARY_FOLLOW_ON[file]
+  const assembled = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--authorize-primary-additive',
+      `--migration=${file}`,
+      `--expected-checksum=${spec.checksum}`,
+      `--require-branch=${PRIMARY_BRANCH_ID}`,
+    ],
+    { DATABASE_URL: 'postgres://primary.example/neondb' },
+  )
+  assert.throws(() => assertSafeIdentity(identity, assembled), /Primary execution is disabled/)
+  assert.doesNotThrow(() => assertSafeIdentity(identity, { ...assembled, executePrimary0006: true }))
+  assert.throws(
+    () => assertSafeIdentity(identity, { ...assembled, executePrimary0006: true, executePrimary0007: true }),
+    /both --execute-primary-0006 and --execute-primary-0007/,
+  )
+  assert.throws(
+    () =>
+      assertSafeIdentity(
+        { project_id: EXPECTED_PROJECT_ID, branch_id: 'br-rough-lab-apixtzmm' },
+        { ...assembled, executePrimary0006: true },
+      ),
+    /against a non-primary branch/,
+  )
+  assert.throws(
+    () =>
+      assertSafeIdentity(
+        { project_id: EXPECTED_PROJECT_ID, branch_id: 'br-rough-lab-apixtzmm' },
+        { ...assembled, executePrimary0006: true, rehearsal: true },
+      ),
+    /execute-primary-0006 with rehearsal/,
+  )
+})
+
+test('primary-authorization rehearsal for 0006 names the real primary and refuses execute', () => {
+  const migrations = loadMigrations(path.join(__dirname, '../../database/migrations'))
+  const spec = PRIMARY_FOLLOW_ON['0006_conversation_lease_token.sql']
+  const args = parseArgs(
+    [
+      'node',
+      'migrate.js',
+      '--rehearsal',
+      '--rehearse-primary-authorization',
+      '--authorize-primary-additive',
+      '--migration=0006_conversation_lease_token.sql',
+      `--expected-checksum=${spec.checksum}`,
+      '--require-branch=br-rough-lab-apixtzmm',
+      `--intended-primary-branch=${PRIMARY_BRANCH_ID}`,
+    ],
+    { REHEARSAL_DATABASE_URL: 'postgres://rehearsal.example/neondb' },
+  )
+  assert.equal(args.executePrimary0006, false)
+  assert.doesNotThrow(() => assertAuthorizedPrimaryFollowOn(args, migrations))
+  assert.throws(
+    () =>
+      assertSafeIdentity(
+        { project_id: EXPECTED_PROJECT_ID, branch_id: 'br-rough-lab-apixtzmm' },
+        { ...args, executePrimary0006: true },
+      ),
+    /rehearsal/,
+  )
+})
+
+test('migration apply sets bounded lock_timeout and statement_timeout', async () => {
+  assert.equal(MIGRATION_LOCK_TIMEOUT, '5s')
+  assert.equal(MIGRATION_STATEMENT_TIMEOUT, '30s')
+  const statements = []
+  await applyMigrationTimeouts({
+    query: async (sql) => {
+      statements.push(sql)
+    },
+  })
+  assert.deepEqual(statements, [
+    "SET LOCAL lock_timeout = '5s'",
+    "SET LOCAL statement_timeout = '30s'",
+  ])
 })

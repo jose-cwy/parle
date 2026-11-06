@@ -126,7 +126,7 @@ All steps require a **separate production authorization**. Rehearsal identity mu
 
 ## 6. Stage 1 (`0005`) recovery point
 
-**Status:** Named backup branch accepted for Stage 1 data recovery. **0005 SQL has not been executed.** Candidate SHA `1350962599ce8fe2fe0c8ae23f814280a11218bc`.
+**Status:** Production `0005` applied (Stage 1). Named backup `br-small-term-ap7j2ssc` remains the pre-0005 recovery child. This backup does **not** include 0005.
 
 | Item | Value | Evidence |
 | --- | --- | --- |
@@ -177,3 +177,56 @@ Production `DATABASE_URL` only. Identity must print project `little-truth-882734
 **User effect:** empty additive tables. `/api/chat/send` stays on `badd746`. No wrap, no UI cutover.
 
 **Rollback:** do not DROP 0005; unused tables can remain. Restore path is Neon re-point/restore from `br-small-term-ap7j2ssc`, not a rehearsal child. Do not run this command without a new explicit founder approval.
+
+---
+
+## 8. Stage 2 (`0006`–`0010`) production gates (not executed)
+
+**Status:** Prepared only. **Do not run these commands until a separate founder execution approval.** Primary writes for 0006–0010 remain refused by default.
+
+**Frozen identities**
+
+| | |
+| --- | --- |
+| Project | `little-truth-88273418` |
+| Primary | `br-morning-sun-apghun9g` |
+| Production SHA | `badd746b1ec8dda4c912760376fca25a475a9c8b` |
+| V2 candidate | `32fd11747ff7fbf8f7c302dc210285a53efc44ab` (gates may be on a later local SHA) |
+| Rehearsal | `br-rough-lab-apixtzmm` |
+| Backup | `br-small-term-ap7j2ssc` (pre-0005; not a post-0005 restore point) |
+
+**Checksums (SHA-256 of the SQL file bytes)**
+
+| File | Checksum |
+| --- | --- |
+| `0006_conversation_lease_token.sql` | `0b20eb485c0783aec17cae7414a1fc7c2330dba400560be7e824a31ceee4ba9e` |
+| `0007_legacy_wrap_migration.sql` | `d85a0f1c8386d54bcfb9924f2ccb86c10b3505ab16ed8c61c2538e2b6ff15148` |
+| `0008_legacy_wrap_origin_triggers.sql` | `18420f1a50fd8aa11f1b5b557d4641faf0ea73cb04e000f4fff3d30316652628` |
+| `0009_timeline_revision.sql` | `a4df15c0cd5a37eb951775bb931a57b93d737dcc07a3e30914a28e95fa404f37` |
+| `0010_parle_ops_controls.sql` | `299cbe82d498fa00dad1cbf59371fdd2016ed6eee6324fa7c1bec430e392a886` |
+
+**One file per approval.** Each command uses production `DATABASE_URL` only. Forbids `--rehearsal`, `--database-url=`, `--allow-destructive`, `--dry-run`, a second `--execute-primary-*`, and any other `--migration=`. Do not pass `--retry-failed` on the first attempt.
+
+```text
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0006 --migration=0006_conversation_lease_token.sql --expected-checksum=0b20eb485c0783aec17cae7414a1fc7c2330dba400560be7e824a31ceee4ba9e --require-branch=br-morning-sun-apghun9g
+
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0007 --migration=0007_legacy_wrap_migration.sql --expected-checksum=d85a0f1c8386d54bcfb9924f2ccb86c10b3505ab16ed8c61c2538e2b6ff15148 --require-branch=br-morning-sun-apghun9g
+
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0008 --migration=0008_legacy_wrap_origin_triggers.sql --expected-checksum=18420f1a50fd8aa11f1b5b557d4641faf0ea73cb04e000f4fff3d30316652628 --require-branch=br-morning-sun-apghun9g
+
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0009 --migration=0009_timeline_revision.sql --expected-checksum=a4df15c0cd5a37eb951775bb931a57b93d737dcc07a3e30914a28e95fa404f37 --require-branch=br-morning-sun-apghun9g
+
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0010 --migration=0010_parle_ops_controls.sql --expected-checksum=299cbe82d498fa00dad1cbf59371fdd2016ed6eee6324fa7c1bec430e392a886 --require-branch=br-morning-sun-apghun9g
+```
+
+**Prerequisites:** 0005 applied. Execute in order 0006 → 0007 → 0008 → 0009 → 0010. 0008 replaces 0007 wrap-origin trigger functions; do not skip 0007.
+
+**Stop immediately if:** wrong project/branch; checksum mismatch vs the frozen map; ledger `failed`; applied checksum conflict; `--allow-destructive`; unknown extra SQL; any `DELETE`/`TRUNCATE`/row `UPDATE`; `chat_memory` DML.
+
+**User effect if later executed:** schema only. Production `/api/chat/send` remains `chat_memory`. Wrap-copy is not invoked. `PARLE_V2_OPS_CONTROL` remains unset in production, so 0010 tables stay inert. V2 send/UI stay inactive.
+
+**0007 live-traffic note:** `CREATE UNIQUE INDEX` on `chat_memory (id, user_id)` takes a SHARE lock (not `CONCURRENTLY`; migrator is transactional). Brief insert stall on the live chatbot is expected; no row rewrite.
+
+**Timeouts (every applied file, including 0007):** after `BEGIN`, the runner issues `SET LOCAL lock_timeout = '5s'` and `SET LOCAL statement_timeout = '30s'`. A lock wait or long statement aborts that transaction. `ROLLBACK` undoes the file’s DDL; the runner then records `schema_migrations.status = failed` **outside** the rolled-back transaction and exits non-zero. That `failed` row is **not** treated as success. Re-apply of the same file on primary requires a new founder-authorized run of the matching `--execute-primary-NNNN` **plus** `--retry-failed` (checksum and branch gates still apply). Do not DELETE `applied` ledger rows. Do not `--retry-failed` if the database objects from that file are actually present (unknown/partial state — stop).
+
+**Post-0005 backup (not created in this preparation):** keep `BACKUP_DATABASE_URL` on `br-small-term-ap7j2ssc` (pre-0005). Do not overwrite or delete it. After explicit founder authorization, create a **new** Neon child of `br-morning-sun-apghun9g` named `parle-stage2-post-0005`, with **no expiration**, then store its URL in a **separate** env key (do not replace `BACKUP_DATABASE_URL`). Verify parent, 0005 applied, user/`chat_memory` fingerprints, and that the compute is independent of primary. Restore path for Stage 2 is that new child, not the pre-0005 backup and not rehearsal.
