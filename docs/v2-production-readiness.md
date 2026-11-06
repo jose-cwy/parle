@@ -124,23 +124,56 @@ All steps require a **separate production authorization**. Rehearsal identity mu
 
 ---
 
-## 6. Stage 1 (`0005`) backup / PITR evidence — not yet verified
+## 6. Stage 1 (`0005`) recovery point
 
-A production write of `0005_conversations_v2.sql` is **not authorized** until founder confirms restore evidence for primary `br-morning-sun-apghun9g` in project `little-truth-88273418`. This repository does **not** currently hold a verified backup artifact.
+**Status:** Named backup branch accepted for Stage 1 data recovery. **0005 SQL has not been executed.** Candidate SHA `1350962599ce8fe2fe0c8ae23f814280a11218bc`.
 
-Required evidence before execution (collect in Neon console; do not paste connection strings):
+| Item | Value | Evidence |
+| --- | --- | --- |
+| Project | `little-truth-88273418` | Postgres `neon.project_id` on backup and primary |
+| Primary | `br-morning-sun-apghun9g` | Postgres `neon.branch_id` on `DATABASE_URL` |
+| Backup branch | `br-small-term-ap7j2ssc` | Postgres `neon.branch_id` on `BACKUP_DATABASE_URL` |
+| Backup compute | `ep-muddy-wildflower-apcs9uh8` | host only; never log the URL |
+| Parent | `br-morning-sun-apghun9g` | **Founder-attested in Neon Console** (2026-11-06). Agent could not re-read `parent_id` (`NEON_API_KEY` unset). |
+| Creation timestamp | *not copied into chat* | Founder stated Console confirmation; request used an unfilled placeholder. **Do not invent a time.** |
+| Expiration | *not copied into chat* | Same. Confirm in Console that the branch has **no `expires_at`** (or a date covering the Stage 1 window) before running 0005. |
+| Restore drill | **not performed** | Do not in-place restore primary as a test |
 
-1. **Project and branch** shown as `little-truth-88273418` / `br-morning-sun-apghun9g`.
-2. **PITR window:** note the earliest restore time Neon reports for that primary branch (history retention still covering “now”).
-3. **Named restore target:** either a console restore-to-new-branch dry check, or a timestamped backup branch created from primary **before** the 0005 apply, with its branch id recorded.
-4. **Who / when:** operator name and UTC time of the confirmation.
+**Integrity (read-only, 2026-11-06):** backup and primary both had 19 users, 156 `chat_memory` rows (all `enc:v1:`), max id 1076, ledger `0003`+`0004` applied, no `conversations` / `conversation_messages` / `conversation_requests`. Backup session used `default_transaction_read_only=on`. Rehearsal `br-rough-lab-apixtzmm` is **not** this recovery point.
 
-This session did not open Neon console, did not create a backup branch, and did not verify PITR. Absence of that confirmation is a **hard stop** for Stage 1 SQL.
-
-After a verified restore point exists, the future primary command (not executed here) is:
+**0005 gate (unchanged):**
 
 ```text
 node scripts/migrate.js --authorize-primary-additive --execute-primary-0005 --migration=0005_conversations_v2.sql --expected-checksum=23e703266d35d8945edd28adb9151e1d1959a544b5d306bf7210d69c601fe251 --require-branch=br-morning-sun-apghun9g
 ```
 
-Uses production `DATABASE_URL` only. Forbids `--rehearsal`, `--database-url=`, `--allow-destructive`, `--dry-run`, and any `--migration=` other than `0005_conversations_v2.sql`.
+Checksum `23e703266d35d8945edd28adb9151e1d1959a544b5d306bf7210d69c601fe251`. Uses production `DATABASE_URL` only. Forbids `--rehearsal`, `--database-url=`, `--allow-destructive`, `--dry-run`, and any `--migration=` other than `0005_conversations_v2.sql`. Default remains refuse.
+
+**Recovery (not executed):** keep `BACKUP_DATABASE_URL` pointing at `br-small-term-ap7j2ssc`. If 0005 must be undone, restore or re-point production from this child in Neon Console; then re-check branch id and the counts above. Writes on primary after the branch point are not on the backup. A restore drill remains outstanding.
+
+**Retention:** The backup remained independently reachable on 2026-11-06 with the same integrity fingerprint as primary. This agent cannot read Neon `expires_at`. Do not enable branch expiration on `br-small-term-ap7j2ssc` during Stage 1. Keep the branch until 0005 is applied, verified, and a later milestone replaces this recovery point.
+
+---
+
+## 7. Stage 1 founder approval request (not executed)
+
+**Proposed action (only):** additive `0005_conversations_v2.sql` on primary `br-morning-sun-apghun9g`.  
+**Not in this approval:** 0006, 0007–0009, 0010, V2 API deploy, genuine wrap, HavenChat/send cutover, env changes, push, merge.
+
+| | |
+| --- | --- |
+| Migrator gate SHA | `1350962599ce8fe2fe0c8ae23f814280a11218bc` |
+| Production baseline | `badd746b1ec8dda4c912760376fca25a475a9c8b` |
+| Backup | `br-small-term-ap7j2ssc` (parent founder-attested `br-morning-sun-apghun9g`) |
+
+```text
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0005 --migration=0005_conversations_v2.sql --expected-checksum=23e703266d35d8945edd28adb9151e1d1959a544b5d306bf7210d69c601fe251 --require-branch=br-morning-sun-apghun9g
+```
+
+Production `DATABASE_URL` only. Identity must print project `little-truth-88273418` and branch `br-morning-sun-apghun9g`. Expect `APPLIED 0005_conversations_v2.sql` or `SKIP_APPLIED` if already recorded. Must not print `APPLIED` for 0006+.
+
+**Stop immediately if:** wrong project/branch; checksum mismatch; `--allow-destructive`; extra `--migration=`; `conversations` already exists in an unexpected shape; any DROP/DELETE/`chat_memory` rewrite; backup branch missing or expired.
+
+**User effect:** empty additive tables. `/api/chat/send` stays on `badd746`. No wrap, no UI cutover.
+
+**Rollback:** do not DROP 0005; unused tables can remain. Restore path is Neon re-point/restore from `br-small-term-ap7j2ssc`, not a rehearsal child. Do not run this command without a new explicit founder approval.
