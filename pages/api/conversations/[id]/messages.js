@@ -9,6 +9,7 @@ const { resolveV2StreamFn } = require('../../../../lib/parle/v2TestStream')
 const { recordAuthedChatActivity } = require('../../../../lib/parle/productEvents')
 const { validateImageDataUrls } = require('../../../../lib/security/images')
 const { attachClientAbort } = require('../../../../lib/parle/chatStreamResponse')
+const { assertV2WritesAllowed } = require('../../../../lib/parle/v2Rollout')
 
 function sendRouteError(res, error, context) {
   if (error?.statusCode) {
@@ -26,6 +27,12 @@ async function handler(req, res) {
     deferRateLimit: true,
   })
   if (guard.handled) return
+
+  try {
+    await assertV2WritesAllowed()
+  } catch (error) {
+    return sendRouteError(res, error, 'conversations_send')
+  }
 
   const body = req.body || {}
   const conversationId = req.query.id

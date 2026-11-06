@@ -10,9 +10,6 @@ import {
   Pencil,
   Settings,
   SquarePen,
-  Archive,
-  History,
-  RotateCcw,
   Trash2,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -46,11 +43,6 @@ export default function ParleChatSidebar({
   onNewChat,
   onSelectSession,
   onDeleteSession,
-  onArchiveSession,
-  onRestoreSession,
-  archivedSessions = [],
-  legacyHistory = null,
-  onSelectLegacyHistory,
   onRenameSession,
   onOpenSettings,
 }) {
@@ -194,9 +186,7 @@ export default function ParleChatSidebar({
                   const disabled = session.loadable === false
                   const showDelete = session.deletable && !disabled
                   const showRename = session.renamable && !disabled
-                  const showArchive = session.archivable && !disabled
-                  const showArchiveUnavailable = session.archiveUnavailable && !disabled
-                  const showActions = showRename || showDelete || showArchive || showArchiveUnavailable
+                  const showActions = showRename || showDelete
                   const isRenaming = renamingId === session.id
 
                   return (
@@ -266,18 +256,6 @@ export default function ParleChatSidebar({
                                   <Pencil size={14} strokeWidth={1.75} />
                                 </button>
                               )}
-                              {showArchive && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => onArchiveSession(session, e)}
-                                  className="parle-chat-sidebar__session-action"
-                                  data-conversation-id={session.id}
-                                  aria-label={`Archive ${session.title}`}
-                                  title="Archive"
-                                >
-                                  <Archive size={14} strokeWidth={1.75} />
-                                </button>
-                              )}
                               {showDelete && (
                                 <button
                                   type="button"
@@ -285,17 +263,6 @@ export default function ParleChatSidebar({
                                   className="parle-chat-sidebar__session-action parle-chat-sidebar__session-action--delete"
                                   aria-label={`Delete ${session.title}`}
                                   title="Delete chat"
-                                >
-                                  <Trash2 size={14} strokeWidth={1.75} />
-                                </button>
-                              )}
-                              {showArchiveUnavailable && (
-                                <button
-                                  type="button"
-                                  disabled
-                                  className="parle-chat-sidebar__session-action parle-chat-sidebar__session-action--delete"
-                                  aria-label="Archive is not available in this rehearsal build"
-                                  title="Archive is not available in this rehearsal build"
                                 >
                                   <Trash2 size={14} strokeWidth={1.75} />
                                 </button>
@@ -313,61 +280,6 @@ export default function ParleChatSidebar({
                 Your conversations will appear here.
               </p>
             )}
-          {isAuthed && archivedSessions.length > 0 && (
-            <div className="px-3 mt-3 pt-3 border-t border-border/60">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-2">Archived</p>
-              <ul className="flex flex-col gap-0.5">
-                {archivedSessions.map((session) => (
-                  <li key={session.id} className="group relative">
-                    <div className="parle-chat-sidebar__archived-row">
-                      <span className="parle-chat-sidebar__archived-title" title={session.title}>
-                        {session.title}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => onRestoreSession?.(session, e)}
-                        className="parle-chat-sidebar__session-action parle-chat-sidebar__restore"
-                        data-conversation-id={session.id}
-                        aria-label={`Restore ${session.title}`}
-                        title="Restore"
-                      >
-                        <RotateCcw size={14} strokeWidth={1.75} />
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-[10px] text-muted-foreground leading-relaxed">
-                Archived chats stay stored and can be restored. They are not permanently deleted.
-              </p>
-            </div>
-          )}
-          {isAuthed && legacyHistory?.conversation && (
-            <div className="parle-chat-sidebar__legacy">
-              <p className="parle-chat-sidebar__legacy-kicker">Earlier conversations</p>
-              <button
-                type="button"
-                className="parle-chat-sidebar__legacy-open"
-                onClick={() => {
-                  onSelectLegacyHistory?.(legacyHistory)
-                  onCloseMobile?.()
-                }}
-                aria-current={activeSessionId === legacyHistory.conversation.id ? 'true' : undefined}
-              >
-                <History size={14} strokeWidth={1.75} aria-hidden />
-                <span className="min-w-0 flex-1 truncate">Earlier conversations</span>
-              </button>
-              <p className="parle-chat-sidebar__legacy-note">
-                {legacyHistory.migration?.incomplete
-                  ? 'Saved history is still incomplete. Some older messages may be missing.'
-                  : legacyHistory.migration?.pendingQuiesce
-                    ? 'History is available and may still receive additional saved messages.'
-                    : legacyHistory.migration?.complete
-                      ? 'Previous account history, kept in the order it was saved. Not one original chat.'
-                      : 'Previous account history, kept in the order it was saved.'}
-              </p>
-            </div>
-          )}
           {!isAuthed && (
             <div className="px-3 mt-3 pt-3 border-t border-border/60">
               <p className="text-[11px] text-muted-foreground leading-relaxed">

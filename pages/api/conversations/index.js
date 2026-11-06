@@ -1,6 +1,7 @@
 const { runApiPipeline, handleApiError } = require('../../../lib/security/pipeline')
 const { createConversation, listConversations } = require('../../../lib/parle/conversations')
 const { publicGenerationSnapshot } = require('../../../lib/parle/v2GenerationControl')
+const { assertV2WritesAllowed } = require('../../../lib/parle/v2Rollout')
 
 function sendRouteError(res, error, context) {
   if (error?.statusCode) {
@@ -24,6 +25,7 @@ async function handler(req, res) {
       })
     }
     if (req.method === 'POST') {
+      await assertV2WritesAllowed()
       const conversation = await createConversation(guard.payload.id, {
         modeId: req.body?.modeId,
         origin: 'live',

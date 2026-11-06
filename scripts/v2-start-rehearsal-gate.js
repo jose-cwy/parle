@@ -85,7 +85,7 @@ async function main() {
 
   const stubInProduction = resolveV2StreamFn(
     { headers: { 'x-parle-v2-stub': 'ok' }, body: { testStub: 'ok' } },
-    { NODE_ENV: 'production', PARLE_V2_TEST_STUB: '1' },
+    { NODE_ENV: 'production', PARLE_V2_TEST_STUB: '1', PARLE_V2_WRITES: '1', NEXT_PUBLIC_PARLE_V2_SURFACE: '1' },
   )
   process.stderr.write(
     `STUB_GUARD production_stub_fn=${stubInProduction ? 'ENABLED_BUG' : 'disabled'}\n`,

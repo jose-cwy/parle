@@ -178,117 +178,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 
 .parle-chat-sidebar__history li.group {
   position: relative;
-  overflow: visible;
-}
-
-.parle-chat-sidebar__legacy {
-  margin-top: 0.75rem;
-  padding: 0.75rem 0.75rem 0.35rem;
-  border-top: 1px solid rgba(61, 53, 48, 0.12);
-}
-
-.parle-chat-sidebar__legacy-kicker {
-  margin: 0 0 0.4rem;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgb(120 113 108);
-}
-
-.parle-chat-sidebar__legacy-open {
-  display: flex;
-  width: 100%;
-  cursor: pointer;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 0.7rem;
-  border: 1px solid rgba(61, 53, 48, 0.1);
-  background: rgba(250, 246, 240, 0.7);
-  padding: 0.55rem 0.7rem;
-  text-align: left;
-  font-size: 11px;
-  line-height: 1.35;
-  color: rgb(68 64 60);
-  transition: background-color 200ms ease, border-color 200ms ease;
-}
-
-.parle-chat-sidebar__legacy-open:hover {
-  background: rgba(232, 168, 96, 0.12);
-  border-color: rgba(184, 90, 56, 0.18);
-}
-
-.parle-chat-sidebar__legacy-open[aria-current='true'] {
-  background: rgba(232, 168, 96, 0.16);
-  border-color: rgba(184, 90, 56, 0.22);
-}
-
-.parle-chat-sidebar__legacy-note {
-  margin: 0.45rem 0 0;
-  font-size: 10px;
-  line-height: 1.45;
-  color: rgb(120 113 108);
-}
-
-.parle-chat-history-banner {
-  margin: 0 auto 0.85rem;
-  max-width: 36rem;
-  border-radius: 1.1rem;
-  border: 1px solid rgba(184, 90, 56, 0.16);
-  background: rgba(255, 249, 240, 0.92);
-  padding: 0.85rem 1rem;
-}
-
-.parle-chat-history-banner__label {
-  margin: 0 0 0.25rem;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(146 90 48);
-}
-
-.parle-chat-history-banner__text {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgb(87 83 78);
-}
-
-.parle-chat-history-banner__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.7rem;
-}
-
-.parle-chat-history-banner__btn {
-  cursor: pointer;
-  border-radius: 999px;
-  border: 1px solid rgba(61, 53, 48, 0.14);
-  background: #fff9f0;
-  padding: 0.4rem 0.85rem;
-  font-size: 11px;
-  color: rgb(68 64 60);
-  transition: background-color 200ms ease;
-}
-
-.parle-chat-history-banner__btn:hover {
-  background: rgba(232, 168, 96, 0.16);
-}
-
-.parle-chat-history-banner__btn--primary {
-  border-color: transparent;
-  background: linear-gradient(180deg, #e8a860, #b85a38);
-  color: #fff9f0;
-}
-
-.parle-chat-history-empty {
-  margin: 1.5rem auto;
-  max-width: 28rem;
-  text-align: center;
-  font-size: 13px;
-  line-height: 1.55;
-  color: rgb(120 113 108);
+  overflow: hidden;
 }
 
 .parle-chat-sidebar__session-actions {
@@ -300,8 +190,8 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   align-items: center;
   gap: 0.125rem;
   opacity: 0;
-  pointer-events: auto;
-  z-index: 5;
+  pointer-events: none;
+  z-index: 1;
   transition: opacity 0.15s ease;
 }
 
@@ -322,9 +212,7 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
-  pointer-events: auto;
-  position: relative;
-  z-index: 2;
+  pointer-events: none;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -337,32 +225,6 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 .parle-chat-sidebar__session-action:hover {
   color: var(--foreground);
   background-color: rgba(61, 53, 48, 0.06);
-}
-
-.parle-chat-sidebar__archived-row {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.parle-chat-sidebar__archived-title {
-  flex: 1;
-  min-width: 0;
-  padding: 0.5rem;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--muted-foreground);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.parle-chat-sidebar__session-action.parle-chat-sidebar__restore {
-  position: relative;
-  z-index: 2;
-  flex-shrink: 0;
-  pointer-events: auto;
 }
 
 .parle-chat-sidebar__session-action--delete:hover {
@@ -1903,15 +1765,13 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-onboarding--open {
+  pointer-events: auto;
   visibility: visible;
 }
 
 .parle-onboarding__backdrop {
   position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: calc(var(--parle-mobile-nav-inset, 0px) + 6.5rem);
+  inset: 0;
   border: 0;
   padding: 0;
   margin: 0;
@@ -1919,11 +1779,9 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
   opacity: 0;
   transition: opacity 250ms ease-out;
   cursor: default;
-  pointer-events: none;
 }
 
 .parle-onboarding--open .parle-onboarding__backdrop {
-  pointer-events: auto;
   opacity: 1;
 }
 
@@ -1945,7 +1803,6 @@ body.body--app .haven-shell--no-rail:has(.parle-chat-layout) .haven-shell__conte
 }
 
 .parle-onboarding--open .parle-onboarding__sheet {
-  pointer-events: auto;
   transform: translateY(0) scale(1);
   opacity: 1;
 }
@@ -2040,10 +1897,6 @@ html[data-theme='light'] .parle-onboarding__option:active {
     left: 0;
     padding: 20px 16px;
     padding-bottom: calc(var(--parle-mobile-nav-inset, 0px) + 5.5rem);
-  }
-
-  .parle-onboarding__backdrop {
-    bottom: calc(var(--parle-mobile-nav-inset, 0px) + 5.5rem);
   }
 
   .parle-onboarding__sheet {

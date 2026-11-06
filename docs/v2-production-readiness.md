@@ -229,4 +229,43 @@ node scripts/migrate.js --authorize-primary-additive --execute-primary-0010 --mi
 
 **Timeouts (every applied file, including 0007):** after `BEGIN`, the runner issues `SET LOCAL lock_timeout = '5s'` and `SET LOCAL statement_timeout = '30s'`. A lock wait or long statement aborts that transaction. `ROLLBACK` undoes the file’s DDL; the runner then records `schema_migrations.status = failed` **outside** the rolled-back transaction and exits non-zero. That `failed` row is **not** treated as success. Re-apply of the same file on primary requires a new founder-authorized run of the matching `--execute-primary-NNNN` **plus** `--retry-failed` (checksum and branch gates still apply). Do not DELETE `applied` ledger rows. Do not `--retry-failed` if the database objects from that file are actually present (unknown/partial state — stop).
 
-**Post-0005 backup (not created in this preparation):** keep `BACKUP_DATABASE_URL` on `br-small-term-ap7j2ssc` (pre-0005). Do not overwrite or delete it. After explicit founder authorization, create a **new** Neon child of `br-morning-sun-apghun9g` named `parle-stage2-post-0005`, with **no expiration**, then store its URL in a **separate** env key (do not replace `BACKUP_DATABASE_URL`). Verify parent, 0005 applied, user/`chat_memory` fingerprints, and that the compute is independent of primary. Restore path for Stage 2 is that new child, not the pre-0005 backup and not rehearsal.
+**Post-0005 backup:** `br-misty-dew-aphty85m` (`parle-stage2-post-0005`), parent `br-morning-sun-apghun9g`, expiration never. Keep `BACKUP_DATABASE_URL` on pre-0005 `br-small-term-ap7j2ssc`.
+
+---
+
+## 9. Stage 3 compatibility release (not deployed)
+
+**Goal:** ship V2 **read** APIs without changing the production chatbot. Not a V2 UI or send cutover.
+
+**Do not deploy the V2 branch as-is.** Current `HavenChat` on the V2 surface uses `/api/conversations` create/send. That would empty the sidebar for existing users and stop writing `chat_memory`.
+
+**Default Stage 3 candidate behavior**
+
+| Surface | Default |
+| --- | --- |
+| `/chat` | Production HavenChat (`/api/chat/send`, `/api/chat/history`, guest-send) |
+| `NEXT_PUBLIC_PARLE_V2_SURFACE` | unset / empty → legacy UI. Rehearsal V2 journeys set `1` at build/dev only |
+| `PARLE_V2_WRITES` | unset → POST/PATCH `/api/conversations*` returns `403 v2_writes_disabled` |
+| Writes on primary | always refused, even if `PARLE_V2_WRITES=1` |
+| Writes on rehearsal | allowed only with `PARLE_V2_WRITES=1` and branch `br-rough-lab-apixtzmm` |
+| GET `/api/conversations`, GET `/:id`, GET `/legacy` | auth + ownership; SELECT only; no wrap-copy |
+| `PARLE_V2_OPS_CONTROL` / generation `read_only` | incident control; not the Stage 3 rollout switch |
+| Production env | **no change required** |
+
+**V2 mutation routes (blocked unless rehearsal writes are explicitly enabled)**
+
+| Method | Path | Default |
+| --- | --- | --- |
+| POST | `/api/conversations` | `403 v2_writes_disabled` |
+| POST | `/api/conversations/:id/messages` | `403 v2_writes_disabled` |
+| PATCH | `/api/conversations/:id` (archive or restore) | `403 v2_writes_disabled` |
+| PUT/DELETE | those paths | `405` |
+| POST | `/api/conversations/legacy` | `405` (GET only; no import) |
+
+There is no HTTP wrap-copy/import route. Library wrap-copy is not invoked by GET. Primary stays write-blocked even if `PARLE_V2_WRITES=1`. `/api/admin/ops/v2-generation` is **not** a Stage 3 rollout switch; it stays 404 without `PARLE_V2_OPS_CONTROL`.
+
+**Future cutover CSS:** Stage 3 restored `styles/parle-chat.css` to `badd746`. `HavenChatV2` / `ParleChatSidebarV2` still exist but their extra classes (`.parle-chat-sidebar__legacy*`, history banner, archived-row, onboarding pointer-event tweaks) are **not** in the Stage 3 stylesheet. Re-apply that CSS (or a dedicated V2 sheet) before any V2 UI cutover. Do not ship V2 UI in Stage 3.
+
+**Rollback:** redeploy `badd746` before any real V2 conversations exist. After V2 rows exist, a `badd746` redeploy keeps `chat_memory` working and leaves V2 tables readable only after a later compatible build (this Stage 3 candidate) is restored. Do not DROP V2 tables.
+
+**Verify:** `node scripts/run-with-rehearsal.js node scripts/v2-stage3-compat-gate.js`

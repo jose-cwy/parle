@@ -4,6 +4,7 @@ const {
   archiveConversation,
   restoreConversation,
 } = require('../../../lib/parle/conversations')
+const { assertV2WritesAllowed } = require('../../../lib/parle/v2Rollout')
 
 function sendRouteError(res, error, context) {
   if (error?.statusCode) {
@@ -25,6 +26,7 @@ async function handler(req, res) {
       return res.status(200).json(payload)
     }
     if (req.method === 'PATCH') {
+      await assertV2WritesAllowed()
       const nextStatus = String(req.body?.status || '').trim()
       if (nextStatus === 'archived') {
         const conversation = await archiveConversation(guard.payload.id, req.query.id)

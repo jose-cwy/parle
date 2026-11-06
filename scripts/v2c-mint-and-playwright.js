@@ -19,6 +19,8 @@ async function main() {
     ...process.env,
     PLAYWRIGHT_BASE_URL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3075',
     PARLE_V2_TEST_STUB: '1',
+    PARLE_V2_WRITES: '1',
+    NEXT_PUBLIC_PARLE_V2_SURFACE: '1',
     TEST_PARLE_SESSION_A: signToken({ id: userA.id, email: userA.email }),
     TEST_PARLE_SESSION_B: signToken({ id: userB.id, email: userB.email }),
     TEST_PARLE_SESSION_LEGACY: userLegacy
