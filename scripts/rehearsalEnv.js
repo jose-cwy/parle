@@ -38,6 +38,7 @@ function parseRehearsalFlags(argv, env = process.env) {
     authorizePrimaryAdditive: false,
     executePrimary0003: false,
     executePrimary0004: false,
+    executePrimary0005: false,
     rehearsePrimaryAuthorization: false,
     intendedPrimaryBranch: null,
     databaseUrlFlag: false,
@@ -51,6 +52,7 @@ function parseRehearsalFlags(argv, env = process.env) {
     else if (raw === '--authorize-primary-additive') args.authorizePrimaryAdditive = true
     else if (raw === '--execute-primary-0003') args.executePrimary0003 = true
     else if (raw === '--execute-primary-0004') args.executePrimary0004 = true
+    else if (raw === '--execute-primary-0005') args.executePrimary0005 = true
     else if (raw === '--rehearse-primary-authorization') args.rehearsePrimaryAuthorization = true
     else if (raw.startsWith('--require-branch=')) args.requireBranch = raw.slice('--require-branch='.length)
     else if (raw.startsWith('--intended-primary-branch=')) {

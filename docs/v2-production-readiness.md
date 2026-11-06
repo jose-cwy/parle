@@ -121,3 +121,26 @@ All steps require a **separate production authorization**. Rehearsal identity mu
 5. Rehearsal A–G green on `next start`; H green on the harness.
 6. No `PARLE_V2_TEST_STUB` / `PARLE_V2_RECOVERY` in production env.
 7. Explicit cutover approval distinct from this planning document.
+
+---
+
+## 6. Stage 1 (`0005`) backup / PITR evidence — not yet verified
+
+A production write of `0005_conversations_v2.sql` is **not authorized** until founder confirms restore evidence for primary `br-morning-sun-apghun9g` in project `little-truth-88273418`. This repository does **not** currently hold a verified backup artifact.
+
+Required evidence before execution (collect in Neon console; do not paste connection strings):
+
+1. **Project and branch** shown as `little-truth-88273418` / `br-morning-sun-apghun9g`.
+2. **PITR window:** note the earliest restore time Neon reports for that primary branch (history retention still covering “now”).
+3. **Named restore target:** either a console restore-to-new-branch dry check, or a timestamped backup branch created from primary **before** the 0005 apply, with its branch id recorded.
+4. **Who / when:** operator name and UTC time of the confirmation.
+
+This session did not open Neon console, did not create a backup branch, and did not verify PITR. Absence of that confirmation is a **hard stop** for Stage 1 SQL.
+
+After a verified restore point exists, the future primary command (not executed here) is:
+
+```text
+node scripts/migrate.js --authorize-primary-additive --execute-primary-0005 --migration=0005_conversations_v2.sql --expected-checksum=23e703266d35d8945edd28adb9151e1d1959a544b5d306bf7210d69c601fe251 --require-branch=br-morning-sun-apghun9g
+```
+
+Uses production `DATABASE_URL` only. Forbids `--rehearsal`, `--database-url=`, `--allow-destructive`, `--dry-run`, and any `--migration=` other than `0005_conversations_v2.sql`.
