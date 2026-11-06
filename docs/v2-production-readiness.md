@@ -2,7 +2,7 @@
 
 **Status:** Isolated planning. No production deploy, primary migration, or genuine wrap.
 
-Production SHA remains `badd746b1ec8dda4c912760376fca25a475a9c8b`. Branch `v2/b1-conversations`. Rehearsal Neon `br-square-unit-apbswjj3`.
+Production SHA remains `badd746b1ec8dda4c912760376fca25a475a9c8b`. Branch `v2/b1-conversations`. Rehearsal Neon `br-rough-lab-apixtzmm`.
 
 `PARLE_V2_TEST_STUB` and `PARLE_V2_RECOVERY` are **inert in `NODE_ENV=production`**. They are not operational controls.
 
@@ -38,7 +38,7 @@ Client mapping (code, not Playwright H): `consumeChatStream` throws on SSE `erro
 
 ## 2. Migration sequence (not executed)
 
-All steps require a **separate production authorization**. Rehearsal identity must be printed and refused if not `br-square-unit-apbswjj3` during rehearsal; production identity must match the **primary** Neon branch recorded at freeze (`br-morning-sun-apghun9g` in prior ops docs — **re-verify at execution**, do not trust this file alone).
+All steps require a **separate production authorization**. Rehearsal identity must be printed and refused if not `br-rough-lab-apixtzmm` during rehearsal; production identity must match the **primary** Neon branch recorded at freeze (`br-morning-sun-apghun9g` in prior ops docs — **re-verify at execution**, do not trust this file alone).
 
 1. **Freeze production SHA** still serving `/api/chat/send` (`badd746` until cutover).
 2. **Additive schema on primary only after branch checksum match:** 0005 conversations → 0006 lease_token → 0007 wrap → 0008 wrap origin triggers → 0009 `timeline_revision`. Stop on wrong project/branch. Never DROP. Never delete `chat_memory`.

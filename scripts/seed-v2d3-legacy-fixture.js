@@ -4,6 +4,7 @@
  */
 const bcrypt = require('bcryptjs')
 const { loadEnvLocal } = require('../tests/helpers/loadEnvLocal')
+const { CURRENT_REHEARSAL_BRANCH } = require('./rehearsalEnv')
 
 loadEnvLocal()
 if (process.env.REHEARSAL_DATABASE_URL) {
@@ -23,7 +24,7 @@ async function main() {
   const ident = await db.query(`
     SELECT current_setting('neon.branch_id', true) AS branch_id
   `)
-  if (ident.rows[0]?.branch_id !== 'br-square-unit-apbswjj3') {
+  if (ident.rows[0]?.branch_id !== CURRENT_REHEARSAL_BRANCH) {
     throw new Error('refusing seed off rehearsal branch')
   }
   const hash = await bcrypt.hash(PASSWORD, 10)

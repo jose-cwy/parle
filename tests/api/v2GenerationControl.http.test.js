@@ -11,7 +11,7 @@ if (process.env.REHEARSAL_DATABASE_URL) {
 
 const RUN = process.env.RUN_V2_OPS_HTTP === '1'
 const BASE = process.env.TEST_API_BASE || 'http://127.0.0.1:3055'
-const REHEARSAL_BRANCH = 'br-square-unit-apbswjj3'
+const { CURRENT_REHEARSAL_BRANCH: REHEARSAL_BRANCH } = require('../../scripts/rehearsalEnv')
 const STAMP = Date.now()
 const ADMIN_EMAIL = process.env.V2F_HTTP_ADMIN_EMAIL
 

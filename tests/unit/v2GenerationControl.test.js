@@ -23,7 +23,7 @@ test('missing control row defaults to live', async () => {
   resetGenerationControlCache()
   const query = async (sql) => {
     if (String(sql).includes('neon.branch_id')) {
-      return { rows: [{ branch_id: 'br-square-unit-apbswjj3' }] }
+      return { rows: [{ branch_id: 'br-rough-lab-apixtzmm' }] }
     }
     return { rows: [] }
   }
@@ -41,7 +41,7 @@ test('confirmed read_only stays read_only when the control read fails', async ()
   let reads = 0
   const query = async (sql) => {
     if (String(sql).includes('neon.branch_id')) {
-      return { rows: [{ branch_id: 'br-square-unit-apbswjj3' }] }
+      return { rows: [{ branch_id: 'br-rough-lab-apixtzmm' }] }
     }
     reads += 1
     if (reads === 1) return { rows: [{ value: 'read_only', revision: 4 }] }
@@ -67,7 +67,7 @@ test('new sends bypass the live success cache and fail closed on control-read er
   let controlReads = 0
   const query = async (sql) => {
     if (String(sql).includes('neon.branch_id')) {
-      return { rows: [{ branch_id: 'br-square-unit-apbswjj3' }] }
+      return { rows: [{ branch_id: 'br-rough-lab-apixtzmm' }] }
     }
     if (String(sql).includes('FROM parle_ops_controls')) {
       controlReads += 1
@@ -96,7 +96,7 @@ test('unknown control-read failure fail-closes to read_only', async () => {
   resetGenerationControlCache()
   const query = async (sql) => {
     if (String(sql).includes('neon.branch_id')) {
-      return { rows: [{ branch_id: 'br-square-unit-apbswjj3' }] }
+      return { rows: [{ branch_id: 'br-rough-lab-apixtzmm' }] }
     }
     throw Object.assign(new Error('db down'), { code: '57P01' })
   }
@@ -114,7 +114,7 @@ test('setGenerationControl requires confirmation, reason, and matching revision'
   const env = { PARLE_V2_OPS_CONTROL: '1' }
   const query = async (sql) => {
     if (String(sql).includes('neon.branch_id')) {
-      return { rows: [{ branch_id: 'br-square-unit-apbswjj3' }] }
+      return { rows: [{ branch_id: 'br-rough-lab-apixtzmm' }] }
     }
     return { rows: [] }
   }

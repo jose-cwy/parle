@@ -2,7 +2,7 @@
 
 **Status:** Implemented on rehearsal only. Not exposed in production. No genuine migration, deploy, or primary schema in this milestone.
 
-Production SHA remains `badd746b1ec8dda4c912760376fca25a475a9c8b`. Branch `v2/b1-conversations`. Rehearsal Neon `br-square-unit-apbswjj3`.
+Production SHA remains `badd746b1ec8dda4c912760376fca25a475a9c8b`. Branch `v2/b1-conversations`. Rehearsal Neon `br-rough-lab-apixtzmm` (replacement for expired `br-square-unit-apbswjj3`).
 
 `PARLE_V2_RECOVERY` stays a rehearsal env overlay. It is **not** the operational control.
 
@@ -10,7 +10,7 @@ Production SHA remains `badd746b1ec8dda4c912760376fca25a475a9c8b`. Branch `v2/b1
 
 **Key:** `v2_generation`  
 **Values:** `live` | `read_only`  
-**Enablement:** `PARLE_V2_OPS_CONTROL=1` **and** connected Neon branch `br-square-unit-apbswjj3`.  
+**Enablement:** `PARLE_V2_OPS_CONTROL=1` **and** connected Neon branch `br-rough-lab-apixtzmm`.  
 Primary branch `br-morning-sun-apghun9g` is refused. Without the env flag the control is inactive (`live`).
 
 ### Authorization

@@ -23,7 +23,7 @@ const { authorizeConversationSend } = require('../../lib/parle/conversationSendP
 const { wrapUserLegacyTimeline, legacyRowFingerprint } = require('../../lib/parle/legacyWrapCopy')
 const { decodeLegacyCursor } = require('../../lib/parle/legacyCursor')
 
-const REHEARSAL_BRANCH = 'br-square-unit-apbswjj3'
+const { CURRENT_REHEARSAL_BRANCH: REHEARSAL_BRANCH } = require('../../scripts/rehearsalEnv')
 const STAMP = Date.now()
 
 function mockReq() {

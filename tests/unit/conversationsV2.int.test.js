@@ -19,7 +19,7 @@ const { authorizeConversationSend } = require('../../lib/parle/conversationSendP
 const { getDailyUsage } = require('../../lib/usageTracking')
 const indexHandler = require('../../pages/api/conversations/index')
 
-const REHEARSAL_BRANCH = 'br-square-unit-apbswjj3'
+const { CURRENT_REHEARSAL_BRANCH: REHEARSAL_BRANCH } = require('../../scripts/rehearsalEnv')
 const STAMP = Date.now()
 
 function mockReq() {

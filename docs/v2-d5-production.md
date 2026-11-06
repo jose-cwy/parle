@@ -2,7 +2,7 @@
 
 **Status:** Design only. No production switch, primary migration, or genuine wrap in this milestone.
 
-Production SHA remains `badd746`. Branch `v2/b1-conversations`. Rehearsal Neon `br-square-unit-apbswjj3`.
+Production SHA remains `badd746`. Branch `v2/b1-conversations`. Rehearsal Neon `br-rough-lab-apixtzmm`.
 
 `PARLE_V2_RECOVERY` is a rehearsal env flag and **must stay inert in production**. It is not an operational control.
 
@@ -21,7 +21,7 @@ Users would see only `chat_memory` (if wrap-copy never deleted it) and would **l
 
 ## Production recovery mechanism
 
-**Rehearsal (V2-F):** implemented behind `PARLE_V2_OPS_CONTROL=1` on `br-square-unit-apbswjj3` only. **Production:** not exposed, not activated, 0010 not applied to primary.
+**Rehearsal (V2-F):** implemented behind `PARLE_V2_OPS_CONTROL=1` on `br-rough-lab-apixtzmm` only. **Production:** not exposed, not activated, 0010 not applied to primary.
 
 **Name:** generation control `v2_generation`  
 **Default:** `live` when the row is missing and nothing has confirmed `read_only`. A confirmed `read_only` must not revert to `live` because a later control read failed.

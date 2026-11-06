@@ -43,8 +43,8 @@ node scripts/migrate.js --rehearsal --require-branch=<child-branch-id> [--allow-
 | `0002_archive_legacy.sql` | `SET SCHEMA archive_legacy` | child only |
 | `0003_phase3_analytics.sql` | additive analytics | child rehearsed; primary not applied |
 | `0004_auth_identities.sql` | additive auth identities | child rehearsed; primary execute is separately gated |
-| `0005_conversations_v2.sql` | additive conversation tables | **rehearsal `br-square-unit-apbswjj3` only** — never primary |
-| `0006_conversation_lease_token.sql` | additive `lease_token` fence | rehearsal `br-square-unit-apbswjj3` only — never primary |
+| `0005_conversations_v2.sql` | additive conversation tables | **rehearsal `br-rough-lab-apixtzmm` only** — never primary |
+| `0006_conversation_lease_token.sql` | additive `lease_token` fence | rehearsal `br-rough-lab-apixtzmm` only — never primary |
 
 ## Classification
 

@@ -2,6 +2,11 @@ const { loadEnvLocal } = require('../tests/helpers/loadEnvLocal')
 
 const PRIMARY_BRANCH_ID = 'br-morning-sun-apghun9g'
 const EXPECTED_PROJECT_ID = 'little-truth-88273418'
+const CURRENT_REHEARSAL_BRANCH = 'br-rough-lab-apixtzmm'
+const EXPIRED_REHEARSAL_BRANCHES = Object.freeze([
+  'br-misty-recipe-apcj8oyo',
+  'br-square-unit-apbswjj3',
+])
 
 function publicHost(connectionString) {
   try {
@@ -74,4 +79,6 @@ module.exports = {
   parseRehearsalFlags,
   PRIMARY_BRANCH_ID,
   EXPECTED_PROJECT_ID,
+  CURRENT_REHEARSAL_BRANCH,
+  EXPIRED_REHEARSAL_BRANCHES,
 }

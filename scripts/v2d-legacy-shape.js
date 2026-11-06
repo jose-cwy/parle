@@ -2,11 +2,16 @@
  * Aggregate-only rehearsal inventory. Never selects or prints message text.
  */
 const { Client } = require('pg')
-const { loadEnvLocal, resolveRehearsalUrl } = require('./rehearsalEnv')
-const { PRIMARY_BRANCH_ID, EXPECTED_PROJECT_ID } = require('./rehearsalEnv')
+const {
+  loadEnvLocal,
+  resolveRehearsalUrl,
+  PRIMARY_BRANCH_ID,
+  EXPECTED_PROJECT_ID,
+  CURRENT_REHEARSAL_BRANCH,
+} = require('./rehearsalEnv')
 
 loadEnvLocal()
-const REQUIRED_BRANCH = 'br-square-unit-apbswjj3'
+const REQUIRED_BRANCH = CURRENT_REHEARSAL_BRANCH
 
 async function main() {
   const client = new Client({

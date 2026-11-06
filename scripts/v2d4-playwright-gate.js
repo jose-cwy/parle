@@ -2,6 +2,7 @@ const http = require('http')
 const path = require('path')
 const { spawn, spawnSync } = require('child_process')
 const { loadEnvLocal } = require('../tests/helpers/loadEnvLocal')
+const { CURRENT_REHEARSAL_BRANCH } = require('./rehearsalEnv')
 const { signToken } = require('../lib/auth')
 
 loadEnvLocal()
@@ -139,7 +140,7 @@ async function main() {
     [
       'scripts/migrate.js',
       '--rehearsal',
-      '--require-branch=br-square-unit-apbswjj3',
+      `--require-branch=${CURRENT_REHEARSAL_BRANCH}`,
       '--migration=0009_timeline_revision.sql',
     ],
     { cwd: path.join(__dirname, '..'), env: process.env, stdio: 'inherit' },

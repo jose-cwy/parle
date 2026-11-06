@@ -26,7 +26,7 @@ const {
   othersFingerprint,
 } = require('../../lib/parle/legacyWrapCopy')
 
-const REHEARSAL_BRANCH = 'br-square-unit-apbswjj3'
+const { CURRENT_REHEARSAL_BRANCH: REHEARSAL_BRANCH } = require('../../scripts/rehearsalEnv')
 const STAMP = Date.now()
 
 function mockReq() {

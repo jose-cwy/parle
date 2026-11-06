@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 const http = require('http')
 const bcrypt = require('bcryptjs')
 const { loadEnvLocal } = require('../helpers/loadEnvLocal')
+const { CURRENT_REHEARSAL_BRANCH } = require('../../scripts/rehearsalEnv')
 
 loadEnvLocal()
 
@@ -65,8 +66,8 @@ test(
     const { insertChatMessage, listChatMessages } = require('../../lib/chatMemoryDb')
 
     const ident = await db.query(`SELECT current_setting('neon.branch_id', true) AS branch_id`)
-    if (ident.rows[0]?.branch_id !== 'br-square-unit-apbswjj3') {
-      t.skip('requires rehearsal child br-square-unit-apbswjj3')
+    if (ident.rows[0]?.branch_id !== CURRENT_REHEARSAL_BRANCH) {
+      t.skip(`requires rehearsal child ${CURRENT_REHEARSAL_BRANCH}`)
       return
     }
 

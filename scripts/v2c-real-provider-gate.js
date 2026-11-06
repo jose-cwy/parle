@@ -13,7 +13,7 @@ loadEnvLocal()
 
 const PORT = Number(process.env.V2_HTTP_PORT || 3061)
 const ORIGIN = `http://127.0.0.1:${PORT}`
-const REHEARSAL_BRANCH = 'br-square-unit-apbswjj3'
+const { CURRENT_REHEARSAL_BRANCH: REHEARSAL_BRANCH } = require('./rehearsalEnv')
 
 function request(pathname, { method = 'GET', headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {

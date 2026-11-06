@@ -7,6 +7,7 @@ const http = require('http')
 const path = require('path')
 const { spawn, spawnSync } = require('child_process')
 const { loadEnvLocal } = require('../tests/helpers/loadEnvLocal')
+const { CURRENT_REHEARSAL_BRANCH } = require('./rehearsalEnv')
 const { signToken } = require('../lib/auth')
 const { resolveV2StreamFn } = require('../lib/parle/v2TestStream')
 
@@ -15,7 +16,7 @@ loadEnvLocal()
 const PORT = Number(process.env.V2_HTTP_PORT || 3082)
 const ORIGIN = `http://127.0.0.1:${PORT}`
 const PHASE = process.env.PARLE_V2_GATE_PHASE || 'mobile-a'
-const REQUIRED_BRANCH = 'br-square-unit-apbswjj3'
+const REQUIRED_BRANCH = CURRENT_REHEARSAL_BRANCH
 
 function waitForServer(child, timeoutMs = 120_000) {
   const started = Date.now()

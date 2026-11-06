@@ -7,10 +7,14 @@ const fs = require('fs')
 const path = require('path')
 const { spawn } = require('child_process')
 const { Client } = require('pg')
-const { PRIMARY_BRANCH_ID, EXPECTED_PROJECT_ID } = require('./rehearsalEnv')
+const {
+  PRIMARY_BRANCH_ID,
+  EXPECTED_PROJECT_ID,
+  CURRENT_REHEARSAL_BRANCH,
+  EXPIRED_REHEARSAL_BRANCHES,
+} = require('./rehearsalEnv')
 
-const REQUIRED_BRANCH = 'br-square-unit-apbswjj3'
-const OLD_REHEARSAL = 'br-misty-recipe-apcj8oyo'
+const REQUIRED_BRANCH = CURRENT_REHEARSAL_BRANCH
 
 function rehearsalUrl() {
   const envPath = path.join(__dirname, '..', '.env.local')
@@ -48,7 +52,7 @@ async function assertBranch(url) {
     if (row.project_id !== EXPECTED_PROJECT_ID) {
       throw new Error(`unexpected project ${row.project_id}`)
     }
-    if (row.branch_id === PRIMARY_BRANCH_ID || row.branch_id === OLD_REHEARSAL) {
+    if (row.branch_id === PRIMARY_BRANCH_ID || EXPIRED_REHEARSAL_BRANCHES.includes(row.branch_id)) {
       throw new Error(`refusing primary/old rehearsal branch ${row.branch_id}`)
     }
     if (row.branch_id !== REQUIRED_BRANCH) {

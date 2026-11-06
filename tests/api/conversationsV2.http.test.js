@@ -8,7 +8,7 @@ loadEnvLocal()
 
 const RUN = process.env.RUN_V2_HTTP === '1'
 const BASE = process.env.TEST_API_BASE || 'http://127.0.0.1:3053'
-const REHEARSAL_BRANCH = 'br-square-unit-apbswjj3'
+const { CURRENT_REHEARSAL_BRANCH: REHEARSAL_BRANCH } = require('../../scripts/rehearsalEnv')
 const STAMP = Date.now()
 
 const db = require('../../lib/db')
