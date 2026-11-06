@@ -24,27 +24,36 @@ Primary branch `br-morning-sun-apghun9g` is refused. Without the env flag the co
 
 ### Failure behavior
 
-| Condition | Generation |
-| --- | --- |
-| Flag off / wrong branch / primary | `live` (control not active) |
-| Missing row, no prior confirmed `read_only` | `live` |
-| Confirmed `read_only`, then DB read fails or row missing | **stay `read_only`** (sticky) |
-| Confirmed `live`, then DB read fails | stay `live` |
-| Cold process, DB read fails, nothing confirmed | **fail-closed `read_only`** until a successful read |
-| Stale cache | 8s TTL; errors 2s then retry |
-| Concurrent admin POST same `expectedRevision` | one commit, the other **409 `revision_conflict`** |
+| Condition | New send | List/GET banner |
+| --- | --- | --- |
+| Flag off / wrong branch / primary | `live` (control not active) | `live` |
+| Missing row, no prior confirmed `read_only` | `live` | `live` |
+| Confirmed `read_only`, then DB read fails or row missing | **blocked** | stay `read_only` |
+| Confirmed `live`, then DB read fails | **blocked** (do not trust stale live) | may still show cached `live` for up to 8s |
+| Cold process, DB read fails, nothing confirmed | **blocked** | fail-closed `read_only` |
+| Success cache | **not used** (authoritative DB read every new send) | 8s TTL |
+| Concurrent admin POST same `expectedRevision` | one commit, the other **409 `revision_conflict`** | same |
 
 Audit: `parle_ops_control_audit` plus `ops_control_changed` log (actor id, old/new, revision, reason). No transcripts.
 
 ### Send path
 
-`authorizeConversationSend` and `sendConversationMessage` consult the control **before** inserting `conversation_requests` or `conversation_messages`. Completed idempotent requests may replay. Ownership, encryption, burst, and daily limits are unchanged.
+`authorizeConversationSend` and `sendConversationMessage` call `isV2GenerationBlocked`, which loads the control with `force: true` and `authoritative: true`. That **does not reuse** the 8-second success cache. A failed control read **does not** authorize generation from a previously cached `live` value.
 
-GET list / GET conversation / archive / restore / Earlier conversations **do not** require generation to be live.
+Completed idempotent requests may replay without a generation check. Ownership, encryption, burst, and daily limits are unchanged. Inserts of `conversation_requests` / `conversation_messages` happen only after the authoritative allow.
+
+GET list / GET conversation / archive / restore / Earlier conversations **do not** require generation to be live. Those surfaces may use the 8-second cache for the banner only.
 
 ### In-flight boundary
 
-`read_only` blocks **new** POSTs. An already-acquired lease/stream is **not** aborted by the switch. That stream may persist its assistant row if it completes successfully. After it finishes, further new sends stay blocked until an authorized `LIVE` re-enable.
+`read_only` blocks **new** POSTs. It does **not** abort a request that already passed authorization and acquired a lease. That in-flight stream may still persist an assistant row if it completes. After it finishes, further new sends stay blocked until an authorized `LIVE` re-enable.
+
+Remaining races (accepted):
+
+1. **In-flight stream** already past `isV2GenerationBlocked` when the admin flips `read_only`.
+2. **Two POSTs in flight** that both read `live` before either inserts: both may proceed; the next POST after commit is 503.
+3. **Banner lag** up to 8s on list/GET after `read_only`; sends do not wait on that TTL.
+4. This is **not** a Vercel fleet broadcast proof; each instance still reads the DB on the next new send.
 
 ## Migration execution plan (not executed)
 

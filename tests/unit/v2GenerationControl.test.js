@@ -59,6 +59,39 @@ test('confirmed read_only stays read_only when the control read fails', async ()
   assert.equal(pub.mode, 'generation_disabled')
 })
 
+test('new sends bypass the live success cache and fail closed on control-read errors', async () => {
+  resetGenerationControlCache()
+  const env = { PARLE_V2_OPS_CONTROL: '1' }
+  let mode = 'live'
+  let fail = false
+  let controlReads = 0
+  const query = async (sql) => {
+    if (String(sql).includes('neon.branch_id')) {
+      return { rows: [{ branch_id: 'br-square-unit-apbswjj3' }] }
+    }
+    if (String(sql).includes('FROM parle_ops_controls')) {
+      controlReads += 1
+      if (fail) throw Object.assign(new Error('db down'), { code: '57P01' })
+      return { rows: [{ value: mode, revision: 1 }] }
+    }
+    return { rows: [] }
+  }
+
+  assert.equal((await loadGenerationControl({ env, query, force: true })).value, 'live')
+  const afterWarm = controlReads
+  assert.equal((await publicGenerationSnapshot(env, query)).available, true)
+  assert.equal(controlReads, afterWarm)
+
+  fail = true
+  assert.equal(await isV2GenerationBlocked(env, query), true)
+  assert.ok(controlReads > afterWarm)
+  assert.equal((await publicGenerationSnapshot(env, query)).available, true)
+
+  fail = false
+  mode = 'read_only'
+  assert.equal(await isV2GenerationBlocked(env, query), true)
+})
+
 test('unknown control-read failure fail-closes to read_only', async () => {
   resetGenerationControlCache()
   const query = async (sql) => {
